@@ -1,3 +1,7 @@
+Changes in 0.17.1:
+------------------
+* Fixed problem when not setting a keep alive rate.
+
 Changes in 0.17:
 ----------------
 * Compile fixes (Sjoerd Simons

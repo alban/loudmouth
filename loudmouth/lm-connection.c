@@ -540,9 +540,12 @@ connection_start_keep_alive (LmConnection *connection)
 		connection_stop_keep_alive (connection);
 	}
 
-	connection->keep_alive_id = g_timeout_add (connection->keep_alive_rate,
-						   (GSourceFunc) connection_send_keep_alive,
-						   connection);
+	if (connection->keep_alive_rate > 0) {
+		connection->keep_alive_id =
+			g_timeout_add (connection->keep_alive_rate,
+				       (GSourceFunc) connection_send_keep_alive,
+				       connection);
+	}
 }
 
 static void
@@ -1118,6 +1121,7 @@ lm_connection_new (const gchar *server)
 	connection->cancel_open       = FALSE;
 	connection->state             = LM_CONNECTION_STATE_CLOSED;
 	connection->keep_alive_id     = 0;
+	connection->keep_alive_rate   = 0;
 	
 	connection->id_handlers = g_hash_table_new_full (g_str_hash, 
 							 g_str_equal,

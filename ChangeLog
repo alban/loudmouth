@@ -1,3 +1,15 @@
+2004-08-30  Mikael Hallendal  <micke@imendio.com>
+
+	* Released 0.17.1
+	
+	* NEWS: Updated for 0.17.1
+	* configure.in: Bumped version to 0.17.1
+	* loudmouth/lm-connection.c: 
+	(connection_start_keep_alive):
+	- Don't add idle if keep alive rate is 0.
+	- Patch from Marcin Krzyżanowski <krzak@hakore.com>
+	(lm_connection_new): initialize keep alive rate
+
 2004-08-27  Mikael Hallendal  <micke@imendio.com>
 
 	* Released 0.17
