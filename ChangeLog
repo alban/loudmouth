@@ -1,5 +1,17 @@
 2004-08-08  Mikael Hallendal  <micke@imendio.com>
 
+	* docs/reference/tmpl/lm-proxy.sgml: Updated docs
+	* examples/test-tunnel.c: Use the new API for connecting to other host
+	  than the actual server name (host part of jid).
+	* loudmouth/lm-connection.[ch]:
+	(lm_connection_set_host), (lm_connection_get_host): Added
+	- Use lm_connection_get_host internally when connecting.
+	- Make LM_PROXY_TYPE_NONE reset the proxy settings on a connection.
+	* loudmouth/lm-proxy.c: (_lm_proxy_connect_cb): Don't connect when 
+	  proxy is of type LM_PROXY_TYPE_NONE.
+
+2004-08-08  Mikael Hallendal  <micke@imendio.com>
+
 	* docs/reference/tmpl/lm-proxy.sgml: Added LM_PROXY_TYPE_NONE
 	* examples/Makefile.am: Added test-tunnel.c
 	* examples/test-tunnel.c: 

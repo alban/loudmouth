@@ -205,15 +205,11 @@ _lm_proxy_connect_cb (GIOChannel *source, GIOCondition condition, gpointer data)
 			_lm_connection_failed (connect_data);
 			return FALSE;
 		}
-		if (proxy->type == LM_PROXY_TYPE_NONE) {
-			_lm_connection_succeeded (connect_data);
-		}
-		else {
-			proxy->io_watch = g_io_add_watch (connect_data->io_channel,
-							  G_IO_IN|G_IO_ERR,
-							  (GIOFunc) proxy_read_cb,
-							  connect_data);
-		}
+			
+		proxy->io_watch = g_io_add_watch (connect_data->io_channel,
+						  G_IO_IN|G_IO_ERR,
+						  (GIOFunc) proxy_read_cb,
+						  connect_data);
 	} else {
 		g_assert_not_reached ();
 	}

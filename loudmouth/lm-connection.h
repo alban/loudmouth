@@ -110,6 +110,9 @@ gboolean      lm_connection_is_authenticated  (LmConnection       *connection);
 const gchar * lm_connection_get_server        (LmConnection       *connection);
 void          lm_connection_set_server        (LmConnection       *connection,
 					       const gchar        *server);
+void          lm_connection_set_host          (LmConnection       *connection,
+					       const gchar        *host);
+const gchar * lm_connection_get_host          (LmConnection       *connection);
 
 guint         lm_connection_get_port          (LmConnection       *connection);
 void          lm_connection_set_port          (LmConnection       *connection,

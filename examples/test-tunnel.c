@@ -92,8 +92,6 @@ main (int argc, char **argv)
         LmMessageHandler *handler;
         gboolean          result;
         UserInfo         *info;
-	LmProxy          *proxy; 
-	guint             proxy_port;
                                                                                 
         if (argc < 6) {
                 g_print ("Usage: %s <server> <username> <password> <proxyserver> <proxyport>\n", argv[0]);
@@ -102,14 +100,9 @@ main (int argc, char **argv)
                                                                                 
         connection = lm_connection_new (argv[1]);
 
-	proxy = lm_proxy_new (LM_PROXY_TYPE_NONE);
-	lm_proxy_set_server (proxy, argv[4]);
+	lm_connection_set_host (connection, argv[4]);
+	lm_connection_set_port (connection, strtol (argv[5], (char **) NULL, 10));
 
-	proxy_port = strtol (argv[5], (char **) NULL, 10);
-	lm_proxy_set_port (proxy, proxy_port);
-	lm_connection_set_proxy (connection, proxy);
-	lm_proxy_unref (proxy);
-                                                                                
         handler = lm_message_handler_new (handle_messages, NULL, NULL);
         lm_connection_register_message_handler (connection, handler,
                                                 LM_MESSAGE_TYPE_MESSAGE,

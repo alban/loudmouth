@@ -58,6 +58,7 @@ struct _LmConnection {
 	/* Parameters */
 	GMainContext *context;
 	gchar        *server;
+	gchar        *host;
 	guint         port;
 
 	LmSSL        *ssl;
@@ -181,6 +182,7 @@ connection_free (LmConnection *connection)
 	int i;
 
 	g_free (connection->server);
+	g_free (connection->host);
 
 	/* Unref handlers */
 	for (i = 0; i < LM_MESSAGE_TYPE_UNKNOWN; ++i) {
@@ -292,7 +294,8 @@ _lm_connection_succeeded (LmConnectData *connect_data)
 
 	if (connection->ssl) {
 		if (!_lm_ssl_begin (connection->ssl, connection->fd, 
-				    connection->server, NULL)) {
+				    lm_connection_get_host (connection),
+				    NULL)) {
 			shutdown (connection->fd, SHUT_RDWR);
 			close (connection->fd);
 			connection_do_close (connection);
@@ -523,7 +526,7 @@ connection_do_open (LmConnection *connection, GError **error)
 		return FALSE;
 	}
 
-	if (!connection->server) {
+	if (!lm_connection_get_host (connection)) {
 		g_set_error (error,
 			     LM_ERROR,
 			     LM_ERROR_CONNECTION_OPEN,
@@ -536,7 +539,7 @@ connection_do_open (LmConnection *connection, GError **error)
 	g_source_attach (connection->incoming_source, connection->context);
 	
 	lm_verbose ("Connecting to: %s:%d\n", 
-		    connection->server, connection->port);
+		    lm_connection_get_host (connection), connection->port);
 
 	memset (&req, 0, sizeof(req));
 
@@ -564,9 +567,11 @@ connection_do_open (LmConnection *connection, GError **error)
 		}
 	} else { /* connect directly */
 		g_log (LM_LOG_DOMAIN,LM_LOG_LEVEL_NET,
-		       "Going to connect to %s\n",connection->server);
+		       "Going to connect to %s\n", 
+		       lm_connection_get_host (connection));
 
-		if (getaddrinfo (connection->server, NULL, &req, &ans) != 0) {
+		if (getaddrinfo (lm_connection_get_host (connection),
+				 NULL, &req, &ans) != 0) {
 			g_set_error (error,
 				     LM_ERROR,                 
 				     LM_ERROR_CONNECTION_OPEN,   
@@ -1055,6 +1060,7 @@ lm_connection_new (const gchar *server)
 
 	connection->context           = NULL;
 	connection->port              = LM_CONNECTION_DEFAULT_PORT;
+	connection->host              = NULL;
 	connection->ssl               = NULL;
 	connection->proxy             = NULL;
 	connection->disconnect_cb     = NULL;
@@ -1207,7 +1213,7 @@ lm_connection_close (LmConnection      *connection,
 	}
 	
 	lm_verbose ("Disconnecting from: %s:%d\n", 
-		    connection->server,
+		    lm_connection_get_host (connection),
 		    connection->port);
 	
 	if (!connection_send (connection, "</stream:stream>", -1, error)) {
@@ -1403,7 +1409,8 @@ lm_connection_is_authenticated (LmConnection *connection)
  * lm_connection_get_server:
  * @connection: an #LmConnection
  * 
- * Fetches the server address that @connection is using.
+ * Fetches the server address that @connection is using. The server address 
+ * will be used when connecting unless the host address is set. 
  * 
  * Return value: the server address
  **/
@@ -1420,7 +1427,9 @@ lm_connection_get_server (LmConnection *connection)
  * @connection: an #LmConnection
  * @server: Address of the server
  * 
- * Sets the server address for @connection to @server. Notice that @connection can't be open while doing this.
+ * Sets the server address for @connection to @server. Notice that @connection
+ * can't be open while doing this. The server address will be used when
+ * connecting unless the host address is set.
  **/
 void
 lm_connection_set_server (LmConnection *connection, const gchar *server)
@@ -1433,11 +1442,57 @@ lm_connection_set_server (LmConnection *connection, const gchar *server)
 		return;
 	}
 	
-	if (connection->server) {
-		g_free (connection->server);
+	g_free (connection->server);
+	connection->server = g_strdup (server);
+}
+
+/**
+ * lm_connection_get_host:
+ * @connection: an #LmConnection
+ * 
+ * Fetches the host address that @connection is using. If set the host address
+ * will be used instead of the server address when connecting. For example a 
+ * server might be named mycompany.com but the real host address needs to be
+ * jabber.mycompany.com.
+ *
+ * If the host address is not set this function will return the server address.
+ * 
+ * Return value: the host address
+ **/
+const gchar *
+lm_connection_get_host (LmConnection *connection)
+{
+	g_return_val_if_fail (connection != NULL, NULL);
+
+	if (connection->host) {
+		return connection->host;
 	}
 	
-	connection->server = g_strdup (server);
+	return connection->server;
+}
+
+/**
+ * lm_connection_set_host:
+ * @connection: an #LmConnection
+ * @host: Address of the server
+ * 
+ * Sets the host address for @connection to @host. If this is set it will be 
+ * used instead of the @server address when connecting. This is useful if the
+ * user wants to connect to a server through a tunnel. Notice that @connection
+ * can't be open while doing this.
+ **/
+void 
+lm_connection_set_host (LmConnection *connection, const gchar *host)
+{
+	g_return_if_fail (connection != NULL);
+
+	if (lm_connection_is_open (connection)) {
+		g_warning ("Can't change server address while connected");
+		return;
+	}
+
+	g_free (connection->host);
+	connection->host = g_strdup (host);
 }
 
 /**
@@ -1536,7 +1591,8 @@ lm_connection_get_proxy (LmConnection *connection)
  * @connection: an #LmConnection
  * @proxy: an #LmProxy
  *
- * Sets the proxy to use for this connection.
+ * Sets the proxy to use for this connection. To unset pass a proxy of type 
+ * #LM_PROXY_TYPE_NONE to this function.
  * 
  **/
 void
@@ -1549,12 +1605,15 @@ lm_connection_set_proxy (LmConnection *connection, LmProxy *proxy)
 		g_warning ("Can't change server proxy while connected");
 		return;
 	}
-	
+
 	if (connection->proxy) {
 		lm_proxy_unref (connection->proxy);
+		connection->proxy = NULL;
 	}
 
-	connection->proxy = lm_proxy_ref (proxy);
+	if (lm_proxy_get_type (proxy) != LM_PROXY_TYPE_NONE) {
+		connection->proxy = lm_proxy_ref (proxy);
+	}
 }
 
 /**
