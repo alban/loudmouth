@@ -79,6 +79,9 @@ struct _LmConnection {
 
 	/* Communication */
 	GIOChannel *io_channel;
+	guint       io_watch_in;
+	guint       io_watch_err;
+	guint       io_watch_hup;
 
 	LmCallback *open_cb;
 	LmCallback *close_cb;
@@ -170,7 +173,7 @@ connection_free (LmConnection *connection)
 	g_free (connection->server);
 
 	if (connection->io_channel) {
-		g_io_channel_unref (connection->io_channel);
+		connection_do_close (connection);
 	}
 
 	g_free (connection);
@@ -313,18 +316,18 @@ connection_do_open (LmConnection *connection, GError **error)
 	g_io_channel_set_buffered (connection->io_channel, FALSE);
 	g_io_channel_set_flags (connection->io_channel,
 				G_IO_FLAG_NONBLOCK, NULL);
-	g_io_add_watch (connection->io_channel,
-			G_IO_IN,
-			(GIOFunc) connection_in_event,
-			connection);
-	g_io_add_watch (connection->io_channel, 
-			G_IO_ERR,
-			(GIOFunc) connection_error_event,
-			connection);
-	g_io_add_watch (connection->io_channel,
-			G_IO_HUP,
-			(GIOFunc) connection_hup_event,
-			connection);
+	connection->io_watch_in = g_io_add_watch (connection->io_channel,
+						  G_IO_IN,
+						  (GIOFunc) connection_in_event,
+						  connection);
+	connection->io_watch_err = g_io_add_watch (connection->io_channel, 
+						   G_IO_ERR,
+						   (GIOFunc) connection_error_event,
+						   connection);
+	connection->io_watch_hup = g_io_add_watch (connection->io_channel,
+						   G_IO_HUP,
+						   (GIOFunc) connection_hup_event,
+						   connection);
 
 	connection->is_open = TRUE;
 
@@ -341,10 +344,18 @@ static void
 connection_do_close (LmConnection *connection)
 {
 	if (connection->io_channel) {
+		g_source_remove (connection->io_watch_in);
+		g_source_remove (connection->io_watch_err);
+		g_source_remove (connection->io_watch_hup);
+
 		g_io_channel_unref (connection->io_channel);
+		connection->io_channel = NULL;
+	} 
+
+	if (!connection->is_open) {
+		return;
 	}
 
-	connection->io_channel = NULL;
 	connection->is_open = FALSE;
 
 #ifdef HAVE_GNUTLS
@@ -368,6 +379,7 @@ connection_in_event (GIOChannel   *source,
 	if (!connection->io_channel) {
 		return FALSE;
 	}
+
 #ifdef HAVE_GNUTLS
 	if (connection->use_ssl) {
 		bytes_read = gnutls_record_recv (connection->gnutls_session,
@@ -405,6 +417,10 @@ connection_error_event (GIOChannel   *source,
 			GIOCondition  condition,
 			LmConnection *connection)
 {
+	if (!connection->io_channel) {
+		return FALSE;
+	}
+
 	lm_verbose ("Error event: %d\n", condition);
 	
 	connection_do_close (connection);
@@ -418,6 +434,10 @@ connection_hup_event (GIOChannel   *source,
 		      GIOCondition  condition,
 		      LmConnection *connection)
 {
+	if (!connection->io_channel) {
+		return FALSE;
+	}
+
 	lm_verbose ("HUP event\n");
 
 	connection_do_close (connection);

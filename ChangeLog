@@ -1,5 +1,15 @@
 2003-08-04  Mikael Hallendal  <micke@imendio.com>
 
+	* loudmouth/lm-connection.c: 
+	- Modifed patch from Mikhail Zabaluev, fixes LM-5.
+	* (connection_free): close connection if it's still open.
+	* (connection_do_open): Store away the GSource handlers.
+	* (connection_do_close): Remove the GSources from the IOChannel.
+	* (connection_in_event, connection_error_event, connection_hup_event):
+	- Return FALSE if io_channel = NULL.
+
+2003-08-04  Mikael Hallendal  <micke@imendio.com>
+
 	* configure.in:
 	- Submitted patch for Loudmouth from Mikhail Zabaluev to
 	  make configure.in use the aclocal-stuff from gnutls instead of
