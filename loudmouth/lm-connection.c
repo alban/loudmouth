@@ -21,6 +21,9 @@
 
 #include <config.h>
 
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
 #ifndef __WIN32__
   #include <netdb.h>
   #include <sys/socket.h>
@@ -28,10 +31,6 @@
 #else
   #include <winsock2.h>
 #endif
-
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
 
 #include "lm-debug.h"
 #include "lm-error.h"
