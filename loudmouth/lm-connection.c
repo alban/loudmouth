@@ -362,7 +362,7 @@ connection_failed_with_error (LmConnectData *connect_data, int error)
 	       "Connection failed: %s (error %d)\n",
 	       strerror (error), error);
 	
-	connect_data->current_addr =  connect_data->current_addr->ai_next;
+	connect_data->current_addr = connect_data->current_addr->ai_next;
 	
 	if (connect_data->io_channel != NULL) {
 		g_io_channel_unref (connect_data->io_channel);
@@ -401,10 +401,12 @@ connection_connect_cb (GIOChannel   *source,
 		getsockopt (connect_data->fd, SOL_SOCKET, SO_ERROR, 
 			    &error, &len);
 		connection_failed_with_error (connect_data, error);
+		return FALSE;
 	} else if (condition == G_IO_OUT) {
 		if (connect_data->connection->proxy) {
 			if (!_lm_proxy_negotiate (connection->proxy, connect_data->fd, connection->server, connection->port)) {
 				connection_failed (connect_data);
+				return FALSE;
 			}
 		}
 		connection_succeeded (connect_data);
@@ -453,6 +455,7 @@ connection_do_connect (LmConnectData *connect_data)
 	
 	if (fd < 0) {
 		connection_failed (connect_data);
+		return;
 	}
 
 	flags = fcntl (fd, F_GETFL, 0);

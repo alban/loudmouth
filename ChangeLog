@@ -1,3 +1,12 @@
+2004-01-16  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-connection.c:
+	(connection_failed_with_error),
+	(connection_connect_cb): 
+	(connection_do_connect):
+	- Don't fall through after calling connection_failed.
+	- Fixed bug #130449
+
 2004-01-15  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/Makefile.am:
