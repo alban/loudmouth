@@ -1,5 +1,23 @@
 2004-01-15  Mikael Hallendal  <micke@imendio.com>
 
+	* loudmouth/Makefile.am:
+	- Added lm-ssl.[ch]
+	* loudmouth/lm-connection.c:
+	* loudmouth/lm-connection.h:
+	- Splitted out the SSL parts
+	- No longer contains loads of #ifdefs around tls parts
+	- Added lm_connection_[set|get]_ssl instead.
+	* loudmouth/lm-internals.h:
+	- Added _lm_ssl*
+	* loudmouth/lm-ssl.c:
+	* loudmouth/lm-ssl.h:
+	- New files, the SSL parts from LmConnection.
+	- Declares no-ops for SSL functions if compiled without support for it.
+	* loudmouth/test-lm.c:
+	- Updated for new SSL API.
+
+2004-01-15  Mikael Hallendal  <micke@imendio.com>
+
 	* loudmouth/lm-connection.c:
 	- Added Sjoerd Simons to copyright list.
 

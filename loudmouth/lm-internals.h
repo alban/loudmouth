@@ -52,6 +52,19 @@ gboolean         _lm_proxy_negotiate                (LmProxy          *proxy,
 						     gint              fd,
 						     const gchar      *server,
 						     guint             port);
+void             _lm_ssl_initialize                 (LmSSL            *ssl);
+gboolean         _lm_ssl_begin                      (LmSSL            *ssl,
+						     gint              fd,
+						     const gchar      *server,
+						     GError          **error);
+GIOStatus        _lm_ssl_read                       (LmSSL            *ssl,
+						     gchar            *buf,
+						     gint              len,
+						     gint             *bytes_read);
+gboolean         _lm_ssl_send                       (LmSSL            *ssl,
+						     const gchar      *str,
+						     gint              len);
+void             _lm_ssl_close                      (LmSSL            *ssl);
 
 LmHandlerResult    
 _lm_message_handler_handle_message                (LmMessageHandler *handler,

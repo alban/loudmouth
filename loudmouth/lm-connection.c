@@ -21,10 +21,6 @@
 
 #include <config.h>
 
-#ifdef HAVE_GNUTLS
-#include <gnutls/gnutls.h>
-#endif
-
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -71,14 +67,10 @@ typedef struct {
 
 struct _LmConnection {
 	/* Parameters */
-	gchar          *server;
-	guint           port;
-	char	        fingerprint[20];
+	gchar      *server;
+	guint       port;
 
-#ifdef HAVE_GNUTLS
-	gnutls_session  gnutls_session;
-	gnutls_certificate_client_credentials gnutls_xcred;
-#endif
+	LmSSL      *ssl;
 
 	LmProxy    *proxy;
 	
@@ -104,10 +96,6 @@ struct _LmConnection {
 	LmCallback *register_cb;
 
 	LmCallback *disconnect_cb;
-
-	LmSSLFunction  ssl_func;
-	gpointer       ssl_func_data;
-	gchar         *expected_fingerprint;
 
 	LmQueue    *incoming_messages;
 	GSource    *incoming_source;
@@ -181,9 +169,6 @@ static GSource * connection_create_source       (LmConnection *connection);
 static void      connection_signal_disconnect   (LmConnection *connection,
 						 LmDisconnectReason reason);
 
-static void     connection_initilize_gnutls     (LmConnection *connection);
-static gboolean connection_begin_ssl            (LmConnection *connection,
-						 GError       **error);
 static void     connection_do_connect           (LmConnectData *connect_data);
 
 
@@ -280,87 +265,6 @@ connection_new_message_cb (LmParser     *parser,
 	lm_queue_push_tail (connection->incoming_messages, m);
 }
 
-#ifdef HAVE_GNUTLS
-static gboolean
-connection_verify_certificate (LmConnection *connection)
-{
-	int status;
-	LmSSLFunction ssl_function = connection->ssl_func;
-
-	/* This verification function uses the trusted CAs in the credentials
-	 * structure. So you must have installed one or more CA certificates.
-	 */
-	status = gnutls_certificate_verify_peers (connection->gnutls_session);
-
-	if (status == GNUTLS_E_NO_CERTIFICATE_FOUND)
-		if (ssl_function (connection,
-				   LM_SSL_STATUS_NO_CERT_FOUND,
-				   connection->ssl_func_data) != LM_SSL_RESPONSE_CONTINUE)
-			return FALSE;
-
-	if (status & GNUTLS_CERT_INVALID
-	    || status & GNUTLS_CERT_NOT_TRUSTED
-	    || status & GNUTLS_CERT_CORRUPTED
-	    || status & GNUTLS_CERT_REVOKED)
-		if (ssl_function (connection,
-				   LM_SSL_STATUS_UNTRUSTED_CERT,
-				   connection->ssl_func_data) != LM_SSL_RESPONSE_CONTINUE)
-
-			return FALSE;
-
-	if (gnutls_certificate_expiration_time_peers (connection->gnutls_session) < time (0)) {
-		if (ssl_function (connection,
-				   LM_SSL_STATUS_CERT_EXPIRED,
-				   connection->ssl_func_data) != LM_SSL_RESPONSE_CONTINUE)
-			return FALSE;
-	}
-	
-	if (gnutls_certificate_activation_time_peers (connection->gnutls_session) > time (0)) {
-		if (ssl_function (connection,
-				  LM_SSL_STATUS_CERT_NOT_ACTIVATED,
-				  connection->ssl_func_data) != LM_SSL_RESPONSE_CONTINUE)
-			return FALSE;
-	}
-	
-	if (gnutls_certificate_type_get (connection->gnutls_session) == GNUTLS_CRT_X509) {
-		const gnutls_datum* cert_list;
-		int cert_list_size;
-		int digest_size;
-		
-		cert_list = gnutls_certificate_get_peers (connection->gnutls_session, &cert_list_size);
-		if (cert_list == NULL) {
-			if (ssl_function (connection,
-					   LM_SSL_STATUS_NO_CERT_FOUND,
-					   connection->ssl_func_data) != LM_SSL_RESPONSE_CONTINUE)
-				return FALSE;
-		}
-		if (!gnutls_x509_check_certificates_hostname (&cert_list[0],
-							      connection->server)) {
-			if (ssl_function (connection,
-					  LM_SSL_STATUS_CERT_HOSTNAME_MISMATCH,
-					  connection->ssl_func_data) != LM_SSL_RESPONSE_CONTINUE)
-				return FALSE;
-		}
-		if (gnutls_x509_fingerprint (GNUTLS_DIG_MD5, &cert_list[0],
-					     connection->fingerprint,
-					     &digest_size) >= 0) {
-			if (connection->expected_fingerprint &&
-			    memcmp (connection->expected_fingerprint, connection->fingerprint,
-				    digest_size) &&
-			    ssl_function (connection,
-					   LM_SSL_STATUS_CERT_FINGERPRINT_MISMATCH,
-					   connection->ssl_func_data) != LM_SSL_RESPONSE_CONTINUE)
-				return FALSE;
-		} else if (ssl_function (connection,
-					  LM_SSL_STATUS_GENERIC_ERROR,
-					  connection->ssl_func_data) != LM_SSL_RESPONSE_CONTINUE)
-			return FALSE;
-	}
-
-	return TRUE;
-}
-#endif
-
 static gboolean
 connection_succeeded (LmConnectData *connect_data)
 {
@@ -390,11 +294,16 @@ connection_succeeded (LmConnectData *connect_data)
 	 * like that */
 	g_io_channel_set_flags (connection->io_channel, flags, NULL);
 
-	/* FIXME: Handle error */
-	if (!connection_begin_ssl (connection, NULL)) {
-		connection->fd = -1;
-		g_io_channel_unref(connection->io_channel);
-		return FALSE;
+	if (connection->ssl) {
+		if (!_lm_ssl_begin (connection->ssl, connection->fd, 
+				    connection->server, NULL)) {
+			shutdown (connection->fd, SHUT_RDWR);
+			close (connection->fd);
+			connection_do_close (connection);
+			connection->fd = -1;
+			g_io_channel_unref(connection->io_channel);
+			return FALSE;
+		}
 	}
 	
 	g_io_channel_set_close_on_unref (connection->io_channel, TRUE);
@@ -417,7 +326,6 @@ connection_succeeded (LmConnectData *connect_data)
 						   G_IO_HUP,
 						   (GIOFunc) connection_hup_event,
 						   connection);
-
 
 	if (!connection_send (connection, 
 			      "<?xml version='1.0' encoding='UTF-8'?>", -1,
@@ -634,8 +542,9 @@ connection_do_open (LmConnection *connection, GError **error)
 		}
 	}
 
-
-	connection_initilize_gnutls (connection);
+	if (connection->ssl) {
+		_lm_ssl_initialize (connection->ssl);
+	}
 
 	/* Prepare and do the nonblocking connection */
 	data = g_new (LmConnectData, 1);
@@ -671,13 +580,9 @@ connection_do_close (LmConnection *connection)
 
 	connection->state = LM_CONNECTION_STATE_DISCONNECTED;
 
-#ifdef HAVE_GNUTLS
-	if (lm_connection_get_use_ssl (connection)) {
-		gnutls_deinit (connection->gnutls_session);
-		gnutls_certificate_free_credentials (connection->gnutls_xcred);
-		gnutls_global_deinit ();
+	if (connection->ssl) {
+		_lm_ssl_close (connection->ssl);
 	}
-#endif
 }
 
 
@@ -694,32 +599,15 @@ connection_in_event (GIOChannel   *source,
 		return FALSE;
 	}
 
-#ifdef HAVE_GNUTLS
-	if (lm_connection_get_use_ssl (connection)) {
-		bytes_read = gnutls_record_recv (connection->gnutls_session,
-						 buf,IN_BUFFER_SIZE - 1);
-		if (bytes_read == GNUTLS_E_AGAIN) {
-			status = G_IO_STATUS_AGAIN;
-		}
-		else if (bytes_read <= 0) {
-			status = G_IO_STATUS_ERROR;
-			
-			//connection_error_event (connection->io_channel, 
-			//			G_IO_HUP,
-			//			connection);
-		}
-		else {
-			status = G_IO_STATUS_NORMAL;
-		}
+	if (connection->ssl) {
+		status = _lm_ssl_read (connection->ssl, 
+				       buf, IN_BUFFER_SIZE - 1, &bytes_read);
 	} else {
-#endif
-	    status = g_io_channel_read_chars (connection->io_channel,
-					      buf, IN_BUFFER_SIZE - 1,
-					      &bytes_read,
-					      NULL);
-#ifdef HAVE_GNUTLS
+		status = g_io_channel_read_chars (connection->io_channel,
+						  buf, IN_BUFFER_SIZE - 1,
+						  &bytes_read,
+						  NULL);
 	}
-#endif
 
 	if (status != G_IO_STATUS_NORMAL) {
 		gint reason;
@@ -820,24 +708,18 @@ connection_send (LmConnection  *connection,
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "%s\n", str);
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
 	       "-----------------------------------\n");
-	
-#ifdef HAVE_GNUTLS
-	if (lm_connection_get_use_ssl (connection)) {
-		while ((bytes_written = gnutls_record_send (connection->gnutls_session, str, len)) < 0)
-			if (bytes_written != GNUTLS_E_INTERRUPTED &&
-			    bytes_written != GNUTLS_E_AGAIN)
-			{
-				connection_error_event (connection->io_channel, G_IO_HUP,
-							connection);
-			}
-		    
+
+	if (connection->ssl) {
+		if (!_lm_ssl_send (connection->ssl, str, len)) {
+			
+			connection_error_event (connection->io_channel, 
+						G_IO_HUP,
+						connection);
+		}
 	} else {
-#endif
 		g_io_channel_write_chars (connection->io_channel, str, len, 
 					  &bytes_written, NULL);
-#ifdef HAVE_GNUTLS
 	}
-#endif
 
 	return TRUE;
 }
@@ -1113,70 +995,6 @@ connection_signal_disconnect (LmConnection       *connection,
 	}
 }
 
-static void
-connection_initilize_gnutls (LmConnection *connection)
-{
-#ifdef HAVE_GNUTLS
-	if (lm_connection_get_use_ssl (connection)) {
-		gnutls_global_init ();
-		gnutls_certificate_allocate_credentials (&connection->gnutls_xcred);
-	}
-#endif
-}
-
-static gboolean 
-connection_begin_ssl (LmConnection *connection, GError **error)
-{
-#ifdef HAVE_GNUTLS
-	if (lm_connection_get_use_ssl (connection)) {
-		int ret;
-		gboolean auth_ok = TRUE;
-		const int cert_type_priority[2] =
-		{ GNUTLS_CRT_X509, GNUTLS_CRT_OPENPGP };
-
-		gnutls_init (&connection->gnutls_session, GNUTLS_CLIENT);
-		gnutls_set_default_priority (connection->gnutls_session);
-		gnutls_certificate_type_set_priority (connection->gnutls_session,
-						      cert_type_priority);
-		gnutls_credentials_set (connection->gnutls_session,
-					GNUTLS_CRD_CERTIFICATE,
-					connection->gnutls_xcred);
-		
-		gnutls_transport_set_ptr (connection->gnutls_session, 
-					  (gnutls_transport_ptr) connection->fd);
-
-		ret = gnutls_handshake (connection->gnutls_session);
-
-		if (ret >= 0) {
-			auth_ok = connection_verify_certificate (connection);
-		}
-		
-		if (ret < 0 || !auth_ok) {
-			char *errmsg;
-			
-			gnutls_perror (ret);
-			shutdown (connection->fd, SHUT_RDWR);
-			close (connection->fd);
-			connection_do_close (connection);
-			
-			if (!auth_ok) {
-				errmsg = "*** GNUTLS authentication error";
-			} else {
-				errmsg = "*** GNUTLS handshake failed";
-			}
-			
-			g_set_error (error, 
-				     LM_ERROR, LM_ERROR_CONNECTION_OPEN,
-				     errmsg);			
-			
-			return FALSE;
-		}
-		return TRUE;
-	}
-#endif
-	return TRUE;
-}
-
 /**
  * lm_connection_new:
  * @server: The hostname to the server for the connection.
@@ -1203,9 +1021,7 @@ lm_connection_new (const gchar *server)
 	}
 	
 	connection->port              = LM_CONNECTION_DEFAULT_PORT;
-	connection->ssl_func          = NULL;
-	connection->expected_fingerprint = NULL;
-	connection->fingerprint[0]    = '\0';
+	connection->ssl               = NULL;
 	connection->proxy             = NULL;
 	connection->disconnect_cb     = NULL;
 	connection->incoming_messages = lm_queue_new ();
@@ -1609,74 +1425,42 @@ lm_connection_set_port (LmConnection *connection, guint port)
 }
 
 /**
- * lm_connection_supports_ssl:
- *
- * Checks whether Loudmouth supports SSL or not.
- *
- * Return value: #TRUE if this installation of Loudmouth supports SSL, otherwise returns #FALSE.
- **/
-gboolean
-lm_connection_supports_ssl (void)
-{
-#ifdef HAVE_GNUTLS
-	return TRUE;
-#else
-	return FALSE;
-#endif
-}
-/*
-* @fingerprint: the expected fingerprint of the remote cert, or %NULL 
- * @ssl_function: Callback function used when an authentication error occurs.
- */
-void
-lm_connection_set_use_ssl (LmConnection  *connection, 
-			   const gchar   *expected_fingerprint,
-			   LmSSLFunction  ssl_function,
-			   gpointer       user_data)
-{
-	g_return_if_fail (connection != NULL);
-
-	g_free (connection->expected_fingerprint);
-	
-	if (expected_fingerprint) {
-		connection->expected_fingerprint = 
-			g_strdup (expected_fingerprint);
-	}
-
-	connection->ssl_func = ssl_function;
-	connection->ssl_func_data = user_data;
-}
-
-/**
- * lm_connection_get_use_ssl:
- * @connection: an #LmConnection
- * 
- * Returns if @connection is using SSL or not
- * 
- * Return value: #TRUE if @connection is using SSL, #FALSE otherwise.
- **/
-gboolean
-lm_connection_get_use_ssl (LmConnection *connection)
-{
-	g_return_val_if_fail (connection != NULL, FALSE);
-
-	return connection->ssl_func != NULL;
-}
-
-/**
- * lm_connection_get_fingerprint: 
+ * lm_connection_get_ssl: 
  * @connection: an #LmConnection
  *
- * Returns the MD5 fingerprint of the remote server's certificate.
+ * Returns the SSL struct if the connection is using one.
  * 
- * Return value: A 16-byte array representing the fingerprint or %NULL if unknown.
+ * Return value: The ssl struct or %NULL if no proxy is used.
  **/
-const unsigned char *
-lm_connection_get_fingerprint (LmConnection *connection)
+LmSSL *
+lm_connection_get_ssl (LmConnection *connection)
 {
 	g_return_val_if_fail (connection != NULL, NULL);
 	
-	return (unsigned char*) connection->fingerprint;
+	return connection->ssl;
+}
+
+/**
+ * lm_connection_set_ssl:
+ * @connection: An #LmConnection
+ * @ssl: An #LmSSL
+ *
+ * Sets SSL struct or unset if @ssl is %NULL. If set @connection will use SSL to for the connection.
+ */
+void
+lm_connection_set_ssl (LmConnection *connection, LmSSL *ssl)
+{
+	g_return_if_fail (connection != NULL);
+
+	if (connection->ssl) {
+		lm_ssl_unref (connection->ssl);
+	}
+
+	if (ssl) {
+		connection->ssl = lm_ssl_ref (ssl);
+	} else {
+		connection->ssl = NULL;
+	}
 }
 
 /**

@@ -26,8 +26,9 @@
 #error "Only <loudmouth/loudmouth.h> can be included directly, this file may di\sappear or change contents."
 #endif
 
-#include <loudmouth/lm-proxy.h>
 #include <loudmouth/lm-message.h>
+#include <loudmouth/lm-proxy.h>
+#include <loudmouth/lm-ssl.h>
 
 #define LM_CONNECTION(o) (LmConnection *) o;
 
@@ -58,27 +59,6 @@ typedef enum {
 } LmDisconnectReason;
 
 typedef enum {
-	LM_CERT_INVALID,
-	LM_CERT_ISSUER_NOT_FOUND,
-	LM_CERT_REVOKED,
-} LmCertificateStatus;
-
-typedef enum {
-	LM_SSL_STATUS_NO_CERT_FOUND,	
-	LM_SSL_STATUS_UNTRUSTED_CERT,
-	LM_SSL_STATUS_CERT_EXPIRED,
-	LM_SSL_STATUS_CERT_NOT_ACTIVATED,
-	LM_SSL_STATUS_CERT_HOSTNAME_MISMATCH,			
-	LM_SSL_STATUS_CERT_FINGERPRINT_MISMATCH,			
-	LM_SSL_STATUS_GENERIC_ERROR,	
-} LmSSLStatus;
-
-typedef enum {
-	LM_SSL_RESPONSE_CONTINUE,
-	LM_SSL_RESPONSE_STOP,
-} LmSSLResponse;
-
-typedef enum {
 	LM_CONNECTION_STATE_DISCONNECTED,
 	LM_CONNECTION_STATE_CONNECTING,
 	LM_CONNECTION_STATE_CONNECTED,
@@ -93,11 +73,6 @@ typedef void          (* LmResultFunction)     (LmConnection       *connection,
 typedef void          (* LmDisconnectFunction) (LmConnection       *connection,
 						LmDisconnectReason  reason,
 						gpointer            user_data);
-
-typedef LmSSLResponse (* LmSSLFunction)        (LmConnection *connection,
-						LmSSLStatus   status,
-						gpointer      user_data);
-
 
 LmConnection *lm_connection_new               (const gchar        *server);
 gboolean      lm_connection_open              (LmConnection       *connection,
@@ -138,16 +113,11 @@ void          lm_connection_set_server        (LmConnection       *connection,
 guint         lm_connection_get_port          (LmConnection       *connection);
 void          lm_connection_set_port          (LmConnection       *connection,
 					       guint               port);
-gboolean      lm_connection_supports_ssl      (void);
-void          lm_connection_set_use_ssl       (LmConnection       *connection,
-					       const gchar        *expected_fingerprint,
-					       LmSSLFunction       ssl_function,
-					       gpointer            user_data);
-gboolean      lm_connection_get_use_ssl       (LmConnection       *connection);
 
-const unsigned char * 
-lm_connection_get_fingerprint                 (LmConnection       *connection);
-					       
+LmSSL *       lm_connection_get_ssl           (LmConnection       *connection);
+void          lm_connection_set_ssl           (LmConnection       *connection,
+					       LmSSL              *ssl);
+
 LmProxy *     lm_connection_get_proxy         (LmConnection       *connection);
 void          lm_connection_set_proxy         (LmConnection       *connection,
 					       LmProxy            *proxy);

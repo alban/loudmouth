@@ -35,6 +35,15 @@ typedef struct {
 	gchar *passwd;
 } UserInfo;
 
+static void 
+free_user_info (UserInfo *info)
+{
+	g_free (info->name);
+	g_free (info->passwd);
+
+	g_free (info);
+}
+
 static unsigned char expected_fingerprint[20];
 
 static void
@@ -47,7 +56,7 @@ print_finger (const unsigned char *fpr, unsigned int size)
 }
 
 static LmSSLResponse
-ssl_cb (LmConnection *connection, LmSSLStatus status, gpointer ud)
+ssl_cb (LmSSL *ssl, LmSSLStatus status, gpointer ud)
 {
 	g_print ("SSL status: %d\n", status);
 	switch (status) {
@@ -67,7 +76,7 @@ ssl_cb (LmConnection *connection, LmSSLStatus status, gpointer ud)
 		g_print ("Certificate hostname does not match expected hostname!\n"); 
 		break;
 	case LM_SSL_STATUS_CERT_FINGERPRINT_MISMATCH: {
-		const unsigned char *fpr = lm_connection_get_fingerprint (connection);
+		const unsigned char *fpr = lm_ssl_get_fingerprint (ssl);
 		g_print ("Certificate fingerprint does not match expected fingerprint!\n"); 
 		g_print ("Remote fingerprint: ");
 		print_finger (fpr, 16);
@@ -172,7 +181,7 @@ main (int argc, char **argv)
 
         connection = lm_connection_new (argv[1]);
 
-	if (argc > 4 && !lm_connection_supports_ssl ()) {
+	if (argc > 4 && !lm_ssl_is_supported ()) {
 		g_error ("No SSL support!");
 		exit (1);
 	}
@@ -190,18 +199,24 @@ main (int argc, char **argv)
 	info->passwd = g_strdup (argv[3]);
 	
 	if (argc > 4) {
-		int i;
-		char *p;
+		int    i;
+		char  *p;
+		LmSSL *ssl;
+		
 		lm_connection_set_port (connection,
 					LM_CONNECTION_DEFAULT_PORT_SSL);
 		
 		for (i = 0, p = argv[4]; *p && *(p+1); i++, p += 3)
 			expected_fingerprint[i] = (unsigned char) g_ascii_strtoull (p, NULL, 16);
+		
+		ssl = lm_ssl_new (expected_fingerprint,
+				  (LmSSLFunction) ssl_cb,
+				  info, 
+				  (GDestroyNotify) free_user_info);
+		
+		lm_connection_set_ssl (connection, ssl);
 
-		lm_connection_set_use_ssl (connection,
-					   expected_fingerprint,
-					   (LmSSLFunction) ssl_cb,
-					   info);
+		lm_ssl_unref (ssl);
 	}
 
 	result = lm_connection_open (connection,
