@@ -1,0 +1,51 @@
+Steps to build Loudmouth 0.13.1 under Windows
+---------------------------------------------
+
+1) Go to Tor Lillqvist's Win32 glib page 
+   (http://www.gimp.org/~tml/gimp/win32/downloads.html)
+
+2) Get the pre-built glib, glib-dev, libintl and libiconv binaries 
+	* libiconv-1.9.1.bin.woe32.zip
+	* gettext-runtime-0.12.1.bin.woe32.zip
+	* glib-dev-2.2.2.zip
+	* glib-2.2.2.zip
+
+3) Extract all of them to a directory (eg c:\glib)
+
+4) Extract the loudmouth source files (eg c:\loudmouth-0.13.1)
+
+5) Copy the prebuilt win32-config.h to c:\loudmouth-0.13.1\config.h
+
+6) Create an empty win32 static lib project in the root of the loudmouth
+   directory 
+
+7) Add config.h and all .c and .h files in the loudmouth subdir except
+   test-lm.c
+
+8) Setup the project:
+
+  Project Settings:
+  Define __WIN32__
+  Define LM_COMPILATION
+  Add include paths ". ; c:\glib\include\glib-2.0 ; c:\glib\lib\glib-2.0\include"
+
+9) Build using the Multi-Threaded Debug runtime library loudmouth.lib should
+   compile now
+
+Steps to build test-lm under Windows
+------------------------------------
+Create an empty win32 console project
+Add test-lm.c
+Define __WIN32__
+Add lib path: "c:\dev\glib\lib; c:\loudmouth-0.13.1\debug"
+Add linker dependencies: "ws2_32.lib glib-2.0.lib loudmouth.lib"
+Build test-lm
+From the glib\bin directory, copy libglib-2.0-0.dll, iconv.dll, and intl.dll
+	Put them into your build directory or the system path
+Run test-lm
+
+Required Code Fixes
+-------------------
+lm-connection.c
+	The include line for unistd.h may need to be moved 
+	into the #ifndef __WIN32__ block

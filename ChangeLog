@@ -1,3 +1,8 @@
+2003-10-01  Mikael Hallendal  <micke@imendio.com>
+
+        * README.WIN32, win32-config.h: 
+	- Added information about how to build on Windows. Fixes LM-12
+	  
 2003-08-24  Martyn Russell  <ginxd@btopenworld.com>
 
 	* loudmouth/lm-connection.c:
