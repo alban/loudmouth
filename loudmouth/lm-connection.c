@@ -369,6 +369,7 @@ connection_timeout_check_open (OpenTimeoutData *data)
 	
 	connection = data->connection;
 
+
 	/* Need some way to report error/success */
 	if (connection->cancel_open) {
 		return FALSE;
@@ -427,7 +428,6 @@ connection_timeout_check_open (OpenTimeoutData *data)
 						   (GIOFunc) connection_hup_event,
 						   connection);
 
-	connection->state = LM_CONNECTION_STATE_CONNECTED;
 
 	if (!connection_send (connection, 
 			      "<?xml version='1.0' encoding='UTF-8'?>", -1,
@@ -435,6 +435,8 @@ connection_timeout_check_open (OpenTimeoutData *data)
 		connection_do_close (connection);
 		return FALSE;
 	}
+	
+	g_print ("In timeoutfunc\n");
 
 	m = lm_message_new (connection->server, LM_MESSAGE_TYPE_STREAM);
 	lm_message_node_set_attributes (m->node,
@@ -459,10 +461,8 @@ connection_timeout_check_open (OpenTimeoutData *data)
 }
 	
 static int
-connection_connect_nonblocking (LmConnection *connection,
-				struct  addrinfo *addr,
-				char   *name, 
-				char   *portname)
+connection_connect_nonblocking (LmConnection    *connection, 
+				struct addrinfo *addr)
 {
 	int              res;
 	int              fd;
@@ -474,6 +474,7 @@ connection_connect_nonblocking (LmConnection *connection,
 	else
 		((struct sockaddr_in *) addr->ai_addr)->sin_port = htons (connection->port);
 
+#if 0
 	getnameinfo (addr->ai_addr,
 		     addr->ai_addrlen,
 		     name,     sizeof (name),
@@ -482,7 +483,7 @@ connection_connect_nonblocking (LmConnection *connection,
 
 	g_log (LM_LOG_DOMAIN,LM_LOG_LEVEL_NET,
 	       "Trying %s port %s...\n", name, portname);
-
+#endif
 	fd = socket (addr->ai_family, 
 		     addr->ai_socktype, 
 		     addr->ai_protocol);
@@ -523,32 +524,53 @@ connection_connect_nonblocking (LmConnection *connection,
 	return fd;
 }
 
-						
+/* Returns directly */
 static gboolean
 connection_do_open (LmConnection *connection, GError **error)
 {
-	gint             err = -1;
-	gint             fd = -1;
 	struct addrinfo  req;
 	struct addrinfo *ans;
 	struct addrinfo *tmpaddr;
-	char             name[NI_MAXHOST];
-	char             portname[NI_MAXSERV];
+	/* char             name[NI_MAXHOST];
+	char             portname[NI_MAXSERV]; */
 	
-	g_return_val_if_fail (connection != NULL, FALSE);
+	if (lm_connection_is_open (connection)) {
+		g_set_error (error,
+			     LM_ERROR,
+			     LM_ERROR_CONNECTION_NOT_OPEN,
+			     "Connection is already open, call lm_connection_close() first");
+		return FALSE;
+	}
+
+	if (!connection->server) {
+		g_set_error (error,
+			     LM_ERROR,
+			     LM_ERROR_CONNECTION_OPEN,
+			     "You need to set the server hostname in the call to lm_connection_new()");
+		return FALSE;
+	}
+	
+	connection->incoming_source = connection_create_source (connection);
+	g_source_attach (connection->incoming_source, NULL);
+
+	lm_verbose ("Connecting to: %s:%d\n", 
+		    connection->server, connection->port);
 
 	memset (&req, 0, sizeof(req));
 
 	req.ai_family   = AF_UNSPEC;
 	req.ai_socktype = SOCK_STREAM;
 	req.ai_protocol = IPPROTO_TCP;
-
+	
+	connection->cancel_open = FALSE;
+	connection->state = LM_CONNECTION_STATE_CONNECTING;
+	
 	if (connection->proxy_type != LM_PROXY_TYPE_NONE) { /* connect through proxy */
 		g_log (LM_LOG_DOMAIN,LM_LOG_LEVEL_NET,
 		       "Going to connect to %s\n",connection->proxy_server);
 
 
-		if ((err = getaddrinfo (connection->proxy_server, NULL, &req, &ans)) != 0) {
+		if (getaddrinfo (connection->proxy_server, NULL, &req, &ans) != 0) {
 			g_set_error (error,
 				     LM_ERROR,                 
 				     LM_ERROR_CONNECTION_OPEN,   
@@ -559,7 +581,7 @@ connection_do_open (LmConnection *connection, GError **error)
 		g_log (LM_LOG_DOMAIN,LM_LOG_LEVEL_NET,
 		       "Going to connect to %s\n",connection->server);
 
-		if ((err = getaddrinfo (connection->server, NULL, &req, &ans)) != 0) {
+		if (getaddrinfo (connection->server, NULL, &req, &ans) != 0) {
 			g_set_error (error,
 				     LM_ERROR,                 
 				     LM_ERROR_CONNECTION_OPEN,   
@@ -568,114 +590,29 @@ connection_do_open (LmConnection *connection, GError **error)
 		}
 	}
 
-#ifdef HAVE_GNUTLS
-	if (lm_connection_get_use_ssl (connection)) {
-		gnutls_global_init ();
-		gnutls_certificate_allocate_credentials (&connection->gnutls_xcred);
-	}
-#endif
+	connection_initilize_gnutls (connection);
+
+	/* Do the nonblocking connection */
+	/* Get results in a timeout callback */
+	/* Return TRUE if nothing has gone wrong up until now */
 
 	for (tmpaddr = ans ; tmpaddr != NULL ; tmpaddr = tmpaddr->ai_next) {
 		if (connection->cancel_open) {
 			break;
 		}
 
-		fd = connection_connect_nonblocking (connection, 
-						     tmpaddr, name, portname);
-		if (fd < 0) {
-			break;
-		}
+		/* FIXME: Try to connect to some addr until success or end of 
+		 * addresses */
+		connection_connect_nonblocking (connection, tmpaddr);
+		/*, name, portname); */
+		break;
 	}
 	
 	freeaddrinfo (ans);
 
-	/* check for failure */
-	if (fd < 0 || err < 0) {
-		g_set_error (error,
-			     LM_ERROR,
-			     LM_ERROR_CONNECTION_OPEN,
-			     "connection failed");
-		return FALSE;
-	}
-
-#ifdef HAVE_GNUTLS
-	if (lm_connection_get_use_ssl (connection)) {
-		int ret;
-		gboolean auth_ok = TRUE;
-		const int cert_type_priority[2] =
-		{ GNUTLS_CRT_X509, GNUTLS_CRT_OPENPGP };
-
-		gnutls_init (&connection->gnutls_session, GNUTLS_CLIENT);
-		gnutls_set_default_priority (connection->gnutls_session);
-		gnutls_certificate_type_set_priority (connection->gnutls_session,
-						      cert_type_priority);
-		gnutls_credentials_set (connection->gnutls_session,
-					GNUTLS_CRD_CERTIFICATE,
-					connection->gnutls_xcred);
-		
-		gnutls_transport_set_ptr (connection->gnutls_session, 
-					  (gnutls_transport_ptr) fd);
-
-		ret = gnutls_handshake (connection->gnutls_session);
-
-		if (ret >= 0) {
-			auth_ok = connection_verify_certificate (connection);
-		}
-		
-		if (ret < 0 || !auth_ok) {
-			char *errmsg;
-			
-			gnutls_perror (ret);
-			shutdown (fd, SHUT_RDWR);
-			close (fd);
-			connection_do_close (connection);
-			
-			if (!auth_ok) {
-				errmsg = "*** GNUTLS authentication error";
-			} else {
-				errmsg = "*** GNUTLS handshake failed";
-			}
-			
-			g_set_error (error, 
-				     LM_ERROR, LM_ERROR_CONNECTION_OPEN,
-				     errmsg);			
-			
-			return FALSE;
-		}
-	}
-#endif
-	
-	connection->io_channel = g_io_channel_unix_new (fd);
-	g_io_channel_set_close_on_unref (connection->io_channel, TRUE);
-	g_io_channel_set_encoding (connection->io_channel, NULL, NULL);
-	
-	g_io_channel_set_buffered (connection->io_channel, FALSE);
-	g_io_channel_set_flags (connection->io_channel,
-				G_IO_FLAG_NONBLOCK, NULL);
-	connection->io_watch_in = g_io_add_watch (connection->io_channel,
-						  G_IO_IN,
-						  (GIOFunc) connection_in_event,
-						  connection);
-	connection->io_watch_err = g_io_add_watch (connection->io_channel, 
-						   G_IO_ERR,
-						   (GIOFunc) connection_error_event,
-						   connection);
-	connection->io_watch_hup = g_io_add_watch (connection->io_channel,
-						   G_IO_HUP,
-						   (GIOFunc) connection_hup_event,
-						   connection);
-
-	connection->state = LM_CONNECTION_STATE_CONNECTED;
-
-	if (!connection_send (connection,
-			      "<?xml version='1.0' encoding='UTF-8'?>", -1, 
-			      error)) {
-		return FALSE;
-	}
-
 	return TRUE;
 }
-
+					
 static void
 connection_do_close (LmConnection *connection)
 {
@@ -828,7 +765,7 @@ connection_send (LmConnection  *connection,
 {
 	gsize             bytes_written;
 	
-	if (!lm_connection_is_open (connection)) {
+	if (connection->state < LM_CONNECTION_STATE_CONNECTING) {
 		g_set_error (error,
 			     LM_ERROR,
 			     LM_ERROR_CONNECTION_NOT_OPEN,
@@ -1056,6 +993,8 @@ connection_stream_received (LmConnection *connection, LmMessage *m)
 									 "id"));;
 	
 	lm_verbose ("Stream received: %s\n", connection->stream_id);
+	
+	connection->state = LM_CONNECTION_STATE_CONNECTED;
 	
 	/* Check to see if the stream is correctly set up */
 	result = TRUE;
@@ -1302,94 +1241,6 @@ lm_connection_new (const gchar *server)
 	return connection;
 }
 
-/* Returns directly */
-static gboolean
-connection_new_do_open (LmConnection *connection, GError **error)
-{
-	struct addrinfo  req;
-	struct addrinfo *ans;
-	struct addrinfo *tmpaddr;
-	char             name[NI_MAXHOST];
-	char             portname[NI_MAXSERV];
-	
-	if (lm_connection_is_open (connection)) {
-		g_set_error (error,
-			     LM_ERROR,
-			     LM_ERROR_CONNECTION_NOT_OPEN,
-			     "Connection is already open, call lm_connection_close() first");
-		return FALSE;
-	}
-
-	if (!connection->server) {
-		g_set_error (error,
-			     LM_ERROR,
-			     LM_ERROR_CONNECTION_OPEN,
-			     "You need to set the server hostname in the call to lm_connection_new()");
-		return FALSE;
-	}
-	
-	connection->incoming_source = connection_create_source (connection);
-	g_source_attach (connection->incoming_source, NULL);
-
-	lm_verbose ("Connecting to: %s:%d\n", 
-		    connection->server, connection->port);
-
-	memset (&req, 0, sizeof(req));
-
-	req.ai_family   = AF_UNSPEC;
-	req.ai_socktype = SOCK_STREAM;
-	req.ai_protocol = IPPROTO_TCP;
-	
-	connection->cancel_open = FALSE;
-	connection->state = LM_CONNECTION_STATE_CONNECTING;
-	
-	if (connection->proxy_type != LM_PROXY_TYPE_NONE) { /* connect through proxy */
-		g_log (LM_LOG_DOMAIN,LM_LOG_LEVEL_NET,
-		       "Going to connect to %s\n",connection->proxy_server);
-
-
-		if (getaddrinfo (connection->proxy_server, NULL, &req, &ans) != 0) {
-			g_set_error (error,
-				     LM_ERROR,                 
-				     LM_ERROR_CONNECTION_OPEN,   
-				     "getaddrinfo() failed");
-			return FALSE;
-		}
-	} else { /* connect directly */
-		g_log (LM_LOG_DOMAIN,LM_LOG_LEVEL_NET,
-		       "Going to connect to %s\n",connection->server);
-
-		if (getaddrinfo (connection->server, NULL, &req, &ans) != 0) {
-			g_set_error (error,
-				     LM_ERROR,                 
-				     LM_ERROR_CONNECTION_OPEN,   
-				     "getaddrinfo() failed");
-			return FALSE;
-		}
-	}
-
-	connection_initilize_gnutls (connection);
-
-	/* Do the nonblocking connection */
-	/* Get results in a timeout callback */
-	/* Return TRUE if nothing has gone wrong up until now */
-
-	for (tmpaddr = ans ; tmpaddr != NULL ; tmpaddr = tmpaddr->ai_next) {
-		if (connection->cancel_open) {
-			break;
-		}
-
-		/* FIXME: Try to connect to some addr until success or end of 
-		 * addresses */
-		connection_connect_nonblocking (connection, 
-						tmpaddr, name, portname);
-		break;
-	}
-	
-	freeaddrinfo (ans);
-
-	return TRUE;
-}
 
 /**
  * lm_connection_open:
@@ -1415,7 +1266,7 @@ lm_connection_open (LmConnection      *connection,
 	connection->open_cb = _lm_utils_new_callback (function, 
 						      user_data, notify);
 
-	return connection_new_do_open (connection, error);
+	return connection_do_open (connection, error);
 }
 
 /**
@@ -1430,69 +1281,35 @@ lm_connection_open (LmConnection      *connection,
 gboolean
 lm_connection_open_and_block (LmConnection *connection, GError **error)
 {
-	LmMessage *m;
-	gboolean   result;
-	gboolean   finished = FALSE;
-	gboolean   ret_val = FALSE;
-
+	gboolean          result;
+	LmConnectionState state;
+	
 	g_return_val_if_fail (connection != NULL, FALSE);
 
 	connection->open_cb = NULL;
-	result = connection_new_do_open (connection, error);
+	result = connection_do_open (connection, error);
 
 	if (result == FALSE) {
 		return FALSE;
 	}
-
-	/* Create a main loop and stuff */
 	
-	if (!connection_do_open (connection, error)) {
-		return FALSE;
-	}
-	
-	m = lm_message_new (connection->server, LM_MESSAGE_TYPE_STREAM);
-	lm_message_node_set_attributes (m->node,
-					"xmlns:stream", "http://etherx.jabber.org/streams",
-					"xmlns", "jabber:client",
-					NULL);
-	
-	lm_verbose ("Sending stream: \n%s\n", 
-		    lm_message_node_to_string (m->node));
-	
-	result = lm_connection_send (connection, m, error);
-	lm_message_unref (m);
-
- 	// g_source_remove (g_source_get_id (connection->incoming_source));
-	// g_source_unref (connection->incoming_source);
-
-	while (!finished) {
-		gint n;
-		
-		g_main_context_iteration (NULL, TRUE);
-		
-		if (lm_queue_is_empty (connection->incoming_messages)) {
-			continue;
-		}
-
-		for (n = 0; n < connection->incoming_messages->length; n++) {
-			LmMessage *m;
-
-			m = lm_queue_peek_nth (connection->incoming_messages, n);
-			if (lm_message_get_type (m) == LM_MESSAGE_TYPE_STREAM) {
-				connection->stream_id = 
-					g_strdup (lm_message_node_get_attribute (m->node, "id"));
-				ret_val = TRUE;
-				finished = TRUE;
-				lm_queue_remove_nth (connection->incoming_messages, n);
-				break;
-			}
+	while ((state = lm_connection_get_state (connection)) == LM_CONNECTION_STATE_CONNECTING) {
+		g_print ("while...\n");
+		if (g_main_context_pending (NULL)) {
+			g_print ("Iterating\n");
+			g_main_context_iteration (NULL, TRUE);
+		} else {
+			usleep (10);
 		}
 	}
-	
-	connection->incoming_source = connection_create_source (connection);
-	g_source_attach (connection->incoming_source, NULL);
 
-	return ret_val;
+	g_print ("Connected!\n");
+	
+	if (lm_connection_is_open (connection)) {
+		return TRUE;
+	}
+
+	return FALSE;
 }
 
 /**
@@ -1659,6 +1476,7 @@ lm_connection_authenticate_and_block (LmConnection  *connection,
 		return FALSE;
 	}
 
+	g_print ("Foo: %d\n", (gint)connection);
 	m = connection_create_auth_msg (connection,
 					username, 
 					password,

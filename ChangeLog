@@ -1,3 +1,10 @@
+2004-01-06  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-connection.c:
+	- Now works with sync open again.
+	* loudmouth/lm-utils.c: (_lm_utils_free_callback):
+	- Work with NULL
+
 2004-01-05  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-connection.c: 

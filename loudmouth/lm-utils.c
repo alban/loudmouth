@@ -44,6 +44,10 @@ _lm_utils_new_callback (gpointer func,
 void
 _lm_utils_free_callback (LmCallback *cb)
 {
+	if (!cb) {
+		return;
+	}
+
 	if (cb->notify) {
 		(* cb->notify) (cb->user_data);
 	}
