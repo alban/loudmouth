@@ -1,3 +1,9 @@
+2003-10-02  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-connection.c: (connection_free):
+	- Free the message handlers and message handler list when free'ing 
+	  the connection.
+
 2003-10-01  Mikael Hallendal  <micke@imendio.com>
 
 	* configure.in: Tweaked the --with-ssl option a bit.

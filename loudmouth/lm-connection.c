@@ -171,9 +171,27 @@ static GSourceFuncs incoming_funcs = {
 static void
 connection_free (LmConnection *connection)
 {
+	int i;
+
 	g_free (connection->server);
 
-	if (connection->io_channel) {
+	/* Unref handlers */
+	for (i = 0; i < LM_MESSAGE_TYPE_UNKNOWN; ++i) {
+		GSList *l;
+
+		for (l = connection->handlers[i]; l; l = l->next) {
+			HandlerData *hd = (HandlerData *) l->data;
+			
+			lm_message_handler_unref (hd->handler);
+			g_free (hd);
+		}
+
+		g_slist_free (connection->handlers[i]);
+	}
+
+	g_hash_table_destroy (connection->id_handlers);
+	
+	if (connection->is_open) {
 		connection_do_close (connection);
 	}
 
