@@ -198,7 +198,7 @@ cdef void cresult_function_handler (LmConnection *connection, int success, void 
     else:
         function(conn, success)    
     
-cdef class Connection:
+cdef class _Connection:
     cdef LmConnection *conn
     
     def __init__(self, server=None, _create=1):
@@ -355,7 +355,7 @@ cdef class Connection:
     def unregister_message_handler(self, handler, type, notify):
         pass
 
-cdef class Message:
+cdef class _Message:
     cdef LmMessage *msg
     def __init__ (self, to, type, sub_type=None, _create=1):
 

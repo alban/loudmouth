@@ -15,11 +15,13 @@ Represents a message that can be sent with lm_connection_send(), lm_connection_s
 
 </para>
 
-<!-- ##### TYPEDEF LmMessage ##### -->
+<!-- ##### STRUCT LmMessage ##### -->
 <para>
 Struct 
 </para>
 
+@node: 
+@priv: 
 
 <!-- ##### ENUM LmMessageType ##### -->
 <para>
@@ -39,8 +41,8 @@ Describes the sub type of a message. This is equal to the "type" attribute in th
 </para>
 
 @LM_MESSAGE_SUB_TYPE_NOT_SET: the default. No "type" attribute will be sent.
-@LM_MESSAGE_SUB_TYPE_NORMAL: 
 @LM_MESSAGE_SUB_TYPE_AVAILABLE: presence is available, applies to message type "presence"
+@LM_MESSAGE_SUB_TYPE_NORMAL: 
 @LM_MESSAGE_SUB_TYPE_CHAT: message is a chat message, applies to message type "message"
 @LM_MESSAGE_SUB_TYPE_GROUPCHAT: message is a group chat message, applies to message type "message"
 @LM_MESSAGE_SUB_TYPE_HEADLINE: message is a headline message, applies to message type "message"
