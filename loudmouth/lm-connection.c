@@ -402,7 +402,10 @@ connection_do_close (LmConnection *connection)
 
 		g_io_channel_unref (connection->io_channel);
 		connection->io_channel = NULL;
-	} 
+	}
+
+	g_source_remove (g_source_get_id (connection->incoming_source));
+	g_source_unref (connection->incoming_source);
 
 	if (!connection->is_open) {
 		return;
@@ -484,7 +487,8 @@ connection_in_event (GIOChannel   *source,
 	}
 
 	buf[bytes_read] = '\0';
-	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "\nRECV:\n");
+	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "\nRECV [%d]:\n", 
+	       bytes_read);
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
 	       "-----------------------------------\n");
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "'%s'\n", buf);
@@ -1213,6 +1217,10 @@ lm_connection_authenticate_and_block (LmConnection  *connection,
 		return TRUE;
 		break;
 	case LM_MESSAGE_SUB_TYPE_ERROR:
+		g_set_error (error,
+			     LM_ERROR,
+			     LM_ERROR_AUTH_FAILED,
+			     "Authentication failed");
 		return FALSE;
 		break;
 	default:

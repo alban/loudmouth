@@ -2,6 +2,17 @@
 
 	* Makefile.am: 
 	- Added README.WIN32 so it will be distributed next release.
+	* loudmouth/lm-connection.c:
+	(connection_do_close): Remove the incoming source. Reported and fix
+	  proposed by Christopher G. Abiad
+	(lm_connection_authenticate_and_block):
+	- Set error message on auth failed (should be more explicit). Fixes
+	  problem when you try to read the error message on fail.
+
+2003-11-11  Mikael Hallendal  <micke@imendio.com>
+
+	* Makefile.am: 
+	- Added README.WIN32 so it will be distributed next release.
 
 2003-10-13  Mikael Hallendal  <micke@imendio.com>
 
