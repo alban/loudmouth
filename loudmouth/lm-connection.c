@@ -1101,17 +1101,13 @@ lm_connection_open_and_block (LmConnection *connection, GError **error)
 	}
 	
 	while ((state = lm_connection_get_state (connection)) == LM_CONNECTION_STATE_CONNECTING) {
-		g_print ("while...\n");
 		if (g_main_context_pending (NULL)) {
-			g_print ("Iterating\n");
 			g_main_context_iteration (NULL, TRUE);
 		} else {
 			usleep (10);
 		}
 	}
 
-	g_print ("Connected!\n");
-	
 	if (lm_connection_is_open (connection)) {
 		return TRUE;
 	}
@@ -1283,7 +1279,6 @@ lm_connection_authenticate_and_block (LmConnection  *connection,
 		return FALSE;
 	}
 
-	g_print ("Foo: %d\n", (gint)connection);
 	m = connection_create_auth_msg (connection,
 					username, 
 					password,
