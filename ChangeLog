@@ -1,4 +1,6 @@
 2003-04-26  Mikael Hallendal  <micke@codefactory.se>
+
+        * loudmouth.spec.in: Enable gtk-doc
  
         * Released 0.9.1
 

@@ -30,7 +30,7 @@ Loudmouth is a lightweight and easy-to-use C library for programming with the Ja
 
 %build
 
-%configure
+%configure --enable-gtk-doc
 make
 
 %install
