@@ -1,5 +1,7 @@
 2003-10-13  Mikael Hallendal  <micke@imendio.com>
 
+	* configure.in: Bumped version to 0.14.1.99
+
 	* loudmouth/lm-message.c: 
 	(lm_message_new): Always set an ID on the message.
 
