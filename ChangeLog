@@ -1,3 +1,10 @@
+2003-06-15  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-message.c:
+	* loudmouth/lm-message.h:
+	(lm_message_get_sub_type): Return LmMessageSubType.
+	  Found by Alexander Saltanov
+
 2003-06-13  Mikael Hallendal  <micke@imendio.com>
 
 	* AUTHORS: updated contact information

@@ -64,15 +64,15 @@ typedef enum {
 	LM_MESSAGE_SUB_TYPE_ERROR
 } LmMessageSubType;
 
-LmMessage *   lm_message_new               (const gchar      *to,
-					    LmMessageType     type);
-LmMessage *   lm_message_new_with_sub_type (const gchar      *to,
-					    LmMessageType     type,
-					    LmMessageSubType  sub_type);
-LmMessageType lm_message_get_type          (LmMessage        *message);
-LmMessageType lm_message_get_sub_type      (LmMessage        *message);
-LmMessageNode * lm_message_get_node        (LmMessage        *message);
-LmMessage *   lm_message_ref               (LmMessage        *message);
-void          lm_message_unref             (LmMessage        *message);
+LmMessage *      lm_message_new               (const gchar      *to,
+					       LmMessageType     type);
+LmMessage *      lm_message_new_with_sub_type (const gchar      *to,
+					       LmMessageType     type,
+					       LmMessageSubType  sub_type);
+LmMessageType    lm_message_get_type          (LmMessage        *message);
+LmMessageSubType lm_message_get_sub_type      (LmMessage        *message);
+LmMessageNode *  lm_message_get_node          (LmMessage        *message);
+LmMessage *      lm_message_ref               (LmMessage        *message);
+void             lm_message_unref             (LmMessage        *message);
 
 #endif /* __LM_MESSAGE_H__ */
