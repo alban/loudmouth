@@ -109,22 +109,10 @@ gboolean      lm_connection_open              (LmConnection       *connection,
 					       gpointer            user_data,
 					       GDestroyNotify      notify,
 					       GError            **error);
-gboolean      lm_connection_open_ssl          (LmConnection       *connection,
-					       const gchar        *fingerprint,
-					       LmSSLFunction       ssl_function,
-					       LmResultFunction    function,
-					       gpointer            user_data,
-					       GDestroyNotify      notify,
-					       GError            **error);
 
 gboolean      lm_connection_open_and_block    (LmConnection       *connection,
 					       GError            **error);
 
-gboolean      lm_connection_open_and_block_ssl (LmConnection      *connection,
-						const gchar       *fingerprint,
-						LmSSLFunction      ssl_function,
-						gpointer           user_data,
-						GError           **error);
 void          lm_connection_cancel_open        (LmConnection      *connection);
 						
 
@@ -155,6 +143,10 @@ guint         lm_connection_get_port          (LmConnection       *connection);
 void          lm_connection_set_port          (LmConnection       *connection,
 					       guint               port);
 gboolean      lm_connection_supports_ssl      (void);
+void          lm_connection_set_use_ssl       (LmConnection       *connection,
+					       const gchar        *expected_fingerprint,
+					       LmSSLFunction       ssl_function,
+					       gpointer            user_data);
 gboolean      lm_connection_get_use_ssl       (LmConnection       *connection);
 
 LmProxyType   lm_connection_get_proxy_type    (LmConnection       *connection);

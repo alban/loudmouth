@@ -64,7 +64,6 @@ struct _LmConnection {
 	/* Parameters */
 	gchar          *server;
 	guint           port;
-	gboolean        use_ssl;
 	char	        fingerprint[20];
 
 	LmProxyType     proxy_type;
@@ -96,6 +95,10 @@ struct _LmConnection {
 
 	LmCallback *disconnect_cb;
 
+	LmSSLFunction  ssl_func;
+	gpointer       ssl_func_data;
+	gchar         *expected_fingerprint;
+
 	LmQueue    *incoming_messages;
 	GSource    *incoming_source;
 
@@ -120,9 +123,6 @@ static void     connection_new_message_cb    (LmParser             *parser,
 					      LmMessage            *message,
 					      LmConnection         *connection);
 static gboolean connection_do_open           (LmConnection         *connection,
-					      const gchar          *fingerprint,
-					      LmSSLFunction         ssl_func,
-					      gpointer              user_data,
 					      GError              **error);
 
 static void     connection_do_close           (LmConnection        *connection);
@@ -268,12 +268,10 @@ connection_new_message_cb (LmParser     *parser,
 
 #ifdef HAVE_GNUTLS
 static gboolean
-connection_verify_certificate (LmConnection  *connection,
-			       const gchar   *expected_fingerprint,
-			       LmSSLFunction  ssl_function,
-			       gpointer       user_data)
+connection_verify_certificate (LmConnection *connection)
 {
 	int status;
+	LmSSLFunction ssl_function = connection->ssl_func;
 
 	/* This verification function uses the trusted CAs in the credentials
 	 * structure. So you must have installed one or more CA certificates.
@@ -283,7 +281,7 @@ connection_verify_certificate (LmConnection  *connection,
 	if (status == GNUTLS_E_NO_CERTIFICATE_FOUND)
 		if (ssl_function (connection,
 				   LM_SSL_STATUS_NO_CERT_FOUND,
-				   user_data) != LM_SSL_RESPONSE_CONTINUE)
+				   connection->ssl_func_data) != LM_SSL_RESPONSE_CONTINUE)
 			return FALSE;
 
 	if (status & GNUTLS_CERT_INVALID
@@ -292,20 +290,21 @@ connection_verify_certificate (LmConnection  *connection,
 	    || status & GNUTLS_CERT_REVOKED)
 		if (ssl_function (connection,
 				   LM_SSL_STATUS_UNTRUSTED_CERT,
-				   user_data) != LM_SSL_RESPONSE_CONTINUE)
+				   connection->ssl_func_data) != LM_SSL_RESPONSE_CONTINUE)
+
 			return FALSE;
 
 	if (gnutls_certificate_expiration_time_peers (connection->gnutls_session) < time (0)) {
 		if (ssl_function (connection,
 				   LM_SSL_STATUS_CERT_EXPIRED,
-				   user_data) != LM_SSL_RESPONSE_CONTINUE)
+				   connection->ssl_func_data) != LM_SSL_RESPONSE_CONTINUE)
 			return FALSE;
 	}
 	
 	if (gnutls_certificate_activation_time_peers (connection->gnutls_session) > time (0)) {
 		if (ssl_function (connection,
-				   LM_SSL_STATUS_CERT_NOT_ACTIVATED,
-				   user_data) != LM_SSL_RESPONSE_CONTINUE)
+				  LM_SSL_STATUS_CERT_NOT_ACTIVATED,
+				  connection->ssl_func_data) != LM_SSL_RESPONSE_CONTINUE)
 			return FALSE;
 	}
 	
@@ -318,29 +317,29 @@ connection_verify_certificate (LmConnection  *connection,
 		if (cert_list == NULL) {
 			if (ssl_function (connection,
 					   LM_SSL_STATUS_NO_CERT_FOUND,
-					   user_data) != LM_SSL_RESPONSE_CONTINUE)
+					   connection->ssl_func_data) != LM_SSL_RESPONSE_CONTINUE)
 				return FALSE;
 		}
 		if (!gnutls_x509_check_certificates_hostname (&cert_list[0],
 							      connection->server)) {
 			if (ssl_function (connection,
-					   LM_SSL_STATUS_CERT_HOSTNAME_MISMATCH,
-					   user_data) != LM_SSL_RESPONSE_CONTINUE)
+					  LM_SSL_STATUS_CERT_HOSTNAME_MISMATCH,
+					  connection->ssl_func_data) != LM_SSL_RESPONSE_CONTINUE)
 				return FALSE;
 		}
 		if (gnutls_x509_fingerprint (GNUTLS_DIG_MD5, &cert_list[0],
 					     connection->fingerprint,
 					     &digest_size) >= 0) {
-			if (expected_fingerprint &&
-			    memcmp (expected_fingerprint, connection->fingerprint,
+			if (connection->expected_fingerprint &&
+			    memcmp (connection->expected_fingerprint, connection->fingerprint,
 				    digest_size) &&
 			    ssl_function (connection,
 					   LM_SSL_STATUS_CERT_FINGERPRINT_MISMATCH,
-					   user_data) != LM_SSL_RESPONSE_CONTINUE)
+					   connection->ssl_func_data) != LM_SSL_RESPONSE_CONTINUE)
 				return FALSE;
 		} else if (ssl_function (connection,
 					  LM_SSL_STATUS_GENERIC_ERROR,
-					  user_data) != LM_SSL_RESPONSE_CONTINUE)
+					  connection->ssl_func_data) != LM_SSL_RESPONSE_CONTINUE)
 			return FALSE;
 	}
 
@@ -431,11 +430,7 @@ connection_connect_nonblocking (LmConnection *connection,
 							
 
 static gboolean
-connection_do_open (LmConnection    *connection,
-		    const gchar     *fingerprint,
-		    LmSSLFunction    ssl_function, 
-		    gpointer         user_data,
-		    GError         **error)
+connection_do_open (LmConnection *connection, GError **error)
 {
 	gint             err = -1;
 	gint             fd = -1;
@@ -446,7 +441,7 @@ connection_do_open (LmConnection    *connection,
 	char             portname[NI_MAXSERV];
 	
 	g_return_val_if_fail (connection != NULL, FALSE);
-	
+
 	memset (&req, 0, sizeof(req));
 
 	req.ai_family   = AF_UNSPEC;
@@ -484,7 +479,7 @@ connection_do_open (LmConnection    *connection,
 	}
 
 #ifdef HAVE_GNUTLS
-	if (connection->use_ssl) {
+	if (lm_connection_get_use_ssl (connection)) {
 		gnutls_global_init ();
 		gnutls_certificate_allocate_credentials (&connection->gnutls_xcred);
 	}
@@ -541,7 +536,7 @@ connection_do_open (LmConnection    *connection,
 	}
 
 #ifdef HAVE_GNUTLS
-	if (connection->use_ssl) {
+	if (lm_connection_get_use_ssl (connection)) {
 		int ret;
 		gboolean auth_ok = TRUE;
 		const int cert_type_priority[2] =
@@ -561,10 +556,7 @@ connection_do_open (LmConnection    *connection,
 		ret = gnutls_handshake (connection->gnutls_session);
 
 		if (ret >= 0) {
-			auth_ok = connection_verify_certificate (connection,
-								 fingerprint,
-								 ssl_function,
-								 user_data);
+			auth_ok = connection_verify_certificate (connection);
 		}
 		
 		if (ret < 0 || !auth_ok) {
@@ -643,7 +635,7 @@ connection_do_close (LmConnection *connection)
 	connection->state = LM_CONNECTION_STATE_DISCONNECTED;
 
 #ifdef HAVE_GNUTLS
-	if (connection->use_ssl) {
+	if (lm_connection_get_use_ssl (connection)) {
 		gnutls_deinit (connection->gnutls_session);
 		gnutls_certificate_free_credentials (connection->gnutls_xcred);
 		gnutls_global_deinit ();
@@ -666,7 +658,7 @@ connection_in_event (GIOChannel   *source,
 	}
 
 #ifdef HAVE_GNUTLS
-	if (connection->use_ssl) {
+	if (lm_connection_get_use_ssl (connection)) {
 		bytes_read = gnutls_record_recv (connection->gnutls_session,
 						 buf,IN_BUFFER_SIZE - 1);
 		if (bytes_read == GNUTLS_E_AGAIN) {
@@ -793,7 +785,7 @@ connection_send (LmConnection  *connection,
 	       "-----------------------------------\n");
 	
 #ifdef HAVE_GNUTLS
-	if (connection->use_ssl) {
+	if (lm_connection_get_use_ssl (connection)) {
 		while ((bytes_written = gnutls_record_send (connection->gnutls_session, str, len)) < 0)
 			if (bytes_written != GNUTLS_E_INTERRUPTED &&
 			    bytes_written != GNUTLS_E_AGAIN)
@@ -1154,7 +1146,8 @@ lm_connection_new (const gchar *server)
 	}
 	
 	connection->port              = LM_CONNECTION_DEFAULT_PORT;
-	connection->use_ssl           = FALSE;
+	connection->ssl_func          = NULL;
+	connection->expected_fingerprint = NULL;
 	connection->fingerprint[0]    = '\0';
 	connection->proxy_type        = LM_PROXY_TYPE_NONE;
 	connection->proxy_server      = NULL;
@@ -1183,35 +1176,29 @@ lm_connection_new (const gchar *server)
 }
 
 /**
- * lm_connection_open_ssl:
- * @connection: #LmConnection to open, using SSL
- * @fingerprint: the expected fingerprint of the remote cert, or %NULL 
- * @ssl_function: Callback function used when an authentication error occurs.
+ * lm_connection_open:
+ * @connection: #LmConnection to open
  * @function: Callback function that will be called when the connection is open.
  * @user_data: User data that will be passed to @function.
  * @notify: Function for freeing that user_data, can be NULL.
  * @error: location to store error, or %NULL
  * 
- * An asynchronous call to open @connection. When the connection is open @function will be called.
+ * An async call to open @connection. When the connection is open @function will be called.
  * 
  * Return value: #TRUE if everything went fine, otherwise #FALSE.
  **/
 gboolean
-lm_connection_open_ssl (LmConnection      *connection, 
-			const gchar	  *fingerprint,
-			LmSSLFunction ssl_function,
-			LmResultFunction   function,
-			gpointer           user_data,
-			GDestroyNotify     notify,
-			GError           **error)
+lm_connection_open (LmConnection      *connection, 
+		    LmResultFunction   function,
+		    gpointer           user_data,
+		    GDestroyNotify     notify,
+		    GError           **error)
 {
 	LmMessage *m;
 	gboolean   result;
 	
 	g_return_val_if_fail (connection != NULL, FALSE);
 
-	connection->use_ssl = ssl_function != NULL;
-	
 	if (lm_connection_is_open (connection)) {
 		g_set_error (error,
 			     LM_ERROR,
@@ -1235,7 +1222,7 @@ lm_connection_open_ssl (LmConnection      *connection,
 	lm_verbose ("Connecting to: %s:%d\n", 
 		    connection->server, connection->port);
 	
-	if (!connection_do_open (connection, fingerprint, ssl_function, user_data, error)) {
+	if (!connection_do_open (connection, error)) {
 		return FALSE;
 	}
 	
@@ -1254,34 +1241,8 @@ lm_connection_open_ssl (LmConnection      *connection,
 }
 
 /**
- * lm_connection_open:
- * @connection: #LmConnection to open
- * @function: Callback function that will be called when the connection is open.
- * @user_data: User data that will be passed to @function.
- * @notify: Function for freeing that user_data, can be NULL.
- * @error: location to store error, or %NULL
- * 
- * An async call to open @connection. When the connection is open @function will be called.
- * 
- * Return value: #TRUE if everything went fine, otherwise #FALSE.
- **/
-gboolean
-lm_connection_open (LmConnection      *connection, 
-		    LmResultFunction   function,
-		    gpointer           user_data,
-		    GDestroyNotify     notify,
-		    GError           **error)
-{
-	return lm_connection_open_ssl (connection, NULL, NULL,
-				       function, user_data, notify, error);
-}
-
-/**
- * lm_connection_open_and_block_ssl:
- * @connection: an #LmConnection to open using SSL
- * @fingerprint: the expected fingerprint of the remote cert, or %NULL
- * @ssl_function: Callback function used when a SSL error occurs.
- * @user_data: User data that will be passed to @function.
+ * lm_connection_open_and_block:
+ * @connection: an #LmConnection to open
  * @error: location to store error, or %NULL
  * 
  * Opens @connection and waits until the stream is setup. 
@@ -1289,11 +1250,7 @@ lm_connection_open (LmConnection      *connection,
  * Return value: #TRUE if no errors where encountered during opening and stream setup successfully, #FALSE otherwise.
  **/
 gboolean
-lm_connection_open_and_block_ssl (LmConnection *connection,
-				  const gchar *fingerprint,
-				  LmSSLFunction ssl_function,
-				  gpointer user_data,
-				  GError **error)
+lm_connection_open_and_block (LmConnection *connection, GError **error)
 {
 	LmMessage *m;
 	gboolean   result;
@@ -1302,8 +1259,6 @@ lm_connection_open_and_block_ssl (LmConnection *connection,
 
 	g_return_val_if_fail (connection != NULL, FALSE);
 
-	connection->use_ssl = ssl_function != NULL;
-	
 	if (lm_connection_is_open (connection)) {
 		g_set_error (error,
 			     LM_ERROR,
@@ -1322,8 +1277,7 @@ lm_connection_open_and_block_ssl (LmConnection *connection,
 	lm_verbose ("(Block)Connecting to: %s:%d\n", 
 		    connection->server, connection->port);
 	
-	if (!connection_do_open (connection, fingerprint, ssl_function,
-				 user_data, error)) {
+	if (!connection_do_open (connection, error)) {
 		return FALSE;
 	}
 	
@@ -1370,23 +1324,6 @@ lm_connection_open_and_block_ssl (LmConnection *connection,
 	g_source_attach (connection->incoming_source, NULL);
 
 	return ret_val;
-}
-
-/**
- * lm_connection_open_and_block:
- * @connection: an #LmConnection to open
- * @error: location to store error, or %NULL
- * 
- * Opens @connection and waits until the stream is setup. 
- * 
- * Return value: #TRUE if no errors where encountered during opening and stream setup successfully, #FALSE otherwise.
- **/
-gboolean
-lm_connection_open_and_block (LmConnection *connection,
-			      GError **error)
-{
-	return lm_connection_open_and_block_ssl (connection, NULL, NULL, 
-						 NULL, error);
 }
 
 /**
@@ -1799,6 +1736,24 @@ lm_connection_supports_ssl (void)
 	return FALSE;
 #endif
 }
+/*
+* @fingerprint: the expected fingerprint of the remote cert, or %NULL 
+ * @ssl_function: Callback function used when an authentication error occurs.
+ */
+void
+lm_connection_set_use_ssl (LmConnection  *connection, 
+			   const gchar   *expected_fingerprint,
+			   LmSSLFunction  ssl_function,
+			   gpointer       user_data)
+{
+	g_free (connection->expected_fingerprint);
+	if (expected_fingerprint) {
+		connection->expected_fingerprint = 
+			g_strdup (expected_fingerprint);
+	}
+	connection->ssl_func = ssl_function;
+	connection->ssl_func_data = user_data;
+}
 
 /**
  * lm_connection_get_use_ssl:
@@ -1811,7 +1766,7 @@ lm_connection_supports_ssl (void)
 gboolean
 lm_connection_get_use_ssl (LmConnection *connection)
 {
-	return connection->use_ssl;
+	return connection->ssl_func != NULL;
 }
 
 /**

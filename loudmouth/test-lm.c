@@ -197,17 +197,16 @@ main (int argc, char **argv)
 		
 		for (i = 0, p = argv[4]; *p && *(p+1); i++, p += 3)
 			expected_fingerprint[i] = (unsigned char) g_ascii_strtoull (p, NULL, 16);
-		
-		result = lm_connection_open_ssl (connection,
-						 expected_fingerprint,
-						 (LmSSLFunction) ssl_cb,
-						 (LmResultFunction) connection_open_cb,
-						 info, NULL, NULL);
-	} else {
-		result = lm_connection_open (connection,
-					     (LmResultFunction) connection_open_cb,
-					     info, NULL, NULL);
+
+		lm_connection_set_use_ssl (connection,
+					   expected_fingerprint,
+					   (LmSSLFunction) ssl_cb,
+					   info);
 	}
+
+	result = lm_connection_open (connection,
+				     (LmResultFunction) connection_open_cb,
+				     info, NULL, NULL);
 
 	if (!result) {
 		g_print ("Opening connection failed: %d\n", result);
