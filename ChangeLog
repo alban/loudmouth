@@ -1,5 +1,8 @@
 2003-08-15  Mikael Hallendal  <micke@imendio.com>
 
+        * configure.in: Bumped to 0.13.2
+        * NEWS: Updated for 0.13.2
+
 	* loudmouth/lm-parser.c: (parser_end_node_cb):
         - Don't crash on </stream:stream>. Fixes bug #117952
 

@@ -1,3 +1,7 @@
+Changes in 0.13.2:
+------------------
+* Don't crash when we receive </stream:stream>
+
 Changes in 0.13.1:
 ------------------
 * Don't require GnuTLS to build
