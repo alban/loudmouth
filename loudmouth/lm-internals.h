@@ -74,7 +74,7 @@ gboolean         _lm_ssl_begin                      (LmSSL            *ssl,
 GIOStatus        _lm_ssl_read                       (LmSSL            *ssl,
 						     gchar            *buf,
 						     gint              len,
-						     gint             *bytes_read);
+						     gsize             *bytes_read);
 gboolean         _lm_ssl_send                       (LmSSL            *ssl,
 						     const gchar      *str,
 						     gint              len);

@@ -201,7 +201,7 @@ _lm_ssl_begin (LmSSL *ssl, gint fd, const gchar *server, GError **error)
 }
 
 GIOStatus
-_lm_ssl_read (LmSSL *ssl, gchar *buf, gint len, gint *bytes_read)
+_lm_ssl_read (LmSSL *ssl, gchar *buf, gint len, gsize *bytes_read)
 {
 	GIOStatus status;
 	
@@ -388,7 +388,7 @@ GIOStatus
 _lm_ssl_read (LmSSL *ssl,
 	      gchar *buf,
 	      gint   len,
-	      gint  *bytes_read)
+	      gsize  *bytes_read)
 {
 	/* NOOP */
 	*bytes_read = 0;

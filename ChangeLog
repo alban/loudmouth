@@ -1,3 +1,12 @@
+2004-09-20  Tollef Fog Heen  <tfheen@raw.no>
+
+	* loudmouth/lm-connection.c:
+	  (connection_in_event): Use gsize and not gint, they have
+          different sizes on 64 bit architectures.
+
+	* loudmouth/lm-ssl.c, loudmouth/lm-internals.h:
+          Adjust prototype of _lm_ssl_read to match.
+
 2004-09-03  Mikael Hallendal  <micke@imendio.com>
 
 	* examples/Makefile.am:

@@ -681,7 +681,7 @@ connection_in_event (GIOChannel   *source,
 		     LmConnection *connection)
 {
 	gchar     buf[IN_BUFFER_SIZE];
-	gint      bytes_read;
+	gsize      bytes_read;
 	GIOStatus status;
        
 	if (!connection->io_channel) {
