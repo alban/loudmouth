@@ -1,3 +1,11 @@
+2003-06-24  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-connection.c:
+	* loudmouth/lm-sha.c: 
+	* loudmouth/test-lm.c:
+	- Submitted patch that makes Loudmouth work and build on Win32.
+	  Patch sent by Vince Negri, thanks a lot.
+
 2003-06-15  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-message.c:

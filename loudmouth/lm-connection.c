@@ -21,12 +21,17 @@
 
 #include <config.h>
 
-#include <netdb.h>
+#ifndef __WIN32__
+  #include <netdb.h>
+  #include <sys/socket.h>
+  #include <netinet/in.h>
+#else
+  #include <winsock2.h>
+#endif
+
 #include <string.h>
 #include <unistd.h>
-#include <sys/socket.h>
 #include <sys/types.h>
-#include <netinet/in.h>
 
 #include "lm-debug.h"
 #include "lm-error.h"
