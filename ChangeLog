@@ -1,5 +1,7 @@
 2003-07-07  Mikael Hallendal  <micke@imendio.com>
 
+        * Release 0.10.1
+
 	* NEWS: Updated for 0.10.1
 	* configure.in: Bumped version to 0.10.1
 
