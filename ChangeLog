@@ -1,7 +1,13 @@
+2004-01-21  Mikael Hallendal  <micke@imendio.com>
+
+	* Makefile.am:
+	* configure.in:
+	- Removed the mono bindings for now.
+
 2004-01-21  Richard Hult  <richard@imendio.com>
 
-	* loudmouth.spec.in: The library changed name, update to
-	libloudmouth-1.la.
+	* loudmouth.spec.in: 
+	- The library changed name, update to libloudmouth-1.la.
 	
 2004-01-21  Mikael Hallendal  <micke@imendio.com>
 
