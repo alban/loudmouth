@@ -1,3 +1,10 @@
+2003-08-24  Martyn Russell  <ginxd@btopenworld.com>
+
+	* loudmouth/lm-connection.c:
+	(connection_in_event): Use an int for bytes_read. Since bytes_read is
+	  now also used for gnutls return value (which can be < 0) a gsize
+	  (unsigned) is not a good idea...
+	
 2003-08-15  Mikael Hallendal  <micke@imendio.com>
 
         * Release 0.13.2
