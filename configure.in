@@ -188,7 +188,7 @@ loudmouth.spec])
 dnl ==========================================================================
 echo "
 
-          Loudmouth $VERSION from Imendio HB
+          Loudmouth $VERSION from Imendio AB
 	==================================
 
         prefix:                   ${prefix}
