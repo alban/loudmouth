@@ -11,6 +11,7 @@ LmConnectionState
 LmResultFunction
 LmDisconnectFunction
 lm_connection_new
+lm_connection_new_with_context
 lm_connection_open
 lm_connection_open_and_block
 lm_connection_close
