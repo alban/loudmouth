@@ -4,8 +4,8 @@
 Summary: Loadmouth is a Jabber client written in C.
 Name: %name
 Version: %ver
-Release: cf1
-URL: http://people.codefactory.se/~micke/loudmouth
+Release: imendio.1
+URL: http://www.imendio.com/projects/loudmouth
 Source0: %{name}-%{ver}.tar.gz
 License: LGPL
 Group: System Environment/Libraries
@@ -57,5 +57,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/gtk-doc/html/loudmouth
 
 %changelog
+* Wed Jun 25 2003 Mikael Hallendal <micke@imendio.com>
+- Updated to reflect move of project.
+
 * Sat Mar 29 2003 Mikael Hallendal <micke@codefactory.se>
 - Initial build

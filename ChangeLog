@@ -1,3 +1,9 @@
+2003-06-25  Mikael Hallendal  <micke@imendio.com>
+
+	* configure.in: Bumped to 0.9.1
+	
+	* loudmouth.spec.in: Changed the URL to the project site.
+
 2003-06-24  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-connection.c:
