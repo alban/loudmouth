@@ -1,3 +1,9 @@
+2004-09-24  Tim Robbins  <tim@teragen.com.au>
+
+	* loudmouth/lm-connection.c: (connection_do_close):
+        - Use g_source_destroy instead of g_source_remove since we might not
+          use the default main context.
+
 2004-09-20  Tollef Fog Heen  <tfheen@raw.no>
 
 	* loudmouth/lm-connection.c:

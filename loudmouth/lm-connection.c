@@ -652,15 +652,18 @@ connection_do_close (LmConnection *connection)
 	connection_stop_keep_alive (connection);
 
 	if (connection->io_channel) {
-		g_source_remove (connection->io_watch_in);
-		g_source_remove (connection->io_watch_err);
-		g_source_remove (connection->io_watch_hup);
+		g_source_destroy (g_main_context_find_source_by_id (
+			connection->context, connection->io_watch_in));
+		g_source_destroy (g_main_context_find_source_by_id (
+			connection->context, connection->io_watch_err));
+		g_source_destroy (g_main_context_find_source_by_id (
+			connection->context, connection->io_watch_hup));
 
 		g_io_channel_unref (connection->io_channel);
 		connection->io_channel = NULL;
 	}
 
-	g_source_remove (g_source_get_id (connection->incoming_source));
+	g_source_destroy (connection->incoming_source);
 	g_source_unref (connection->incoming_source);
 
 	if (!lm_connection_is_open (connection)) {
