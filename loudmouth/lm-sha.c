@@ -69,7 +69,7 @@ extern "C" {
 #endif
 
 void SHA1Init (SHA1Context *sc);
-void SHA1Update (SHA1Context *sc, const void *data, guint32 len);
+void SHA1Update (SHA1Context *sc, const void *udata, guint32 len);
 void SHA1Final (SHA1Context *sc, guint8 hash[SHA1_HASH_SIZE]);
 
 #ifdef __cplusplus
@@ -492,11 +492,12 @@ SHA1Guts (SHA1Context *sc, const guint32 *cbuf)
 }
 
 void
-SHA1Update (SHA1Context *sc, const void *data, guint32 len)
+SHA1Update (SHA1Context *sc, const void *udata, guint32 len)
 {
   guint32 bufferBytesLeft;
   guint32 bytesToCopy;
   int needBurn = 0;
+  guint8 *data = (guint8 *)udata;
 
 #ifdef SHA1_FAST_COPY
   if (sc->bufferLength) {
@@ -511,7 +512,7 @@ SHA1Update (SHA1Context *sc, const void *data, guint32 len)
     sc->totalLength += bytesToCopy * 8L;
 
     sc->bufferLength += bytesToCopy;
-    ((guint8 *) data) += bytesToCopy;
+    data += bytesToCopy;
     len -= bytesToCopy;
 
     if (sc->bufferLength == 64L) {
@@ -527,7 +528,7 @@ SHA1Update (SHA1Context *sc, const void *data, guint32 len)
     SHA1Guts (sc, data);
     needBurn = 1;
 
-    ((guint8 *) data) += 64L;
+    data += 64L;
     len -= 64L;
   }
 
@@ -551,7 +552,7 @@ SHA1Update (SHA1Context *sc, const void *data, guint32 len)
     sc->totalLength += bytesToCopy * 8L;
 
     sc->bufferLength += bytesToCopy;
-    ((guint8 *) data) += bytesToCopy;
+    data += bytesToCopy;
     len -= bytesToCopy;
 
     if (sc->bufferLength == 64L) {

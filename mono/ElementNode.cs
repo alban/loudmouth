@@ -1,8 +1,11 @@
+using System;
+using System.Runtime.InteropServices;
+
 namespace Loudmouth {
-    using System;
-    using System.Runtime.InteropServices;
     
-    public class ElementNode : Object {
+    public class ElementNode {
+	private IntPtr _obj;
+
 	public string Value {
 	    get {
 		return lm_message_node_get_value (this._obj);
@@ -12,22 +15,20 @@ namespace Loudmouth {
 	    }
 	}
 
-	[DllImport ("libloudmouth.so")]
+	[DllImport ("libloudmouth-1.so")]
 	    private static extern string lm_message_node_get_value (IntPtr obj);
-
-	[DllImport ("libloudmouth.so")]
+	[DllImport ("libloudmouth-1.so")]
 	    private static extern void lm_message_node_set_value (IntPtr obj, string value);
-
-	[DllImport ("libloudmouth.so")]
+	[DllImport ("libloudmouth-1.so")]
 	    private static extern IntPtr lm_message_node_add_child (IntPtr obj, string name, string value);
-	[DllImport ("libloudmouth.so")]
+	[DllImport ("libloudmouth-1.so")]
 	    private static extern void lm_message_node_set_attribute (IntPtr obj, string name, string value);
-	[DllImport ("libloudmouth.so")]
+	[DllImport ("libloudmouth-1.so")]
 	    private static extern string lm_message_node_get_attribute (IntPtr obj, string name);
-	[DllImport ("libloudmouth.so")]
+	[DllImport ("libloudmouth-1.so")]
 	    private static extern IntPtr lm_message_node_get_child (IntPtr obj, string name);
 	
-	[DllImport ("libloudmouth.so")]
+	[DllImport ("libloudmouth-1.so")]
 	    private static extern IntPtr lm_message_node_find_child (IntPtr obj, string name);
 
 	public ElementNode (IntPtr obj) {

@@ -40,7 +40,6 @@
 #include "lm-internals.h"
 #include "lm-parser.h"
 #include "lm-sha.h"
-#include "lm-queue.h"
 #include "lm-connection.h"
 
 #define IN_BUFFER_SIZE 1024
@@ -88,7 +87,7 @@ struct _LmConnection {
 
 	LmCallback   *disconnect_cb;
 
-	LmQueue      *incoming_messages;
+	GQueue       *incoming_messages;
 	GSource      *incoming_source;
 
 	LmConnectionState state;
@@ -259,7 +258,7 @@ connection_new_message_cb (LmParser     *parser,
 		    _lm_message_type_to_string (lm_message_get_type (m)),
 		    lm_message_node_get_attribute (m->node, "from"));
 
-	lm_queue_push_tail (connection->incoming_messages, m);
+	g_queue_push_tail (connection->incoming_messages, m);
 }
 
 gboolean
@@ -976,7 +975,7 @@ connection_incoming_prepare (GSource *source, gint *timeout)
 	
 	connection = ((LmIncomingSource *)source)->connection;
 	
-	return !lm_queue_is_empty (connection->incoming_messages);
+	return !g_queue_is_empty (connection->incoming_messages);
 }
 
 static gboolean
@@ -995,7 +994,7 @@ connection_incoming_dispatch (GSource *source,
 	
 	connection = ((LmIncomingSource *) source)->connection;
 
-	m = (LmMessage *) lm_queue_pop_head (connection->incoming_messages);
+	m = (LmMessage *) g_queue_pop_head (connection->incoming_messages);
 	
 	if (m) {
 		connection_handle_message (connection, m);
@@ -1059,7 +1058,7 @@ lm_connection_new (const gchar *server)
 	connection->ssl               = NULL;
 	connection->proxy             = NULL;
 	connection->disconnect_cb     = NULL;
-	connection->incoming_messages = lm_queue_new ();
+	connection->incoming_messages = g_queue_new ();
 	connection->cancel_open       = FALSE;
 	connection->state             = LM_CONNECTION_STATE_DISCONNECTED;
 	
@@ -1668,20 +1667,21 @@ lm_connection_send_with_reply_and_block (LmConnection  *connection,
 
 		g_main_context_iteration (connection->context, TRUE);
 	
-		if (lm_queue_is_empty (connection->incoming_messages)) {
+		if (g_queue_is_empty (connection->incoming_messages)) {
 			continue;
 		}
 
-		for (n = 0; n < connection->incoming_messages->length; n++) {
+		for (n = 0; n < g_queue_get_length (connection->incoming_messages); n++) {
 			LmMessage *m;
 
-			m = lm_queue_peek_nth (connection->incoming_messages, n);
+			m = (LmMessage *) g_queue_peek_nth (connection->incoming_messages, n);
 
 			m_id = lm_message_node_get_attribute (m->node, "id");
 			
 			if (m_id && strcmp (m_id, id) == 0) {
 				reply = m;
-				lm_queue_remove_nth (connection->incoming_messages, n);
+				g_queue_pop_nth (connection->incoming_messages,
+						 n);
 				break;
 			}
 		}

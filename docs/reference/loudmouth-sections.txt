@@ -7,6 +7,7 @@ LmConnection
 LmHandlerResult
 LmHandlerPriority
 LmDisconnectReason
+LmConnectionState
 LmResultFunction
 LmDisconnectFunction
 lm_connection_new
@@ -32,6 +33,7 @@ lm_connection_register_message_handler
 lm_connection_unregister_message_handler
 lm_connection_set_disconnect_function
 lm_connection_send_raw
+lm_connection_get_state
 lm_connection_ref
 lm_connection_unref
 </SECTION>

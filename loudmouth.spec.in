@@ -6,7 +6,7 @@
 Summary: Loadmouth is a Jabber client written in C.
 Name: %name
 Version: %ver
-Release: imendio.1
+Release: imendio.2
 Vendor: Imendio
 URL: http://www.imendio.com/projects/loudmouth
 Source0: %{name}-%{ver}.tar.gz
@@ -19,7 +19,9 @@ BuildRequires: gtk-doc >= 0.10
 
 %if %{with_ssl}
 Requires: gnutls >= @GNUTLS_REQUIRED@
+Requires: libtasn1 >= @LIBTASN1_REQUIRED@
 BuildRequires: gnutls-devel >= @GNUTLS_REQUIRED@
+BuildRequires: libtasn1-devel >= @LIBTASN1_REQUIRED@
 %endif
 
 %description

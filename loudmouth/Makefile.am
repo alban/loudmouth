@@ -26,8 +26,6 @@ libloudmouth_1_la_SOURCES =		\
 	lm-ssl.c                        \
 	lm-utils.c			\
 	lm-proxy.c                      \
-	lm-queue.c                      \
-	lm-queue.h                      \
 	$(NULL)
 
 libloudmouthinclude_HEADERS =		\

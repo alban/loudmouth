@@ -107,6 +107,17 @@ Sent with #LmDisconnectFunction to describe why a connection was closed.
 @LM_DISCONNECT_REASON_ERROR: A generic error somewhere in the transport layer.
 @LM_DISCONNECT_REASON_UNKNOWN: An unknown error.
 
+<!-- ##### ENUM LmConnectionState ##### -->
+<para>
+
+</para>
+
+@LM_CONNECTION_STATE_DISCONNECTED: 
+@LM_CONNECTION_STATE_CONNECTING: 
+@LM_CONNECTION_STATE_CONNECTED: 
+@LM_CONNECTION_STATE_AUTHENTICATING: 
+@LM_CONNECTION_STATE_AUTHENTICATED: 
+
 <!-- ##### USER_FUNCTION LmResultFunction ##### -->
 <para>
 Callback for informing if an asynchronous operation was successful.
@@ -362,6 +373,15 @@ Callback called when a connection is closed.
 @connection: 
 @str: 
 @error: 
+@Returns: 
+
+
+<!-- ##### FUNCTION lm_connection_get_state ##### -->
+<para>
+
+</para>
+
+@connection: 
 @Returns: 
 
 

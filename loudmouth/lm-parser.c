@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- * Copyright (C) 2003 Mikael Hallendal <micke@imendio.com>
+ * Copyright (C) 2003 Imendio HB
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License as
@@ -159,13 +159,16 @@ parser_end_node_cb (GMarkupParseContext  *context,
 		}
 
 		lm_message_unref (m);
- 		lm_message_node_unref (parser->cur_root);
+		lm_message_node_unref (parser->cur_root);
 		
+			
 		parser->cur_node = parser->cur_root = NULL;
 	} else {
 		LmMessageNode *tmp_node;
 		tmp_node = parser->cur_node;
 		parser->cur_node = parser->cur_node->parent;
+
+		lm_message_node_unref (tmp_node);
 	}
 }
 
@@ -214,7 +217,7 @@ lm_parser_new (LmParserMessageFunction function,
 		return NULL;
 	}
 	
-	parser->m_parser                = g_new0 (GMarkupParser, 1);
+	parser->m_parser = g_new0 (GMarkupParser, 1);
 	if (!parser->m_parser) {
 		g_free (parser);
 		return NULL;

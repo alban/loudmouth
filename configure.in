@@ -27,11 +27,13 @@ changequote([,])dnl
 AC_SUBST(CFLAGS)
 AC_SUBST(LDFLAGS)
 
-GLIB2_REQUIRED=2.0.0
+GLIB2_REQUIRED=2.4.0
 GNUTLS_REQUIRED=1.0.0
+LIBTASN1_REQUIRED=0.2.6
 
 AC_SUBST(GLIB2_REQUIRED)
 AC_SUBST(GNUTLS_REQUIRED)
+AC_SUBST(LIBTASN1_REQUIRED)
 
 LM_CHECK_TIMEZONE
 
@@ -101,12 +103,14 @@ AC_ARG_WITH(ssl, [  --with-ssl=no/yes           define whether to look for SSL, 
 	    ac_ssl=yes
 	    )
 
+enable_ssl=no
 if test x$ac_ssl != xno; then
   AM_PATH_LM_LIBGNUTLS($GNUTLS_REQUIRED, have_libgnutls=yes, have_libgnutls=no)
   if test x$have_libgnutls = xyes; then
     CFLAGS="$CFLAGS $LIBGNUTLS_CFLAGS"
     LIBS="$LIBS $LIBGNUTLS_LIBS"
     AC_DEFINE(HAVE_GNUTLS, 1, [whether to use GnuTSL support.])
+    enable_ssl=yes
   else 
     echo "Couldn't find GnuTLS, disabling SSL support"
   fi
@@ -150,27 +154,25 @@ dnl +--------------------------------------+
 dnl  --------------
 dnl | mono setup |--------------------------------------------
 dnl  --------------
-dnl AC_ARG_ENABLE(mono, [  --enable-mono        build mono bindings [default=auto]], enable_mono="$enableval", enable_mono=auto)
+AC_ARG_ENABLE(mono, [  --enable-mono        build mono bindings [default=auto]], enable_mono="$enableval", enable_mono=auto)
                                                                                 
-dnl if test "x$enable_mono" != "xno"; then
-dnl     PKG_CHECK_MODULES(,gtk-sharp,have_mono=yes,have_mono=no)
-dnl                                                                             dnl     
-dnl     if test "x$have_mono" = "xyes"; then
-dnl         AC_PATH_PROG(GAPI_FIXUP, gapi-fixup, no)
-dnl         AC_PATH_PROG(GAPI_CODEGEN, gapi-codegen, no)
-dnl         AC_PATH_PROG(MCS, mcs, no)
-dnl         AC_PATH_PROG(MONO, mono, no)
-dnl     fi
-dnl else
-dnl     have_mono=no
-dnl fi
+if test "x$enable_mono" != "xno"; then
+     PKG_CHECK_MODULES(,gtk-sharp,have_mono=yes,have_mono=no)
+
+     if test "x$have_mono" = "xyes"; then
+         AC_PATH_PROG(MCS, mcs, no)
+         AC_PATH_PROG(MONO, mono, no)
+     fi
+else
+     have_mono=no
+fi
                                                                                 
-dnl if test "x$enable_mono" = "xyes"; then
-dnl     AC_MSG_CHECKING(for mono environment)
-dnl     if test "x$have_mono" = "xno"; then
-dnl         AC_MSG_ERROR([not found])
-dnl     fi
-dnl fi
+if test "x$enable_mono" = "xyes"; then
+    AC_MSG_CHECKING(for mono environment)
+    if test "x$have_mono" = "xno"; then
+        AC_MSG_ERROR([not found])
+    fi
+fi
                                                                                 
 AM_CONDITIONAL(HAVE_MONO, test x$have_mono = xyes)
 
@@ -180,11 +182,10 @@ docs/Makefile
 docs/reference/Makefile
 loudmouth/Makefile
 examples/Makefile
+mono/Makefile
+mono/loudmouth-sharp.pc
 loudmouth-1.0.pc
 loudmouth.spec])
-
-dnl mono/Makefile
-dnl mono/loudmouth/Makefile
 
 dnl ==========================================================================
 echo "
@@ -196,20 +197,20 @@ echo "
         compiler:                 ${CC}
 	"
 		    
-dnl if test x$enable_mono = xyes ; then
-dnl echo \
-dnl "        mcs:                     ${MCS}
-dnl          mcsflags:                ${MCSFLAGS}
-dnl "
-dnl else
-dnl echo \
-dnl "        mcs:                     (not enabled)
-dnl "
-dnl fi
+if test x$enable_mono = xyes ; then
+echo \
+"        mcs:                     ${MCS}
+        mcsflags:                ${MCSFLAGS}
+"
+else
+echo \
+"        mcs:                     (not enabled)
+"
+fi
 
 
 echo \
-"        Enable SSL               ${ac_ssl}"
+"        Enable SSL               ${enable_ssl}"
 echo \
 "        Enable Debug:            ${enable_debug}
 "

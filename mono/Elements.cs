@@ -1,7 +1,11 @@
+using System;
+using System.Runtime.InteropServices;
+
 namespace Loudmouth {
-    using System;
-    using System.Runtime.InteropServices;
-    public class Element : Object {
+
+    public class Element  {
+	protected IntPtr _obj;
+	
 	public enum ElementType {
 	    MESSAGE,
 	    PRESENCE,
@@ -12,11 +16,12 @@ namespace Loudmouth {
 	}
 	
 	public enum ElementSubType {
-	    NOT_SET = -1,
-	    CHAT = 0,
+	    NOT_SET = -10,
+	    AVAILABLE = -1,
+	    NORMAL = 0,
+	    CHAT,
 	    GROUPCHAT,
 	    HEADLINE,
-	    AVAILABLE,
 	    UNAVAILABLE,
 	    PROBE,
 	    SUBSCRIBE,
@@ -35,45 +40,9 @@ namespace Loudmouth {
 	    }
 	}
 	
-	private Element () {}
-	
-	protected Element (IntPtr obj) : base (obj) {
-	}
-	
-	[DllImport ("libloudmouth.so")]
-	    private static extern int lm_message_get_type (IntPtr obj);
-
-	[DllImport ("libloudmouth.so")]
-	    private static extern IntPtr lm_message_new (string to, ElementType type);
-	
-	protected Element (string to, ElementType type) {
-	    _obj = lm_message_new (to, type);
-	}
-	
-	[DllImport ("libloudmouth.so")]
-	    private static extern IntPtr lm_message_new_with_sub_type (string to, ElementType type, ElementSubType sub);
-	
-	protected Element (string to, ElementType type, ElementSubType sub) {
-	    _obj = lm_message_new_with_sub_type(to, type, sub);
-	}
-	
-	[DllImport ("libloudmouth.so")]
-	    private static extern ElementSubType lm_message_get_sub_type (IntPtr obj);
-
-	protected ElementSubType GetElementSubType () {
-	    return lm_message_get_sub_type(this._obj);
-	}
-
-	[DllImport ("libloudmouth.so")]
-	    private static extern IntPtr lm_message_get_node (IntPtr obj);
-
-	public ElementNode GetNode () {
-	    return new ElementNode(lm_message_get_node (this._obj));
-	}
-
 	public string this[string data] {
 	    get {
-		ElementNode node = this.GetNode();
+		ElementNode node = this.GetNode ();
 		return node[data];
 	    }
 	    set {
@@ -82,11 +51,43 @@ namespace Loudmouth {
 	    }
 	}
 	
-	public override string ToString () {
+	protected Element (IntPtr obj) 
+	{
+	    this._obj = obj;
+	}
+
+	protected Element (string to, ElementType type) 
+	{
+	    _obj = lm_message_new (to, type);
+	}
+	
+	protected Element (string to, ElementType type, ElementSubType sub) 
+	{
+	    _obj = lm_message_new_with_sub_type (to, type, sub);
+	}
+	
+	protected ElementSubType GetElementSubType () 
+	{
+	    return lm_message_get_sub_type (this._obj);
+	}
+
+	public ElementNode GetNode () 
+	{
+	    return new ElementNode(lm_message_get_node (this._obj));
+	}
+
+	public IntPtr GetObject ()
+	{
+	    return _obj;
+	}
+	
+	public override string ToString () 
+	{
 	    return "<Element: " + this.Kind + ":" + this.GetElementSubType() + ">";
 	}
 
-	public static Element CreateElement (IntPtr obj) {
+	public static Element CreateElement (IntPtr obj)
+	{
 	    switch (lm_message_get_type(obj)) {
 		case (int)Element.ElementType.MESSAGE:
 		    return new Message(obj);
@@ -97,7 +98,18 @@ namespace Loudmouth {
 	    }
 	    return null;
 	}
-    }
+ 
+	[DllImport ("libloudmouth-1.so")]
+	    private static extern int lm_message_get_type (IntPtr obj);
+	[DllImport ("libloudmouth-1.so")]
+	    private static extern IntPtr lm_message_new (string to, ElementType type);
+	[DllImport ("libloudmouth-1.so")]
+	    private static extern IntPtr lm_message_new_with_sub_type (string to, ElementType type, ElementSubType sub);
+	[DllImport ("libloudmouth-1.so")]
+	    private static extern ElementSubType lm_message_get_sub_type (IntPtr obj);
+	[DllImport ("libloudmouth-1.so")]
+	    private static extern IntPtr lm_message_get_node (IntPtr obj);
+   }
   
     public class Message : Element {
 	public MessageType Type {
@@ -125,16 +137,16 @@ namespace Loudmouth {
 	    HEADLINE   = Element.ElementSubType.HEADLINE
 	}
 
-	public Message (IntPtr obj) :
-	    base (obj) {
-	    }
+	public Message (IntPtr obj) : base (obj) 
+	{
+	}
 	
-	public Message (string to) :
-	    base (to, Element.ElementType.MESSAGE, Element.ElementSubType.NOT_SET) {
-	    }
+	public Message (string to) : base (to, Element.ElementType.MESSAGE, Element.ElementSubType.NOT_SET) 
+	{
+	}
 	
-	public Message (string to, MessageType type) : 
-	    base (to, Element.ElementType.MESSAGE, (Element.ElementSubType) type) {
+	public Message (string to, MessageType type) : base (to, Element.ElementType.MESSAGE, (Element.ElementSubType) type) 
+	{
 	}
     }
 
@@ -149,19 +161,24 @@ namespace Loudmouth {
 	    UNSUBSCRIBED = Element.ElementSubType.UNSUBSCRIBED, 
 	}
 
-	public Presence (IntPtr obj) : base (obj) {
+	public Presence (IntPtr obj) : base (obj) 
+	{
 	}
 
-	public Presence () : base (null, Element.ElementType.PRESENCE, Element.ElementSubType.AVAILABLE) {}
+	public Presence () : base (null, Element.ElementType.PRESENCE, Element.ElementSubType.AVAILABLE) 
+	{
+	}
 		    
-	public Presence (PresenceType type) : base (null, Element.ElementType.PRESENCE, (Element.ElementSubType) type) {}
-	
-	public Presence (string to) :
-	    base (to, Element.ElementType.PRESENCE) {
+	public Presence (PresenceType type) : base (null, Element.ElementType.PRESENCE, (Element.ElementSubType) type) 
+	{
 	}
 	
-	public Presence (string to, PresenceType type) :
-	    base (to, Element.ElementType.PRESENCE, (Element.ElementSubType) type) {
+	public Presence (string to) : base (to, Element.ElementType.PRESENCE) 
+	{
+	}
+	
+	public Presence (string to, PresenceType type) : base (to, Element.ElementType.PRESENCE, (Element.ElementSubType) type) 
+	{
 	}
     }
 
@@ -191,19 +208,24 @@ namespace Loudmouth {
 	    RESULT = Element.ElementSubType.RESULT
 	}
 
-	public IQ (IntPtr obj) : base (obj) {
+	public IQ (IntPtr obj) : base (obj) 
+	{
 	}
 
-	public IQ () :
-	    base (null, Element.ElementType.IQ, Element.ElementSubType.GET) {}
+	public IQ () : base (null, Element.ElementType.IQ, Element.ElementSubType.GET) 
+	{
+	}
 	
-	public IQ (string to) :
-	    base (to, Element.ElementType.IQ, Element.ElementSubType.GET) {}
+	public IQ (string to) : base (to, Element.ElementType.IQ, Element.ElementSubType.GET) 
+	{
+	}
+	
+	public IQ (string to, IQType type) : base (to, Element.ElementType.IQ, (Element.ElementSubType) type) 
+	{
+	}
 
-	public IQ (string to, IQType type) :
-	    base (to, Element.ElementType.IQ, (Element.ElementSubType) type) {}
-
-	public IQ (IQType type) : 
-	    base (null, Element.ElementType.IQ, (Element.ElementSubType) type) {}
+	public IQ (IQType type) : base (null, Element.ElementType.IQ, (Element.ElementSubType) type) 
+	{
+	}
     }
 }
