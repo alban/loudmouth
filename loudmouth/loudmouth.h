@@ -30,6 +30,7 @@
 #include <loudmouth/lm-message-node.h>
 #include <loudmouth/lm-proxy.h>
 #include <loudmouth/lm-utils.h>
+#include <loudmouth/lm-ssl.h>
 
 #undef LM_INSIDE_LOUDMOUTH_H
 

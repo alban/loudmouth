@@ -27,6 +27,8 @@
 
 #include <loudmouth/lm-message-node.h>
 
+G_BEGIN_DECLS
+
 typedef struct LmMessagePriv LmMessagePriv;
 
 typedef struct {
@@ -73,5 +75,7 @@ LmMessageSubType lm_message_get_sub_type      (LmMessage        *message);
 LmMessageNode *  lm_message_get_node          (LmMessage        *message);
 LmMessage *      lm_message_ref               (LmMessage        *message);
 void             lm_message_unref             (LmMessage        *message);
+
+G_END_DECLS
 
 #endif /* __LM_MESSAGE_H__ */

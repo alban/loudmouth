@@ -27,6 +27,8 @@
 
 #include <loudmouth/lm-connection.h>
 
+G_BEGIN_DECLS
+
 typedef LmHandlerResult (* LmHandleMessageFunction) (LmMessageHandler *handler,
 						     LmConnection     *connection,
 						     LmMessage        *message,
@@ -40,6 +42,7 @@ gboolean          lm_message_handler_is_valid   (LmMessageHandler   *handler);
 LmMessageHandler *lm_message_handler_ref   (LmMessageHandler        *handler);
 void              lm_message_handler_unref (LmMessageHandler        *handler);
 
+G_END_DECLS
 
 #endif /* __LM_MESSAGE_HANDLER_H__ */
 

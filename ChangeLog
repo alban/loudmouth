@@ -1,3 +1,19 @@
+2004-10-22  Mikael Hallendal  <micke@imendio.com>
+
+	reviewed by: <delete if not using a buddy>
+
+	* loudmouth/lm-connection.h:
+	* loudmouth/lm-error.h:
+	* loudmouth/lm-message-handler.h:
+	* loudmouth/lm-message-node.h:
+	* loudmouth/lm-message.h:
+	* loudmouth/lm-proxy.h:
+	* loudmouth/lm-utils.h:
+        * loudmouth/lm-ssl.h:
+        - G_BEGIN_DECLS and G_END_DECLS
+        * loudmouth/loudmouth.h:
+        - Include lm-ssl.h
+
 2004-10-08  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-connection.c: (connection_new_message_cb):

@@ -27,6 +27,8 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 typedef struct _LmMessageNode LmMessageNode;
 
 struct _LmMessageNode {
@@ -69,5 +71,6 @@ LmMessageNode *lm_message_node_ref            (LmMessageNode *node);
 void           lm_message_node_unref          (LmMessageNode *node);
 gchar *        lm_message_node_to_string      (LmMessageNode *node);
 
+G_END_DECLS
 
 #endif /* __LM_MESSAGE_NODE_H__ */

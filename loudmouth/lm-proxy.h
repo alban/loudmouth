@@ -24,6 +24,8 @@
 #error "Only <loudmouth/loudmouth.h> can be included directly, this file may disappear or change contents."
 #endif
 
+G_BEGIN_DECLS
+
 typedef struct _LmProxy LmProxy;
 
 typedef enum {
@@ -59,5 +61,6 @@ void          lm_proxy_set_password     (LmProxy            *proxy,
 LmProxy *     lm_proxy_ref              (LmProxy            *proxy);
 void          lm_proxy_unref            (LmProxy            *proxy);
 
+G_END_DECLS
 #endif /* __LM_PROXY_H__ */
 

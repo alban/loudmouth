@@ -29,6 +29,8 @@
 #include <loudmouth/lm-proxy.h>
 #include <loudmouth/lm-ssl.h>
 
+G_BEGIN_DECLS
+
 #define LM_CONNECTION(o) (LmConnection *) o;
 
 #define LM_CONNECTION_DEFAULT_PORT     5222
@@ -157,5 +159,7 @@ gboolean      lm_connection_send_raw          (LmConnection       *connection,
 LmConnectionState lm_connection_get_state     (LmConnection       *connection);
 LmConnection* lm_connection_ref               (LmConnection       *connection);
 void          lm_connection_unref             (LmConnection       *connection);
+
+G_END_DECLS
 
 #endif /* __LM_CONNECTION_H__ */

@@ -25,6 +25,8 @@
 #error "Only <loudmouth/loudmouth.h> can be included directly, this file may disappear or change contents."
 #endif
 
+G_BEGIN_DECLS
+
 typedef struct _LmSSL LmSSL;
 typedef enum {
 	LM_CERT_INVALID,
@@ -63,5 +65,7 @@ const unsigned char * lm_ssl_get_fingerprint (LmSSL          *ssl);
 
 LmSSL *               lm_ssl_ref             (LmSSL          *ssl);
 void                  lm_ssl_unref           (LmSSL          *ssl);
+
+G_END_DECLS
 
 #endif /* __LM_SSL_H__ */

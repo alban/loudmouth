@@ -27,6 +27,10 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 struct tm *lm_utils_get_localtime (const gchar *stamp);
+
+G_END_DECLS
 
 #endif /* __LM_UTIL__ */

@@ -27,6 +27,8 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 #define LM_ERROR lm_error_quark ()
 
 typedef enum {
@@ -37,5 +39,7 @@ typedef enum {
 } LmError;
 
 GQuark lm_error_quark (void) G_GNUC_CONST;
+
+G_END_DECLS
 
 #endif /* __LM_ERROR_H__ */
