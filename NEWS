@@ -1,3 +1,13 @@
+Changes in 0.14:
+----------------
+* Added information about building on Windows
+* Bug when using GnuTLS fixed.
+* Fixed a bug that could cause replies to be overlooked when using 
+  blocking mode.
+* Added IPv6-support, patch from Sjoerd Simons.
+* Made it easier to build RPMs without SSL-support.
+* Fixed a memleak when destroying a connection.
+
 Changes in 0.13.2:
 ------------------
 * Don't crash when we receive </stream:stream>
