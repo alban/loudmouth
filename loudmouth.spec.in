@@ -11,7 +11,9 @@ License: LGPL
 Group: System Environment/Libraries
 BuildRoot: %{_tmppath}/%{name}-root
 Requires: glib2 >= @GLIB2_REQUIRED@
+Requires: gnutls >= @GNUTLS_REQUIRED@
 BuildRequires: glib2-devel >= @GLIB2_REQUIRED@
+BuildRequires: gnutls-devel >= @GNUTLS_REQUIRED@
 
 %description
 Loudmouth is a lightweight and easy-to-use C library for programming with the Jabber protocol. It's designed to be easy to get started with and yet extensible to let you do anything the Jabber protocol allows. 
@@ -21,6 +23,7 @@ Summary:	Development files for RoadRunner..
 Group: 		Development/Libraries
 Requires:	%name = %{PACKAGE_VERSION}
 Requires:	glib2-devel >= @GLIB2_REQUIRED@
+Requires:       gnutls-devel >= @GNUTLS_REQUIRED@
 
 %description devel
 Loudmouth is a lightweight and easy-to-use C library for programming with the Jabber protocol. It's designed to be easy to get started with and yet extensible to let you do anything the Jabber protocol allows. 

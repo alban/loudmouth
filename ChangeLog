@@ -1,5 +1,10 @@
 2003-07-17  Mikael Hallendal  <micke@imendio.com>
 
+	* configure.in: Added GNUTLS_REQUIRED
+	* loudmouth.spec.in: Added gnutls dependency in RPM's.
+
+2003-07-17  Mikael Hallendal  <micke@imendio.com>
+
 	* docs/reference/loudmouth-sections.txt: Added new functions
 	* docs/reference/tmpl/lm-error.sgml: Documented undocumented references.
 	* docs/reference/tmpl/lm-message-handler.sgml: Same.
