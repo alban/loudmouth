@@ -92,15 +92,19 @@ main (int argc, char **argv)
         LmMessageHandler *handler;
         gboolean          result;
         UserInfo         *info;
+	gchar            *jid;
                                                                                 
         if (argc < 6) {
-                g_print ("Usage: %s <server> <username> <password> <proxyserver> <proxyport>\n", argv[0]);
+                g_print ("Usage: %s <server> <username> <password> <connectserver> <connectport>\n", argv[0]);
                 return 1;
         }
                                                                                 
-        connection = lm_connection_new (argv[1]);
+        connection = lm_connection_new (argv[4]);
 
-	lm_connection_set_host (connection, argv[4]);
+	jid = g_strdup_printf ("%s@%s", argv[2], argv[1]);
+	lm_connection_set_jid (connection, jid);
+	g_free (jid);
+
 	lm_connection_set_port (connection, strtol (argv[5], (char **) NULL, 10));
 
         handler = lm_message_handler_new (handle_messages, NULL, NULL);

@@ -58,7 +58,7 @@ struct _LmConnection {
 	/* Parameters */
 	GMainContext *context;
 	gchar        *server;
-	gchar        *host;
+	gchar        *jid;
 	guint         port;
 
 	LmSSL        *ssl;
@@ -182,7 +182,7 @@ connection_free (LmConnection *connection)
 	int i;
 
 	g_free (connection->server);
-	g_free (connection->host);
+	g_free (connection->jid);
 
 	/* Unref handlers */
 	for (i = 0; i < LM_MESSAGE_TYPE_UNKNOWN; ++i) {
@@ -266,9 +266,13 @@ connection_new_message_cb (LmParser     *parser,
 gboolean
 _lm_connection_succeeded (LmConnectData *connect_data)
 {
-	LmConnection *connection = connect_data->connection;
+	LmConnection *connection;
 	LmMessage    *m;
 	GIOFlags      flags;
+	gchar        *server_from_jid;
+	gchar        *ch;
+
+	connection = connect_data->connection;
 
 	/* Need some way to report error/success */
 	if (connection->cancel_open) {
@@ -293,8 +297,8 @@ _lm_connection_succeeded (LmConnectData *connect_data)
 	g_io_channel_set_flags (connection->io_channel, flags, NULL);
 
 	if (connection->ssl) {
-		if (!_lm_ssl_begin (connection->ssl, connection->fd, 
-				    lm_connection_get_host (connection),
+		if (!_lm_ssl_begin (connection->ssl, connection->fd,
+				    connection->server,
 				    NULL)) {
 			shutdown (connection->fd, SHUT_RDWR);
 			close (connection->fd);
@@ -339,7 +343,13 @@ _lm_connection_succeeded (LmConnectData *connect_data)
 		return FALSE;
 	}
 
-	m = lm_message_new (connection->server, LM_MESSAGE_TYPE_STREAM);
+	if (connection->jid != NULL && (ch = strchr (connection->jid, '@')) != NULL) {
+		server_from_jid = ch + 1;
+	} else {
+		server_from_jid = connection->server;
+	}
+
+	m = lm_message_new (server_from_jid, LM_MESSAGE_TYPE_STREAM);
 	lm_message_node_set_attributes (m->node,
 					"xmlns:stream", 
 					"http://etherx.jabber.org/streams",
@@ -526,7 +536,7 @@ connection_do_open (LmConnection *connection, GError **error)
 		return FALSE;
 	}
 
-	if (!lm_connection_get_host (connection)) {
+	if (!connection->server) {
 		g_set_error (error,
 			     LM_ERROR,
 			     LM_ERROR_CONNECTION_OPEN,
@@ -539,7 +549,7 @@ connection_do_open (LmConnection *connection, GError **error)
 	g_source_attach (connection->incoming_source, connection->context);
 	
 	lm_verbose ("Connecting to: %s:%d\n", 
-		    lm_connection_get_host (connection), connection->port);
+		    connection->server, connection->port);
 
 	memset (&req, 0, sizeof(req));
 
@@ -568,9 +578,9 @@ connection_do_open (LmConnection *connection, GError **error)
 	} else { /* connect directly */
 		g_log (LM_LOG_DOMAIN,LM_LOG_LEVEL_NET,
 		       "Going to connect to %s\n", 
-		       lm_connection_get_host (connection));
+		       connection->server);
 
-		if (getaddrinfo (lm_connection_get_host (connection),
+		if (getaddrinfo (connection->server,
 				 NULL, &req, &ans) != 0) {
 			g_set_error (error,
 				     LM_ERROR,                 
@@ -1060,7 +1070,7 @@ lm_connection_new (const gchar *server)
 
 	connection->context           = NULL;
 	connection->port              = LM_CONNECTION_DEFAULT_PORT;
-	connection->host              = NULL;
+	connection->jid               = NULL;
 	connection->ssl               = NULL;
 	connection->proxy             = NULL;
 	connection->disconnect_cb     = NULL;
@@ -1213,8 +1223,7 @@ lm_connection_close (LmConnection      *connection,
 	}
 	
 	lm_verbose ("Disconnecting from: %s:%d\n", 
-		    lm_connection_get_host (connection),
-		    connection->port);
+		    connection->server, connection->port);
 	
 	if (!connection_send (connection, "</stream:stream>", -1, error)) {
 		return FALSE;
@@ -1409,8 +1418,7 @@ lm_connection_is_authenticated (LmConnection *connection)
  * lm_connection_get_server:
  * @connection: an #LmConnection
  * 
- * Fetches the server address that @connection is using. The server address 
- * will be used when connecting unless the host address is set. 
+ * Fetches the server address that @connection is using. 
  * 
  * Return value: the server address
  **/
@@ -1428,8 +1436,7 @@ lm_connection_get_server (LmConnection *connection)
  * @server: Address of the server
  * 
  * Sets the server address for @connection to @server. Notice that @connection
- * can't be open while doing this. The server address will be used when
- * connecting unless the host address is set.
+ * can't be open while doing this. 
  **/
 void
 lm_connection_set_server (LmConnection *connection, const gchar *server)
@@ -1447,52 +1454,40 @@ lm_connection_set_server (LmConnection *connection, const gchar *server)
 }
 
 /**
- * lm_connection_get_host:
+ * lm_connection_get_jid:
  * @connection: an #LmConnection
  * 
- * Fetches the host address that @connection is using. If set the host address
- * will be used instead of the server address when connecting. For example a 
- * server might be named mycompany.com but the real host address needs to be
- * jabber.mycompany.com.
- *
- * If the host address is not set this function will return the server address.
+ * Fetches the jid set for @connection is using. 
  * 
- * Return value: the host address
+ * Return value: the jid
  **/
 const gchar *
-lm_connection_get_host (LmConnection *connection)
+lm_connection_get_jid (LmConnection *connection)
 {
 	g_return_val_if_fail (connection != NULL, NULL);
 
-	if (connection->host) {
-		return connection->host;
-	}
-	
-	return connection->server;
+	return connection->jid;
 }
 
 /**
- * lm_connection_set_host:
+ * lm_connection_set_jid:
  * @connection: an #LmConnection
- * @host: Address of the server
+ * @jid: JID to be used for @connection
  * 
- * Sets the host address for @connection to @host. If this is set it will be 
- * used instead of the @server address when connecting. This is useful if the
- * user wants to connect to a server through a tunnel. Notice that @connection
- * can't be open while doing this.
+ * Sets the JID to be used for @connection.
  **/
 void 
-lm_connection_set_host (LmConnection *connection, const gchar *host)
+lm_connection_set_jid (LmConnection *connection, const gchar *jid)
 {
 	g_return_if_fail (connection != NULL);
 
 	if (lm_connection_is_open (connection)) {
-		g_warning ("Can't change server address while connected");
+		g_warning ("Can't change JID while connected");
 		return;
 	}
 
-	g_free (connection->host);
-	connection->host = g_strdup (host);
+	g_free (connection->jid);
+	connection->jid = g_strdup (jid);
 }
 
 /**
