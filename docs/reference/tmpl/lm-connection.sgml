@@ -161,6 +161,15 @@ Callback called when a connection is closed.
 @Returns: 
 
 
+<!-- ##### FUNCTION lm_connection_is_open ##### -->
+<para>
+
+</para>
+
+@connection: 
+@Returns: 
+
+
 <!-- ##### FUNCTION lm_connection_is_authenticated ##### -->
 <para>
 
@@ -204,6 +213,14 @@ Callback called when a connection is closed.
 
 @connection: 
 @port: 
+
+
+<!-- ##### FUNCTION lm_connection_supports_ssl ##### -->
+<para>
+
+</para>
+
+@Returns: 
 
 
 <!-- ##### FUNCTION lm_connection_get_use_ssl ##### -->

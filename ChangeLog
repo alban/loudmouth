@@ -1,3 +1,19 @@
+2003-07-17  Mikael Hallendal  <micke@imendio.com>
+
+	* docs/reference/loudmouth-sections.txt: Added new functions
+	* docs/reference/tmpl/lm-error.sgml: Documented undocumented references.
+	* docs/reference/tmpl/lm-message-handler.sgml: Same.
+	* docs/reference/tmpl/loudmouth-unused.sgml: Same
+	* loudmouth/lm-debug.c: Same
+	
+	* loudmouth/lm-message-handler.c:
+	* loudmouth/lm-message-handler.h:
+	(_lm_message_handler_handle_message): 
+	- Check if handler is valid before trying to handle message.
+	(lm_message_handler_new): Set handler to be valid.
+	(lm_message_handler_invalidate): Added. Fixes cf-bug #677
+	(lm_message_handler_is_valid): Added
+
 2003-07-14  Mikael Hallendal  <micke@imendio.com>
 
         * Release 0.11

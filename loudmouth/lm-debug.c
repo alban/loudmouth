@@ -53,6 +53,11 @@ debug_log_handler (const gchar    *log_domain,
 	}
 }
 
+/**
+ * lm_debug_init
+ *
+ * Initialized the debug system.
+ **/
 void 
 lm_debug_init (void)
 {

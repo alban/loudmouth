@@ -1,5 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
+ * Copyright (C) 2003 Imendio HB
  * Copyright (C) 2003 Mikael Hallendal <micke@imendio.com>
  * Copyright (C) 2003 CodeFactory AB. 
  *
@@ -36,6 +37,8 @@ typedef LmHandlerResult (* LmHandleMessageFunction) (LmMessageHandler *handler,
 LmMessageHandler *lm_message_handler_new   (LmHandleMessageFunction  function,
 					    gpointer                 user_data,
 					    GDestroyNotify           notify);
+void              lm_message_handler_invalidate (LmMessageHandler   *handler);
+gboolean          lm_message_handler_is_valid   (LmMessageHandler   *handler);
 LmMessageHandler *lm_message_handler_ref   (LmMessageHandler        *handler);
 void              lm_message_handler_unref (LmMessageHandler        *handler);
 

@@ -15,6 +15,7 @@ lm_connection_open_and_block
 lm_connection_close
 lm_connection_authenticate
 lm_connection_authenticate_and_block
+lm_connection_is_open
 lm_connection_is_connected
 lm_connection_is_authenticated
 lm_connection_get_server
@@ -39,6 +40,8 @@ lm_connection_unref
 <FILE>lm-message-handler</FILE>
 LmHandleMessageFunction
 lm_message_handler_new
+lm_message_handler_invalidate
+lm_message_handler_is_valid
 lm_message_handler_ref
 lm_message_handler_unref
 </SECTION>
@@ -82,6 +85,15 @@ lm_message_unref
 <SECTION>
 <FILE>lm-error</FILE>
 lm_error_quark
+LmError
+LM_ERROR
 </SECTION>
 
+<SECTION>
+<FILE>lm-debug</FILE>
+LmLogLevelFlags
+lm_debug_init
+LM_LOG_DOMAIN
+lm_verbose
+</SECTION>
 

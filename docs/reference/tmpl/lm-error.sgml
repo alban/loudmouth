@@ -22,3 +22,20 @@ Error reporting.
 @Returns: 
 
 
+<!-- ##### ENUM LmError ##### -->
+<para>
+Describes the problem of the error.
+</para>
+
+@LM_ERROR_CONNECTION_NOT_OPEN: Connection not open when trying to send a message
+@LM_ERROR_CONNECTION_OPEN: Connection is already open when trying to open it again. 
+@LM_ERROR_AUTH_FAILED: Authentication failed while opening connection
+
+<!-- ##### MACRO LM_ERROR ##### -->
+<para>
+Macro for getting the error quark.
+
+</para>
+
+
+

@@ -18,22 +18,6 @@
 lm-result
 
 
-<!-- ##### MACRO LM_ERROR ##### -->
-<para>
-
-</para>
-
-
-<!-- ##### ENUM LmError ##### -->
-<para>
-Describes the problem of the error.
-</para>
-
-@LM_ERROR_CONNECTION_NO_SERVER: No server defined before trying to open connection.
-@LM_ERROR_CONNECTION_NOT_OPEN: Connection not open when trying to send a message
-@LM_ERROR_CONNECTION_ALREADY_OPEN: Connection already open when trying to connect.
-@LM_ERROR_AUTH_FAILED: Authentication failed while opening connection
-
 <!-- ##### USER_FUNCTION MessageNodeFunc ##### -->
 <para>
 

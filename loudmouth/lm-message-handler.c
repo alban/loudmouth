@@ -23,6 +23,7 @@
 #include "lm-message-handler.h"
 
 struct LmMessageHandler {
+	gboolean                valid;
         gint                    ref_count;
         LmHandleMessageFunction function;
         gpointer                user_data;
@@ -36,6 +37,10 @@ _lm_message_handler_handle_message (LmMessageHandler *handler,
 {
         g_return_val_if_fail (handler != NULL, 
                           LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS);
+
+	if (!handler->valid) {
+		return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+	}
         
         if (handler->function) {
                 return (* handler->function) (handler, connection, 
@@ -72,12 +77,39 @@ lm_message_handler_new (LmHandleMessageFunction function,
                 return NULL;
         }
         
+	handler->valid     = TRUE;	
         handler->ref_count = 1;
         handler->function  = function;
         handler->user_data = user_data;
         handler->notify    = notify;
         
         return handler;
+}
+
+/**
+ * lm_message_handler_invalidate
+ * @handler: an #LmMessageHandler
+ *
+ * Invalidates the handler. Useful if you need to cancel a reply
+ **/
+void
+lm_message_handler_invalidate (LmMessageHandler *handler)
+{
+	handler->valid = FALSE;
+}
+
+/**
+ * lm_message_handler_is_valid
+ * @handler: an #LmMessageHandler
+ *
+ * Fetches whether the handler is valid or not.
+ *
+ * Return value: #TRUE if @handler is valid, otherwise #FALSE
+ **/
+gboolean
+lm_message_handler_is_valid (LmMessageHandler *handler)
+{
+	return handler->valid;
 }
 
 /**
