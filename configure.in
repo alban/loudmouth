@@ -100,12 +100,16 @@ AC_ARG_WITH(ssl, [  --without-ssl           disable ssl support],
 	    )
 
 if test x$ac_ssl != xno; then
-  AM_PATH_LIBGNUTLS($GNUTLS_REQUIRED, have_libgnutls=yes, have_libgnutls=no)
-  if test $have_libgnutls = yes; then
+  AM_PATH_LM_LIBGNUTLS($GNUTLS_REQUIRED, have_libgnutls=yes, have_libgnutls=no)
+  if test x$have_libgnutls = xyes; then
     CFLAGS="$CFLAGS $LIBGNUTLS_CFLAGS"
     LIBS="$LIBS $LIBGNUTLS_LIBS"
     AC_DEFINE(HAVE_GNUTLS, 1, [whether to use GnuTSL support.])
+  else 
+    echo "Couldn't find GnuTLS, disabling SSL support"
   fi
+else
+  echo "Disabling SSL support"
 fi
 
 dnl +-------------+

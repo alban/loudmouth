@@ -1,5 +1,8 @@
 2003-08-05  Mikael Hallendal  <micke@imendio.com>
 
+	* acinclude.m4:
+	* configure.in:
+
 	* loudmouth.spec.in: Added Build-requirment on gtk-doc.
 
         * Release 0.13
