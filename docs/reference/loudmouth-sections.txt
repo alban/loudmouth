@@ -89,10 +89,14 @@ LM_ERROR
 </SECTION>
 
 <SECTION>
-<FILE>lm-debug</FILE>
-LmLogLevelFlags
-lm_debug_init
-LM_LOG_DOMAIN
-lm_verbose
+<FILE>lm-ssl</FILE>
+LmCertificateStatus
+LmSSLStatus
+LmSSLResponse
+LmSSLFunction
+lm_ssl_new
+lm_ssl_is_supported
+lm_ssl_get_fingerprint
+lm_ssl_ref
+lm_ssl_unref
 </SECTION>
-

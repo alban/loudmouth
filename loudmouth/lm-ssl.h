@@ -52,18 +52,17 @@ typedef LmSSLResponse (* LmSSLFunction)        (LmSSL        *ssl,
 						LmSSLStatus   status,
 						gpointer      user_data);
 
-LmSSL *
-lm_ssl_new (const gchar    *expected_fingerprint,
-	    LmSSLFunction   ssl_function,
-	    gpointer        user_data,
-	    GDestroyNotify  notify);
+LmSSL *               lm_ssl_new             (const gchar *expected_fingerprint,
+					      LmSSLFunction   ssl_function,
+					      gpointer        user_data,
+					      GDestroyNotify  notify);
 
-gboolean  lm_ssl_is_supported (void);
+gboolean              lm_ssl_is_supported    (void);
 
-const unsigned char *  lm_ssl_get_fingerprint (LmSSL *ssl);
+const unsigned char * lm_ssl_get_fingerprint (LmSSL          *ssl);
 
 
-LmSSL *   lm_ssl_ref          (LmSSL *ssl);
-void      lm_ssl_unref        (LmSSL *ssl);
+LmSSL *               lm_ssl_ref             (LmSSL          *ssl);
+void                  lm_ssl_unref           (LmSSL          *ssl);
 
 #endif /* __LM_SSL_H__ */

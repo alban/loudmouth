@@ -1,0 +1,103 @@
+<!-- ##### SECTION Title ##### -->
+lm-ssl
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### ENUM LmCertificateStatus ##### -->
+<para>
+
+</para>
+
+@LM_CERT_INVALID: 
+@LM_CERT_ISSUER_NOT_FOUND: 
+@LM_CERT_REVOKED: 
+
+<!-- ##### ENUM LmSSLStatus ##### -->
+<para>
+
+</para>
+
+@LM_SSL_STATUS_NO_CERT_FOUND: 
+@LM_SSL_STATUS_UNTRUSTED_CERT: 
+@LM_SSL_STATUS_CERT_EXPIRED: 
+@LM_SSL_STATUS_CERT_NOT_ACTIVATED: 
+@LM_SSL_STATUS_CERT_HOSTNAME_MISMATCH: 
+@LM_SSL_STATUS_CERT_FINGERPRINT_MISMATCH: 
+@LM_SSL_STATUS_GENERIC_ERROR: 
+
+<!-- ##### ENUM LmSSLResponse ##### -->
+<para>
+
+</para>
+
+@LM_SSL_RESPONSE_CONTINUE: 
+@LM_SSL_RESPONSE_STOP: 
+
+<!-- ##### USER_FUNCTION LmSSLFunction ##### -->
+<para>
+
+</para>
+
+@ssl: 
+@status: 
+@user_data: 
+@Returns: 
+
+
+<!-- ##### FUNCTION lm_ssl_new ##### -->
+<para>
+
+</para>
+
+@expected_fingerprint: 
+@ssl_function: 
+@user_data: 
+@notify: 
+@Returns: 
+
+
+<!-- ##### FUNCTION lm_ssl_is_supported ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION lm_ssl_get_fingerprint ##### -->
+<para>
+
+</para>
+
+@ssl: 
+@Returns: 
+
+
+<!-- ##### FUNCTION lm_ssl_ref ##### -->
+<para>
+
+</para>
+
+@ssl: 
+@Returns: 
+
+
+<!-- ##### FUNCTION lm_ssl_unref ##### -->
+<para>
+
+</para>
+
+@ssl: 
+
+
