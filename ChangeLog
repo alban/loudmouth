@@ -1,3 +1,10 @@
+2004-10-31  Mikael Hallendal  <micke@imendio.com>
+
+	* Release 0.17.2
+        
+	* NEWS: Updated for 0.17.2
+	* configure.in: Bumped version to 0.17.2
+
 2004-10-30  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-parser.c: (lm_parser_parse):

@@ -1,3 +1,10 @@
+Changes in 0.17.2:
+------------------
+* Unset proxy by setting it to NULL.
+* Fixes for 64 bit architectures.
+* Fixed an issue when not using default main context.
+* Fixed UTF-8 issue that lead to a few weird problems in Gossip.
+
 Changes in 0.17.1:
 ------------------
 * Fixed problem when not setting a keep alive rate.
