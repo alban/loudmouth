@@ -1,0 +1,8 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+
+Name: Loudmouth# 
+Description: Loudmouth# - Loudmouth .NET Binding
+Version: @VERSION@
+Libs: -r${libdir}/loudmouth-sharp.dll
