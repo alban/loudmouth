@@ -127,8 +127,6 @@ _lm_message_sub_type_to_string (LmMessageSubType type)
 		return NULL;
         }
 
-	g_print("TYPE: %d -> %s\n", type, sub_type_names[type].name);
-
         return sub_type_names[type].name;
 }
 
