@@ -94,26 +94,18 @@ AC_CHECK_LIB(socket,socket)
 dnl +--------------------------------------------------------+
 dnl | Checking for SSL (through GnuTLS) support              |
 dnl +--------------------------------------------------------+
-AC_MSG_CHECKING([for GnuTLS support])
-
 AC_ARG_WITH(ssl, [  --without-ssl           disable ssl support],
 	    ac_ssl=$withval,
 	    ac_ssl=yes
 	    )
 
 if test x$ac_ssl != xno; then
-  GNUTLS_CFLAGS=`libgnutls-config --cflags`
-  if test "x$GNUTLS_CFLAGS" = "x"; then
-    AC_MSG_RESULT(no)
-  else
-    AC_MSG_RESULT(yes)
-    GNUTLS_LDFLAGS=`libgnutls-config --libs`
-    CFLAGS="$CFLAGS $GNUTLS_CFLAGS"
-    LDFLAGS="$LDFLAGS $GNUTLS_LDFLAGS"
+  AM_PATH_LIBGNUTLS($GNUTLS_REQUIRED, have_libgnutls=yes, have_libgnutls=no)
+  if test $have_libgnutls = yes; then
+    CFLAGS="$CFLAGS $LIBGNUTLS_CFLAGS"
+    LIBS="$LIBS $LIBGNUTLS_LIBS"
     AC_DEFINE(HAVE_GNUTLS, 1, [whether to use GnuTSL support.])
   fi
-else
-  AC_MSG_RESULT(no)
 fi
 
 dnl +-------------+
