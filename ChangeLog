@@ -1,5 +1,12 @@
 2003-07-17  Mikael Hallendal  <micke@imendio.com>
 
+        * Release 0.12
+
+	* NEWS: Updated for 0.12
+	* configure.in: Bumped to 0.12
+
+2003-07-17  Mikael Hallendal  <micke@imendio.com>
+
 	* loudmouth/lm-connection.c:
 	(auth_req_data_free): Added, free's auth data
 	(connection_create_auth_req_msg): 

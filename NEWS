@@ -1,6 +1,11 @@
+Changes in 0.12:
+----------------
+* Added support for cancelling messages waiting for reply
+* Now checks for supported auth methods.
+* Fixed RPM's to require GnuTLS.
+
 Changes in 0.11:
 ----------------
-
 * SSL-support, patch by Bartosz Zapalowski
 
 Changes in 0.10.1:
