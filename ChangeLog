@@ -1,5 +1,11 @@
 2003-08-04  Mikael Hallendal  <micke@imendio.com>
 
+	* README: 
+	- Added comment about GnuTLS and --with-included-libtasn1.
+	- Fixes LM-7 and bug #117801
+
+2003-08-04  Mikael Hallendal  <micke@imendio.com>
+
 	* loudmouth/lm-connection.c: (connection_in_event): 
 	- Disconnect and report that we are disconnected if read doesn't work.
 	  This solved the problem when Gossip eats 100% CPU because the server

@@ -20,6 +20,8 @@ ftp://ftp.gtk.org/pub/gtk/v2.2/
 gtk-doc (optional, if you want documentation built):
 ftp://ftp.gnome.org/pub/GNOME/sources/gtk-doc/1.0
 
+If you want SSL-support you'll also need:
+GnuTLS >= 0.8.9 (might have to be built with '--with-included-libtasn1')
 
 Building:
 =========
