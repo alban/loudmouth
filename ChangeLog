@@ -1,8 +1,11 @@
 2003-08-04  Mikael Hallendal  <micke@imendio.com>
 
-	* loudmouth/Makefile.am: Use -DRUNTIME_ENDIAN, fixes LM-8, bug #118502.
+	* loudmouth/lm-connection.c: (connection_in_event): 
+	- Disconnect and report that we are disconnected if read doesn't work.
+	  This solved the problem when Gossip eats 100% CPU because the server
+	  got disconnected. Fixes LM-9.
 
-2003-08-04  Mikael Hallendal  <micke@imendio.com>
+	* loudmouth/Makefile.am: Use -DRUNTIME_ENDIAN, fixes LM-8, bug #118502.
 
 	* loudmouth/lm-connection.c: 
 	- Modifed patch from Mikhail Zabaluev, fixes LM-5.
@@ -11,8 +14,6 @@
 	* (connection_do_close): Remove the GSources from the IOChannel.
 	* (connection_in_event, connection_error_event, connection_hup_event):
 	- Return FALSE if io_channel = NULL.
-
-2003-08-04  Mikael Hallendal  <micke@imendio.com>
 
 	* configure.in:
 	- Submitted patch for Loudmouth from Mikhail Zabaluev to

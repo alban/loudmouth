@@ -373,8 +373,9 @@ connection_in_event (GIOChannel   *source,
 		     GIOCondition  condition,
 		     LmConnection *connection)
 {
-	gchar             buf[IN_BUFFER_SIZE];
-	gsize             bytes_read;
+	gchar     buf[IN_BUFFER_SIZE];
+	gsize     bytes_read;
+	GIOStatus status;
        
 	if (!connection->io_channel) {
 		return FALSE;
@@ -385,28 +386,59 @@ connection_in_event (GIOChannel   *source,
 		bytes_read = gnutls_record_recv (connection->gnutls_session,
 						 buf,IN_BUFFER_SIZE - 1);
 		if (bytes_read <= 0) {
-			connection_error_event (connection->io_channel, 
-						G_IO_HUP,
-						connection);
+			status = G_IO_STATUS_ERROR;
+			
+			//connection_error_event (connection->io_channel, 
+			//			G_IO_HUP,
+			//			connection);
+		}
+		else {
+			status = G_IO_STATUS_NORMAL;
 		}
 	} else {
 #endif
-	    g_io_channel_read_chars (connection->io_channel,
-				     buf, IN_BUFFER_SIZE - 1,
-				     &bytes_read,
-				     NULL);
+	    status = g_io_channel_read_chars (connection->io_channel,
+					      buf, IN_BUFFER_SIZE - 1,
+					      &bytes_read,
+					      NULL);
 #ifdef HAVE_GNUTLS
 	}
 #endif
+
+	if (status != G_IO_STATUS_NORMAL) {
+		gint reason;
+		
+		
+		switch (status) {
+		case G_IO_STATUS_EOF:
+			reason = LM_DISCONNECT_REASON_HUP;
+			break;
+		case G_IO_STATUS_AGAIN:
+			return TRUE;
+			break;
+		case G_IO_STATUS_ERROR:
+			reason = LM_DISCONNECT_REASON_ERROR;
+			break;
+		default:
+			reason = LM_DISCONNECT_REASON_UNKNOWN;
+		}
+
+		connection_do_close (connection);
+		connection_signal_disconnect (connection, reason);
+		
+		return FALSE;
+	}
 
 	buf[bytes_read] = '\0';
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "\nRECV:\n");
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
 	       "-----------------------------------\n");
-	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "%s\n", buf);
+	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "'%s'\n", buf);
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
 	       "-----------------------------------\n");
-	
+
+	lm_verbose ("Read: %d chars\n", bytes_read);
+
 	lm_parser_parse (connection->parser, buf);
 	
 	return TRUE;
