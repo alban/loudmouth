@@ -1,5 +1,9 @@
 2004-08-08  Mikael Hallendal  <micke@imendio.com>
 
+	* configure.in: Bumped version to 0.17
+
+2004-08-08  Mikael Hallendal  <micke@imendio.com>
+
 	* docs/reference/tmpl/lm-proxy.sgml: Updated docs
 	* examples/test-tunnel.c: Use the new API for connecting to other host
 	  than the actual server name (host part of jid).
