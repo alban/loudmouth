@@ -1,6 +1,14 @@
+Changes in 0.10:
+----------------
+* Fixed case bug in message nodes. Making it not treat the XML as case 
+  dependant.
+* Added lm_message_node_[get|set]_raw_mode that determines if
+  the node value should be escaped or not.
+* Return correct type from lm_message_get_sub_type.
+* Win32 build fixes. Sent in by Vince Negri.
+
 Changes in 0.9:
 ---------------
-
 * Build fixes Solaris
 * Non async operations
 * API additions to ease binding efforts

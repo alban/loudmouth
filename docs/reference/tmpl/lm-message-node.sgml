@@ -21,6 +21,7 @@ A struct representing a node in a message.
 
 @name: the name of the node
 @value: value of the node, can be NULL
+@raw_mode: 
 @next: next sibling
 @prev: previous sibling
 @parent: node parent
@@ -105,6 +106,24 @@ A struct representing a node in a message.
 @message_node: 
 @child_name: 
 @Returns: 
+
+
+<!-- ##### FUNCTION lm_message_node_get_raw_mode ##### -->
+<para>
+
+</para>
+
+@node: 
+@Returns: 
+
+
+<!-- ##### FUNCTION lm_message_node_set_raw_mode ##### -->
+<para>
+
+</para>
+
+@node: 
+@raw_mode: 
 
 
 <!-- ##### FUNCTION lm_message_node_ref ##### -->

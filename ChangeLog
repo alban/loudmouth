@@ -1,7 +1,12 @@
+2003-06-26  Mikael Hallendal  <micke@imendio.com>
+
+        * Released 0.10
+        * configure.in: Changed version to 0.10
+	* NEWS: Added 0.10 news.
+	
 2003-06-25  Mikael Hallendal  <micke@imendio.com>
 
 	* configure.in: Bumped to 0.9.1
-	
 	* loudmouth.spec.in: Changed the URL to the project site.
 
 2003-06-24  Mikael Hallendal  <micke@imendio.com>

@@ -2,7 +2,7 @@ AC_INIT(loudmouth/lm-message.h)
 
 AM_CONFIG_HEADER(config.h)
 
-AM_INIT_AUTOMAKE(loudmouth, 0.9.2)
+AM_INIT_AUTOMAKE(loudmouth, 0.10)
 
 AM_MAINTAINER_MODE
 
