@@ -12,3 +12,4 @@ libtool
 loudmouth.spec
 stamp-h*
 loudmouth-1.0.pc
+*.swp

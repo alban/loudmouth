@@ -1,0 +1,10 @@
+Makefile
+Makefile.in
+lm-change-password
+lm-register
+lm-send-async
+lm-send-sync
+test-http-proxy
+test-lm
+test-tunnel
+*.swp

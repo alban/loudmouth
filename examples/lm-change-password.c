@@ -23,11 +23,20 @@
  */
 
 #include <loudmouth/loudmouth.h>
+#include <string.h>
+
+static LmSSLResponse 
+ssl_func (LmSSL        *ssl,
+	  LmSSLStatus   status,
+	  gpointer      user_data)
+{
+	return LM_SSL_RESPONSE_CONTINUE;
+}
 
 static void
 print_usage (const gchar *exec_name)
 {
-	g_print ("Usage: %s <server> <username> <oldpassword> <newpassword>\n",
+	g_print ("Usage: %s <server> <username> <oldpassword> <newpassword> [--ssl]\n",
 		 exec_name);
 }
 
@@ -42,7 +51,8 @@ main (int argc, char **argv)
 	GError        *error = NULL;
 	LmMessage     *m;
 	LmMessageNode *query;
-
+	gboolean       use_ssl = FALSE;
+	
 	if (argc < 5) {
 		print_usage (argv[0]);
 		return -1;
@@ -53,7 +63,36 @@ main (int argc, char **argv)
 	old_pass = argv[3];
 	new_pass = argv[4];
 
+	if (argc >= 5) {
+		int i;
+
+		for (i = 5; i < argc; ++i) {
+			if (strcmp (argv[i], "-s") == 0 ||
+			    strcmp (argv[i], "--ssl") == 0) {
+				use_ssl = TRUE;
+				break;
+			}
+		}
+	}
+
 	connection = lm_connection_new (server);
+
+	if (use_ssl) {
+		LmSSL *ssl;
+
+		if (!lm_ssl_is_supported ()) {
+			g_print ("This loudmouth installation doesn't support SSL\n");
+			return 1;
+		}
+
+		g_print ("Setting ssl\n");
+		ssl = lm_ssl_new (NULL, ssl_func, NULL, NULL);
+		lm_connection_set_ssl (connection, ssl);
+		lm_ssl_unref (ssl);
+
+		lm_connection_set_port (connection,
+					LM_CONNECTION_DEFAULT_PORT_SSL);
+	}
 
 	if (!lm_connection_open_and_block (connection, &error)) {
 		g_error ("Failed to open: %s\n", error->message);
