@@ -128,6 +128,11 @@ parser_end_node_cb (GMarkupParseContext  *context,
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_PARSER,
 	       "Trying to close node: %s\n", node_name);
 
+        if (!parser->cur_node) {
+                /* FIXME: LM-1 should look at this */
+                return;
+        }
+        
 	if (strcmp (parser->cur_node->name, node_name) != 0) {
 		if (strcmp (node_name, "stream:stream")) {
 			g_print ("Got an stream:stream end\n");
