@@ -57,7 +57,7 @@ rm -rf %{buildroot}
 %makeinstall 
 
 # remove, not shipped
-rm -f $RPM_BUILD_ROOT%{_libdir}/libloudmouth.la
+rm -f $RPM_BUILD_ROOT%{_libdir}/libloudmouth-1.la
 
 %clean
 rm -rf $RPM_BUILD_ROOT
