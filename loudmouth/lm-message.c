@@ -44,6 +44,7 @@ static struct SubTypeNames
         LmMessageSubType  type;
         const gchar      *name;
 } sub_type_names[] = {
+	{ LM_MESSAGE_SUB_TYPE_NORMAL,          "normal"        },
         { LM_MESSAGE_SUB_TYPE_CHAT,            "chat"          },
 	{ LM_MESSAGE_SUB_TYPE_GROUPCHAT,       "groupchat"     },
 	{ LM_MESSAGE_SUB_TYPE_HEADLINE,        "headline"      },
@@ -106,7 +107,7 @@ message_sub_type_from_string (const gchar *type_str)
                 return LM_MESSAGE_SUB_TYPE_NOT_SET;
         }
 
-        for (i = LM_MESSAGE_SUB_TYPE_CHAT;
+        for (i = LM_MESSAGE_SUB_TYPE_NORMAL;
 	     i <= LM_MESSAGE_SUB_TYPE_ERROR;
 	     ++i) {
                 if (g_ascii_strcasecmp (type_str, 
@@ -121,10 +122,12 @@ message_sub_type_from_string (const gchar *type_str)
 const gchar *
 _lm_message_sub_type_to_string (LmMessageSubType type)
 {
-        if (type < LM_MESSAGE_SUB_TYPE_CHAT ||
+        if (type < LM_MESSAGE_SUB_TYPE_NORMAL ||
             type > LM_MESSAGE_SUB_TYPE_ERROR) {
 		return NULL;
         }
+
+	g_print("TYPE: %d -> %s\n", type, sub_type_names[type].name);
 
         return sub_type_names[type].name;
 }
@@ -135,7 +138,11 @@ message_sub_type_when_unset (LmMessageType type) {
 
 	switch (type) {
 	case LM_MESSAGE_TYPE_MESSAGE:
-		sub_type = LM_MESSAGE_SUB_TYPE_NORMAL;
+		/* A message without type should be handled like a message with
+		 * type=normal, but we won't set it to that since then the user
+		 * will not know if it's set or not.
+		 */
+		sub_type = LM_MESSAGE_SUB_TYPE_NOT_SET;
 		break;
 	case LM_MESSAGE_TYPE_PRESENCE:
 		sub_type = LM_MESSAGE_SUB_TYPE_AVAILABLE;

@@ -1,5 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
+ * Copyright (C) 2003 Imendio HB
  * Copyright (C) 2003 Mikael Hallendal <micke@imendio.com>
  * Copyright (C) 2003 CodeFactory AB. 
  *
@@ -47,9 +48,9 @@ typedef enum {
 
 typedef enum {
         LM_MESSAGE_SUB_TYPE_NOT_SET = -10,
-	LM_MESSAGE_SUB_TYPE_NORMAL = -2,
 	LM_MESSAGE_SUB_TYPE_AVAILABLE = -1,
-	LM_MESSAGE_SUB_TYPE_CHAT = 0,
+	LM_MESSAGE_SUB_TYPE_NORMAL = 0,
+	LM_MESSAGE_SUB_TYPE_CHAT,
         LM_MESSAGE_SUB_TYPE_GROUPCHAT,
         LM_MESSAGE_SUB_TYPE_HEADLINE,
         LM_MESSAGE_SUB_TYPE_UNAVAILABLE,

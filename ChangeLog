@@ -1,3 +1,11 @@
+2003-07-29  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-message.[ch]:
+	- Added LM_MESSAGE_SUB_TYPE_NORMAL to be a sub type that can actually 
+	  be set.
+	- If type is not set in a <message/>-node it won't be reported to be 
+	  LM_MESSAGE_SUB_TYPE_NORMAL but rather LM_MESSAGE_SUB_TYPE_NOT_SET.
+
 2003-07-17  Mikael Hallendal  <micke@imendio.com>
 
         * Release 0.12
