@@ -1,5 +1,19 @@
 2003-10-01  Mikael Hallendal  <micke@imendio.com>
 
+	* loudmouth/Makefile.am: 
+	- added lm-queue.[ch]
+	  
+	* loudmouth/lm-queue.[ch]: copied and extended from GQueue.
+	
+	* loudmouth/lm-connection.c: 
+	- Use LmQueue instead of GQueue
+	(lm_connection_open_and_block): Better handling of the queue.
+	
+	(lm_connection_send_with_reply_and_block): 
+	- Fixed a bug causing replies to be over looked.
+
+2003-10-01  Mikael Hallendal  <micke@imendio.com>
+
         * README.WIN32, win32-config.h: 
 	- Added information about how to build on Windows. Fixes LM-12
 	  

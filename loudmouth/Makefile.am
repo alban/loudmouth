@@ -24,6 +24,8 @@ libloudmouth_la_SOURCES =		\
 	lm-sha.c			\
 	lm-sha.h			\
 	lm-utils.c			\
+	lm-queue.c                      \
+	lm-queue.h                      \
 	$(NULL)
 
 libloudmouthinclude_HEADERS =		\
