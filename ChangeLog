@@ -1,4 +1,12 @@
 2003-10-13  Mikael Hallendal  <micke@imendio.com>
+ 
+	* mono/*: Added first cut at C-sharp bindings that I hacked up a while
+	  ago. Can't continue development at the moment since the mono compiler
+	  segfaults on my machine at the moment.
+
+	* python/*: Johan Dahlin added a first cut of python bindings, yay him!
+
+2003-10-13  Mikael Hallendal  <micke@imendio.com>
 
 	* NEWS: Updated for 0.14.1
 	
