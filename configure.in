@@ -94,7 +94,7 @@ AC_CHECK_LIB(socket,socket)
 dnl +--------------------------------------------------------+
 dnl | Checking for SSL (through GnuTLS) support              |
 dnl +--------------------------------------------------------+
-AC_ARG_WITH(ssl, [  --without-ssl           disable ssl support],
+AC_ARG_WITH(ssl, [  --with-ssl=no/yes           define whether to look for SSL, default=yes],
 	    ac_ssl=$withval,
 	    ac_ssl=yes
 	    )

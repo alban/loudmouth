@@ -1,5 +1,13 @@
 2003-10-01  Mikael Hallendal  <micke@imendio.com>
 
+	* configure.in: Tweaked the --with-ssl option a bit.
+	
+	* loudmouth.spec.in: 
+	- Added a with_ssl to be able to easily turn of GNU Tls support.
+	- Fixes LM-14
+
+2003-10-01  Mikael Hallendal  <micke@imendio.com>
+
 	* loudmouth/lm-connection.c: (connection_do_open):
 	- Added a patch for IPv6-support submitted by Sjoerd Simons.
 	- Sjoerd also seems to know this stuff better than me since his 
