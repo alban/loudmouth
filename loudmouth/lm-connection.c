@@ -374,7 +374,6 @@ connection_connect_nonblocking (LmConnection *connection,
 	flags = fcntl (fd, F_GETFL, 0);
 	fcntl (fd, F_SETFL, flags | O_NONBLOCK);
 	
-	g_print ("Connecting...");
 	res = connect (fd, addr->ai_addr, addr->ai_addrlen);
 	if (res == 0) {
 		/* connection successfull */
@@ -394,7 +393,6 @@ connection_connect_nonblocking (LmConnection *connection,
 		if (connection->cancel_open) {
 			return -1;
 		}
-		g_print (".");
 		tval.tv_sec = 0;
 		tval.tv_usec = 10;
 		while (g_main_context_pending (NULL)) {
@@ -405,8 +403,6 @@ connection_connect_nonblocking (LmConnection *connection,
 		}
 	} while (select (fd + 1, &rset, &wset, NULL, &tval) == 0);
 
-	g_print (" done!\n");
-	
 	/* Either things went fine or we have an error */
 
 	if (FD_ISSET (fd, &rset) && FD_ISSET (fd, &wset)) {
