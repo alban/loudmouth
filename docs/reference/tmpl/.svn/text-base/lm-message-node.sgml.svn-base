@@ -1,0 +1,135 @@
+<!-- ##### SECTION Title ##### -->
+LmMessageNode
+
+<!-- ##### SECTION Short_Description ##### -->
+A node in the message tree
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### STRUCT LmMessageNode ##### -->
+<para>
+A struct representing a node in a message. 
+</para>
+
+@name: the name of the node
+@value: value of the node, can be NULL
+@next: next sibling
+@prev: previous sibling
+@parent: node parent
+@children: pointing to first child
+@attributes: list of attributes. This shouldn't be accessed directly.
+@ref_count: Reference count of node, internal value.
+
+<!-- ##### FUNCTION lm_message_node_get_value ##### -->
+<para>
+
+</para>
+
+@node: 
+@Returns: 
+
+
+<!-- ##### FUNCTION lm_message_node_set_value ##### -->
+<para>
+
+</para>
+
+@node: 
+@value: 
+
+
+<!-- ##### FUNCTION lm_message_node_add_child ##### -->
+<para>
+
+</para>
+
+@node: 
+@name: 
+@value: 
+@Returns: 
+
+
+<!-- ##### FUNCTION lm_message_node_set_attributes ##### -->
+<para>
+
+</para>
+
+@node: 
+@name: 
+@Varargs: 
+
+
+<!-- ##### FUNCTION lm_message_node_get_attribute ##### -->
+<para>
+
+</para>
+
+@node: 
+@name: 
+@Returns: 
+
+
+<!-- ##### FUNCTION lm_message_node_set_attribute ##### -->
+<para>
+
+</para>
+
+@node: 
+@name: 
+@value: 
+
+
+<!-- ##### FUNCTION lm_message_node_get_child ##### -->
+<para>
+
+</para>
+
+@message_node: 
+@child_name: 
+@Returns: 
+
+
+<!-- ##### FUNCTION lm_message_node_find_child ##### -->
+<para>
+
+</para>
+
+@message_node: 
+@child_name: 
+@Returns: 
+
+
+<!-- ##### FUNCTION lm_message_node_ref ##### -->
+<para>
+
+</para>
+
+@node: 
+@Returns: 
+
+
+<!-- ##### FUNCTION lm_message_node_unref ##### -->
+<para>
+
+</para>
+
+@node: 
+
+
+<!-- ##### FUNCTION lm_message_node_to_string ##### -->
+<para>
+
+</para>
+
+@node: 
+@Returns: 
+
+

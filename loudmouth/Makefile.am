@@ -1,0 +1,56 @@
+NULL=
+
+INCLUDES = 				\
+	-I.				\
+	-I$(top_srcdir)			\
+	$(LOUDMOUTH_CFLAGS)		\
+	-DLM_COMPILATION		\
+	$(NULL)
+
+lib_LTLIBRARIES = libloudmouth.la
+
+libloudmouth_la_SOURCES =		\
+	lm-connection.c	 		\
+	lm-debug.c                      \
+	lm-debug.h                      \
+	lm-error.c			\
+	lm-message.c	 		\
+	lm-message-handler.c		\
+	lm-message-node.c		\
+	lm-parser.c			\
+	lm-parser.h			\
+	lm-internals.h			\
+	lm-sha.c			\
+	lm-sha.h			\
+	lm-utils.c			\
+	$(NULL)
+
+libloudmouthinclude_HEADERS =		\
+	lm-connection.h			\
+	lm-error.h			\
+	lm-message.h		 	\
+	lm-message-handler.h		\
+	lm-message-node.h		\
+	lm-utils.h			\
+	loudmouth.h			\
+	$(NULL)
+
+libloudmouth_la_LIBADD = 		\
+	$(LOUDMOUTH_LIBS)
+
+libloudmouthincludedir = $(includedir)/loudmouth-1.0/loudmouth
+
+# an explicit dependency here so alm generated files get built
+$(OBJECTS): $(built_sources)
+
+noinst_PROGRAMS = test-lm
+
+test_lm_SOURCES =			\
+	test-lm.c
+
+test_lm_LDADD =			 	\
+	$(LOUDMOUTH_LIBS)		\
+	libloudmouth.la			\
+	$(NULL)
+
+

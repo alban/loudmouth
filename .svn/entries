@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wc-entries
+   xmlns="svn:">
+<entry
+   committed-rev="346"
+   name="svn:this_dir"
+   committed-date="2003-04-17T10:56:10.375431Z"
+   url="http://svn.codefactory.se/svn/projects/loudmouth/trunk"
+   last-author="micke"
+   kind="dir"
+   revision="349"/>
+<entry
+   name="loudmouth"
+   kind="dir"/>
+<entry
+   committed-rev="14"
+   name="loudmouth-1.0.pc.in"
+   text-time="2003-05-19T18:17:28.000000Z"
+   committed-date="2003-02-02T02:56:08.000000Z"
+   checksum="b9e5d2c4fde31253abf576a0cc27c126"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:28.000000Z"/>
+<entry
+   committed-rev="5"
+   name="AUTHORS"
+   text-time="2003-05-19T18:17:37.000000Z"
+   committed-date="2003-01-31T12:27:42.000000Z"
+   checksum="e45079c9a18bfcf7c0f7aa3861971438"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:37.000000Z"/>
+<entry
+   committed-rev="12"
+   name="acinclude.m4"
+   text-time="2003-05-19T18:17:34.000000Z"
+   committed-date="2003-02-02T02:13:19.000000Z"
+   checksum="d8abfc739967a530a76d41df8df5e643"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:34.000000Z"/>
+<entry
+   committed-rev="1"
+   name="INSTALL"
+   text-time="2003-05-19T18:17:35.000000Z"
+   committed-date="2003-01-31T11:46:56.000000Z"
+   checksum="0d6be33865b76025c20b48bcac87adb7"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:35.000000Z"/>
+<entry
+   committed-rev="337"
+   name="configure.in"
+   text-time="2003-05-19T18:17:36.000000Z"
+   committed-date="2003-04-10T22:31:29.810044Z"
+   checksum="ea451fd3205e8c5b53f1dd72f9d87cda"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:36.000000Z"/>
+<entry
+   committed-rev="346"
+   name="ChangeLog"
+   text-time="2003-05-19T18:17:34.000000Z"
+   committed-date="2003-04-17T10:56:10.375431Z"
+   checksum="ca00a3c7ba3160b5a598c6b187089a92"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:34.000000Z"/>
+<entry
+   committed-rev="28"
+   name="COPYING"
+   text-time="2003-05-19T18:17:33.000000Z"
+   committed-date="2003-03-03T21:14:06.000000Z"
+   checksum="c4f38aef94828f6b280e00d1173be689"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:33.000000Z"/>
+<entry
+   name="docs"
+   kind="dir"/>
+<entry
+   committed-rev="324"
+   name="Makefile.am"
+   text-time="2003-05-19T18:17:32.000000Z"
+   committed-date="2003-04-04T22:42:44.686791Z"
+   checksum="7d8c44694961ad1cc17bc0c65e86a578"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:32.000000Z"/>
+<entry
+   committed-rev="47"
+   name="autogen.sh"
+   text-time="2003-05-19T18:17:31.000000Z"
+   committed-date="2003-03-13T01:41:32.000000Z"
+   checksum="efe34bcc54ee79c68ba836c90eb57bd8"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:31.000000Z"/>
+<entry
+   committed-rev="337"
+   name="NEWS"
+   text-time="2003-05-19T18:17:30.000000Z"
+   committed-date="2003-04-10T22:31:29.810044Z"
+   checksum="9cc657364e1eda18f8ed6f5b28a95444"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:30.000000Z"/>
+<entry
+   committed-rev="329"
+   name="README"
+   text-time="2003-05-19T18:17:30.000000Z"
+   committed-date="2003-04-07T08:54:07.401630Z"
+   checksum="aad35ccceeb2fd692ddb44ebe7fb8c4b"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:30.000000Z"/>
+<entry
+   committed-rev="337"
+   name="loudmouth.spec.in"
+   text-time="2003-05-19T18:17:29.000000Z"
+   committed-date="2003-04-10T22:31:29.810044Z"
+   checksum="ceb8ea0d61e3a482dedd3a29d5a04a14"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:29.000000Z"/>
+</wc-entries>

@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wc-entries
+   xmlns="svn:">
+<entry
+   committed-rev="346"
+   name="svn:this_dir"
+   committed-date="2003-04-17T10:56:10.375431Z"
+   url="http://svn.codefactory.se/svn/projects/loudmouth/trunk/loudmouth"
+   last-author="micke"
+   kind="dir"
+   revision="349"/>
+<entry
+   committed-rev="28"
+   name="lm-error.c"
+   text-time="2003-05-19T18:17:43.000000Z"
+   committed-date="2003-03-03T21:14:06.000000Z"
+   checksum="7cb5ccd82b7a64b6b92d0812e93c8736"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:43.000000Z"/>
+<entry
+   committed-rev="324"
+   name="lm-message.h"
+   text-time="2003-05-19T18:17:43.000000Z"
+   committed-date="2003-04-04T22:42:44.686791Z"
+   checksum="513f8a47e7c12a5699e220704da6feee"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:43.000000Z"/>
+<entry
+   committed-rev="330"
+   name="lm-debug.h"
+   text-time="2003-05-19T18:17:42.000000Z"
+   committed-date="2003-04-07T09:10:38.452108Z"
+   checksum="97a040c81fcad281448d5453a659ade3"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:42.000000Z"/>
+<entry
+   committed-rev="337"
+   name="lm-parser.c"
+   text-time="2003-05-19T18:17:41.000000Z"
+   committed-date="2003-04-10T22:31:29.810044Z"
+   checksum="e6d57fa9435f7cc81f7aa44abac57a73"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:41.000000Z"/>
+<entry
+   committed-rev="50"
+   name="lm-error.h"
+   text-time="2003-05-19T18:18:00.000000Z"
+   committed-date="2003-03-24T00:26:36.000000Z"
+   checksum="5a10ad1583e09154fd75b5e64e3ad3f2"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:18:00.000000Z"/>
+<entry
+   committed-rev="337"
+   name="lm-connection.c"
+   text-time="2003-05-19T18:17:58.000000Z"
+   committed-date="2003-04-10T22:31:29.810044Z"
+   checksum="a5a79cc81b6de5702136fbff0d17c297"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:58.000000Z"/>
+<entry
+   committed-rev="28"
+   name="lm-message-handler.c"
+   text-time="2003-05-19T18:17:59.000000Z"
+   committed-date="2003-03-03T21:14:06.000000Z"
+   checksum="ec20dc894176d8ec3054f1b05fdbf259"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:59.000000Z"/>
+<entry
+   committed-rev="28"
+   name="lm-utils.c"
+   text-time="2003-05-19T18:17:57.000000Z"
+   committed-date="2003-03-03T21:14:06.000000Z"
+   checksum="8f4203c0ca1c728a1007661f9685fc17"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:57.000000Z"/>
+<entry
+   committed-rev="49"
+   name="lm-parser.h"
+   text-time="2003-05-19T18:17:56.000000Z"
+   committed-date="2003-03-23T02:56:50.000000Z"
+   checksum="bf91e66076c3a0b31e05f58a71add7d4"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:56.000000Z"/>
+<entry
+   committed-rev="321"
+   name="lm-connection.h"
+   text-time="2003-05-19T18:17:54.000000Z"
+   committed-date="2003-04-03T13:56:09.915880Z"
+   checksum="082e5b0ae3899c6c7b4fe82e1649ec8a"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:54.000000Z"/>
+<entry
+   committed-rev="36"
+   name="lm-message-handler.h"
+   text-time="2003-05-19T18:17:55.000000Z"
+   committed-date="2003-03-05T01:15:07.000000Z"
+   checksum="ba9f9d70cf521b05e406890116eb00cd"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:55.000000Z"/>
+<entry
+   committed-rev="328"
+   name="lm-internals.h"
+   text-time="2003-05-19T18:17:56.000000Z"
+   committed-date="2003-04-06T23:45:14.454305Z"
+   checksum="8d1a1776d4a8e9e691ec98609ba1543b"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:56.000000Z"/>
+<entry
+   committed-rev="36"
+   name="lm-utils.h"
+   text-time="2003-05-19T18:17:53.000000Z"
+   committed-date="2003-03-05T01:15:07.000000Z"
+   checksum="4e3849fc954dea8796910ac7a75e523e"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:53.000000Z"/>
+<entry
+   committed-rev="317"
+   name="lm-message-node.c"
+   text-time="2003-05-19T18:17:53.000000Z"
+   committed-date="2003-04-01T02:25:19.357019Z"
+   checksum="d0f5cddff1c735d55056fccf6f3bd5d6"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:53.000000Z"/>
+<entry
+   committed-rev="49"
+   name="lm-sha.c"
+   text-time="2003-05-19T18:17:52.000000Z"
+   committed-date="2003-03-23T02:56:50.000000Z"
+   checksum="df27cf38cea2d92eee59b7ff6bf248d7"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:52.000000Z"/>
+<entry
+   committed-rev="317"
+   name="lm-message-node.h"
+   text-time="2003-05-19T18:17:50.000000Z"
+   committed-date="2003-04-01T02:25:19.357019Z"
+   checksum="4f4d97b1200b8b4a85fc7cd1d4e44de9"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:50.000000Z"/>
+<entry
+   committed-rev="1"
+   name="test-jid.c"
+   text-time="2003-05-19T18:17:49.000000Z"
+   committed-date="2003-01-31T11:46:56.000000Z"
+   checksum="3b67f75d3d5f3e2363634925238b3ae1"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:49.000000Z"/>
+<entry
+   committed-rev="28"
+   name="loudmouth.h"
+   text-time="2003-05-19T18:17:48.000000Z"
+   committed-date="2003-03-03T21:14:06.000000Z"
+   checksum="3085c80ec8b39e6b7f392f721399ec71"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:48.000000Z"/>
+<entry
+   committed-rev="48"
+   name="test-lm.c"
+   text-time="2003-05-19T18:17:48.000000Z"
+   committed-date="2003-03-14T01:25:25.000000Z"
+   checksum="0198283473a2bd540ca027170c7db0cc"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:48.000000Z"/>
+<entry
+   committed-rev="28"
+   name="lm-sha.h"
+   text-time="2003-05-19T18:17:46.000000Z"
+   committed-date="2003-03-03T21:14:06.000000Z"
+   checksum="af4b130fcda26d360cc930378d33cc87"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:46.000000Z"/>
+<entry
+   committed-rev="328"
+   name="Makefile.am"
+   text-time="2003-05-19T18:17:46.000000Z"
+   committed-date="2003-04-06T23:45:14.454305Z"
+   checksum="9c321d48a3c4ea273ecb5d5fb42e1581"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:46.000000Z"/>
+<entry
+   committed-rev="328"
+   name="lm-message.c"
+   text-time="2003-05-19T18:17:45.000000Z"
+   committed-date="2003-04-06T23:45:14.454305Z"
+   checksum="e4ff58e77fae68c5101c6c148cff58cc"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:45.000000Z"/>
+<entry
+   committed-rev="346"
+   name="lm-debug.c"
+   text-time="2003-05-19T18:17:44.000000Z"
+   committed-date="2003-04-17T10:56:10.375431Z"
+   checksum="dba65a5ecf3ef9feb904c963ac426a60"
+   last-author="micke"
+   kind="file"
+   prop-time="2003-05-19T18:17:44.000000Z"/>
+</wc-entries>

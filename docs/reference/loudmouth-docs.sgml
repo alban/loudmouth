@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<book id="index" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <bookinfo>
+    <title>Loudmouth Reference Manual</title>
+  </bookinfo>
+
+  <chapter>
+    <title>Loudmouth</title>
+    <xi:include href="xml/lm-connection.xml"/>
+    <xi:include href="xml/lm-error.xml"/>
+    <xi:include href="xml/lm-message.xml"/>
+    <xi:include href="xml/lm-message-handler.xml"/>
+    <xi:include href="xml/lm-message-node.xml"/>
+  </chapter>
+</book>

@@ -1,0 +1,24 @@
+<!-- ##### SECTION Title ##### -->
+LmError
+
+<!-- ##### SECTION Short_Description ##### -->
+Error reporting.
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### FUNCTION lm_error_quark ##### -->
+<para>
+-
+</para>
+
+@Returns: 
+
+

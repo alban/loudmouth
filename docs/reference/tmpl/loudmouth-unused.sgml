@@ -1,0 +1,86 @@
+<!-- ##### SECTION ./tmpl/lm-result.sgml:Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/lm-result.sgml:See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/lm-result.sgml:Short_Description ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/lm-result.sgml:Title ##### -->
+lm-result
+
+
+<!-- ##### MACRO LM_ERROR ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### ENUM LmError ##### -->
+<para>
+Describes the problem of the error.
+</para>
+
+@LM_ERROR_CONNECTION_NO_SERVER: No server defined before trying to open connection.
+@LM_ERROR_CONNECTION_NOT_OPEN: Connection not open when trying to send a message
+@LM_ERROR_CONNECTION_ALREADY_OPEN: Connection already open when trying to connect.
+@LM_ERROR_AUTH_FAILED: Authentication failed while opening connection
+
+<!-- ##### USER_FUNCTION MessageNodeFunc ##### -->
+<para>
+
+</para>
+
+@attribute: 
+@value: 
+@user_data: 
+
+<!-- ##### FUNCTION lm_message_node_add_child_message_node ##### -->
+<para>
+
+</para>
+
+@message_node: 
+@child: 
+
+<!-- ##### FUNCTION lm_message_node_foreach_attribute ##### -->
+<para>
+
+</para>
+
+@message_node: 
+@func: 
+@user_data: 
+
+<!-- ##### FUNCTION lm_message_node_new ##### -->
+<para>
+
+</para>
+
+@name: 
+@Returns: 
+
+<!-- ##### FUNCTION lm_message_node_set_child_value ##### -->
+<para>
+
+</para>
+
+@message_node: 
+@child_name: 
+@value: 
+
+<!-- ##### FUNCTION lm_message_node_unlink ##### -->
+<para>
+
+</para>
+
+@message_node: 
+
