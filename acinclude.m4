@@ -217,3 +217,32 @@ the latter case, you"
 ])
 
 
+dnl ***************
+dnl Timezone checks
+dnl ***************
+AC_DEFUN([LM_CHECK_TIMEZONE],[
+AC_CACHE_CHECK(for tm_gmtoff in struct tm, ac_cv_struct_tm_gmtoff,
+	AC_TRY_COMPILE([
+		#include <time.h>
+		], [
+		struct tm tm;
+		tm.tm_gmtoff = 1;
+		], ac_cv_struct_tm_gmtoff=yes, ac_cv_struct_tm_gmtoff=no))
+if test $ac_cv_struct_tm_gmtoff = yes; then
+	AC_DEFINE(HAVE_TM_GMTOFF, 1, [Define if struct tm has a tm_gmtoff member])
+else
+	AC_CACHE_CHECK(for timezone variable, ac_cv_var_timezone,
+		AC_TRY_COMPILE([
+			#include <time.h>
+		], [
+			timezone = 1;
+		], ac_cv_var_timezone=yes, ac_cv_var_timezone=no))
+	if test $ac_cv_var_timezone = yes; then
+		AC_DEFINE(HAVE_TIMEZONE, 1, [Define if libc defines a timezone variable])
+	else
+		AC_ERROR(unable to find a way to determine timezone)
+	fi
+fi
+])
+
+

@@ -65,22 +65,30 @@ _lm_utils_generate_id (void)
 struct tm *
 lm_utils_get_localtime (const gchar *stamp)
 {
-	struct tm tmp_tm;
+	struct tm tm;
 	time_t    t;
 	gint      year, month;
 	
 	/* 20021209T23:51:30 */
 
 	sscanf (stamp, "%4d%2d%2dT%2d:%2d:%2d", 
-		&year, &month, &tmp_tm.tm_mday, &tmp_tm.tm_hour,
-		&tmp_tm.tm_min, &tmp_tm.tm_sec);
+		&year, &month, &tm.tm_mday, &tm.tm_hour,
+		&tm.tm_min, &tm.tm_sec);
 
-	tmp_tm.tm_year = year - 1900;
-	tmp_tm.tm_mon = month - 1;
-	tmp_tm.tm_isdst = -1;
+	tm.tm_year = year - 1900;
+	tm.tm_mon = month - 1;
+	tm.tm_isdst = -1;
 
- 	t = mktime (&tmp_tm);
-	t = t - (int) timezone;
+ 	t = mktime (&tm);
+
+#if defined(HAVE_TM_GMTOFF)
+	t += tm.tm_gmtoff;
+#elif defined(HAVE_TIMEZONE)
+	t -= timezone;
+	if (tm.tm_isdst > 0) {
+		t += 3600;
+	}
+#endif	
 
 	return localtime (&t);
 }

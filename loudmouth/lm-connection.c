@@ -435,9 +435,10 @@ connection_timeout_check_open (OpenTimeoutData *data)
 		connection_do_close (connection);
 		return FALSE;
 	}
-	
-	g_print ("In timeoutfunc\n");
 
+#if 0
+	g_print ("In timeoutfunc\n");
+#endif
 	m = lm_message_new (connection->server, LM_MESSAGE_TYPE_STREAM);
 	lm_message_node_set_attributes (m->node,
 					"xmlns:stream", "http://etherx.jabber.org/streams",
@@ -453,9 +454,11 @@ connection_timeout_check_open (OpenTimeoutData *data)
 	}
 		
 	lm_message_unref (m);
-	
-	g_print ("Success!!\n");
 
+#if 0
+	g_print ("Success!!\n");
+#endif
+	
 	/* Success */
 	return FALSE;
 }
