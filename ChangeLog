@@ -1,3 +1,9 @@
+2004-09-02  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-connection.c: (lm_connection_set_proxy):
+	- Use NULL to unset the proxy settings
+	* docs/reference/tmp/lm-proxy.sgml: Updated LmProxyType docs
+
 2004-08-30  Mikael Hallendal  <micke@imendio.com>
 
 	* Released 0.17.1

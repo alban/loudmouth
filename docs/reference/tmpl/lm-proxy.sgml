@@ -35,7 +35,7 @@ This should not be accessed directly. Use the accessor functions as described be
 The type of the proxy.
 </para>
 
-@LM_PROXY_TYPE_NONE: Use this to unset the proxy on an #LmConnection.
+@LM_PROXY_TYPE_NONE: Unused
 @LM_PROXY_TYPE_HTTP: An HTTP proxy.
 
 <!-- ##### FUNCTION lm_proxy_new ##### -->

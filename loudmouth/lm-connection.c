@@ -1659,15 +1659,13 @@ lm_connection_get_proxy (LmConnection *connection)
  * @connection: an #LmConnection
  * @proxy: an #LmProxy
  *
- * Sets the proxy to use for this connection. To unset pass a proxy of type 
- * #LM_PROXY_TYPE_NONE to this function.
+ * Sets the proxy to use for this connection. To unset pass #NULL.
  * 
  **/
 void
 lm_connection_set_proxy (LmConnection *connection, LmProxy *proxy)
 {
 	g_return_if_fail (connection != NULL);
-	g_return_if_fail (proxy != NULL);
 
 	if (lm_connection_is_open (connection)) {
 		g_warning ("Can't change server proxy while connected");
@@ -1679,7 +1677,7 @@ lm_connection_set_proxy (LmConnection *connection, LmProxy *proxy)
 		connection->proxy = NULL;
 	}
 
-	if (lm_proxy_get_type (proxy) != LM_PROXY_TYPE_NONE) {
+	if (proxy && lm_proxy_get_type (proxy) != LM_PROXY_TYPE_NONE) {
 		connection->proxy = lm_proxy_ref (proxy);
 	}
 }
