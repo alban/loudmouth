@@ -182,8 +182,6 @@ docs/Makefile
 docs/reference/Makefile
 loudmouth/Makefile
 examples/Makefile
-mono/Makefile
-mono/loudmouth-sharp.pc
 loudmouth-1.0.pc
 loudmouth.spec])
 

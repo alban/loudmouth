@@ -1,3 +1,14 @@
+2004-08-27  Mikael Hallendal  <micke@imendio.com>
+
+	* Released 0.17
+	
+	* NEWS: Updated for 0.17
+	* configure.in: Don't try to output mono Makefiles
+	* docs/reference/tmpl/lm-connection.sgml: Updated
+	* loudmouth/lm-connection.[ch]:
+	- Changed the LmConnectionState enum to follow the rest of the API 
+	  better.
+
 2004-08-25  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-connection.[ch]: 

@@ -594,7 +594,7 @@ connection_do_open (LmConnection *connection, GError **error)
 	req.ai_protocol = IPPROTO_TCP;
 	
 	connection->cancel_open = FALSE;
-	connection->state = LM_CONNECTION_STATE_CONNECTING;
+	connection->state = LM_CONNECTION_STATE_OPENING;
 	
 	if (connection->proxy) {
 		const gchar *proxy_server;
@@ -664,7 +664,7 @@ connection_do_close (LmConnection *connection)
 		return;
 	}
 	
-	connection->state = LM_CONNECTION_STATE_DISCONNECTED;
+	connection->state = LM_CONNECTION_STATE_CLOSED;
 
 	if (connection->ssl) {
 		_lm_ssl_close (connection->ssl);
@@ -776,7 +776,7 @@ connection_send (LmConnection  *connection,
 {
 	gsize             bytes_written;
 	
-	if (connection->state < LM_CONNECTION_STATE_CONNECTING) {
+	if (connection->state < LM_CONNECTION_STATE_OPENING) {
 		g_set_error (error,
 			     LM_ERROR,
 			     LM_ERROR_CONNECTION_NOT_OPEN,
@@ -967,7 +967,7 @@ connection_auth_reply (LmMessageHandler *handler,
 	} 
 	else if (strcmp (type, "error") == 0) {
 		result = FALSE;
-		connection->state = LM_CONNECTION_STATE_CONNECTED;
+		connection->state = LM_CONNECTION_STATE_OPEN;
 	}
 	
 	lm_verbose ("AUTH reply: %d\n", result);
@@ -999,7 +999,7 @@ connection_stream_received (LmConnection *connection, LmMessage *m)
 	
 	lm_verbose ("Stream received: %s\n", connection->stream_id);
 	
-	connection->state = LM_CONNECTION_STATE_CONNECTED;
+	connection->state = LM_CONNECTION_STATE_OPEN;
 	
 	/* Check to see if the stream is correctly set up */
 	result = TRUE;
@@ -1116,7 +1116,7 @@ lm_connection_new (const gchar *server)
 	connection->disconnect_cb     = NULL;
 	connection->incoming_messages = g_queue_new ();
 	connection->cancel_open       = FALSE;
-	connection->state             = LM_CONNECTION_STATE_DISCONNECTED;
+	connection->state             = LM_CONNECTION_STATE_CLOSED;
 	connection->keep_alive_id     = 0;
 	
 	connection->id_handlers = g_hash_table_new_full (g_str_hash, 
@@ -1211,7 +1211,7 @@ lm_connection_open_and_block (LmConnection *connection, GError **error)
 		return FALSE;
 	}
 	
-	while ((state = lm_connection_get_state (connection)) == LM_CONNECTION_STATE_CONNECTING) {
+	while ((state = lm_connection_get_state (connection)) == LM_CONNECTION_STATE_OPENING) {
 		if (g_main_context_pending (connection->context)) {
 			g_main_context_iteration (connection->context, TRUE);
 		} else {
@@ -1231,7 +1231,7 @@ lm_connection_open_and_block (LmConnection *connection, GError **error)
  * lm_connection_cancel_open:
  * @connection: an #LmConnection to cancel opening on
  *
- * Cancels the open operation of a connection. The connection should be in the state #LM_CONNECTION_STATE_CONNECTING.
+ * Cancels the open operation of a connection. The connection should be in the state #LM_CONNECTION_STATE_OPENING.
  **/
 void
 lm_connection_cancel_open (LmConnection *connection)
@@ -1464,7 +1464,7 @@ lm_connection_is_open (LmConnection *connection)
 {
 	g_return_val_if_fail (connection != NULL, FALSE);
 	
-	return connection->state >= LM_CONNECTION_STATE_CONNECTED;
+	return connection->state >= LM_CONNECTION_STATE_OPEN;
 }
 
 /**
@@ -1945,7 +1945,7 @@ LmConnectionState
 lm_connection_get_state (LmConnection *connection)
 {
 	g_return_val_if_fail (connection != NULL, 
-			      LM_CONNECTION_STATE_DISCONNECTED);
+			      LM_CONNECTION_STATE_CLOSED);
 
 	return connection->state;
 }

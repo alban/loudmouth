@@ -109,14 +109,14 @@ Sent with #LmDisconnectFunction to describe why a connection was closed.
 
 <!-- ##### ENUM LmConnectionState ##### -->
 <para>
-
+Describes the current state of an #LmConnection.
 </para>
 
-@LM_CONNECTION_STATE_DISCONNECTED: 
-@LM_CONNECTION_STATE_CONNECTING: 
-@LM_CONNECTION_STATE_CONNECTED: 
-@LM_CONNECTION_STATE_AUTHENTICATING: 
-@LM_CONNECTION_STATE_AUTHENTICATED: 
+@LM_CONNECTION_STATE_CLOSED: The connection is closed.
+@LM_CONNECTION_STATE_OPENING: The connection is in the process of opening.
+@LM_CONNECTION_STATE_OPEN: The connection is open.
+@LM_CONNECTION_STATE_AUTHENTICATING: The connection is in the process of authenticating.
+@LM_CONNECTION_STATE_AUTHENTICATED: The connection is authenticated and is ready to start sending/receiving messages.
 
 <!-- ##### USER_FUNCTION LmResultFunction ##### -->
 <para>
