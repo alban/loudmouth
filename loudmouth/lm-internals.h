@@ -33,22 +33,30 @@ typedef struct {
 	GDestroyNotify notify;
 } LmCallback;
 
-LmCallback *_lm_utils_new_callback (gpointer func, 
-				    gpointer user_data,
-				    GDestroyNotify notify);
-void _lm_utils_free_callback (LmCallback *cb);
+LmCallback *     _lm_utils_new_callback             (gpointer          func, 
+						     gpointer          data,
+						     GDestroyNotify    notify);
+void             _lm_utils_free_callback            (LmCallback       *cb);
 
-gchar *            _lm_utils_generate_id             (void);
-LmHandlerResult _lm_message_handler_handle_message   (LmMessageHandler *handler,
-						      LmConnection     *connection,
-						      LmMessage        *messag);
+gchar *          _lm_utils_generate_id              (void);
+gchar *          _lm_utils_base64_encode            (const gchar      *str);
+const gchar *    _lm_message_type_to_string         (LmMessageType     type);
+const gchar *    _lm_message_sub_type_to_string     (LmMessageSubType  type);
+LmMessage *      _lm_message_new_from_node          (LmMessageNode    *node);
+void             _lm_message_node_add_child_node    (LmMessageNode    *node,
+						     LmMessageNode    *child);
+LmMessageNode *  _lm_message_node_new               (const gchar      *name);
+void             _lm_debug_init                     (void);
 
-const gchar *      _lm_message_type_to_string         (LmMessageType     type);
-const gchar *      _lm_message_sub_type_to_string     (LmMessageSubType  type);
-LmMessage *        _lm_message_new_from_node          (LmMessageNode    *node);
-void               _lm_message_node_add_child_node    (LmMessageNode    *node,
-						       LmMessageNode    *child);
-LmMessageNode *    _lm_message_node_new               (const gchar  *name);
-void               _lm_debug_init                     (void);
+gboolean         _lm_proxy_negotiate                (LmProxy          *proxy,
+						     gint              fd,
+						     const gchar      *server,
+						     guint             port);
+
+LmHandlerResult    
+_lm_message_handler_handle_message                (LmMessageHandler *handler,
+						   LmConnection     *connection,
+						   LmMessage        *messag);
+
 
 #endif /* __LM_INTERNALS_H__ */

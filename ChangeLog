@@ -1,3 +1,23 @@
+2004-01-15  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/Makefile.am:
+	- Added lm-proxy.[ch]
+	* loudmouth/lm-connection.c:
+	* loudmouth/lm-connection.h:
+	- Commited patch from Sjoerd Simons to make async connect work better.
+	- Cleaned out the proxy support to it's own file.
+	- Made sure all public functions user g_return_(val)_if_fail.
+	* loudmouth/lm-internals.h:
+	- cleaned up a bit and added proxy function and base64 encoding
+	* loudmouth/lm-message-handler.c:
+	- include config.h
+	* loudmouth/lm-proxy.c:
+	* loudmouth/lm-proxy.h:
+	- Added, broken out of LmConnection
+	- Commited patch from Josh Beam
+	* loudmouth/lm-utils.c:
+	(_lm_utils_base64_encode): Added.
+
 2004-01-08  Richard Hult  <richard@imendio.com>
 
 	* loudmouth/lm-connection.c (connection_timeout_check_open):

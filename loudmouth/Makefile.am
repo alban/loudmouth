@@ -24,6 +24,7 @@ libloudmouth_la_SOURCES =		\
 	lm-sha.c			\
 	lm-sha.h			\
 	lm-utils.c			\
+	lm-proxy.c                      \
 	lm-queue.c                      \
 	lm-queue.h                      \
 	$(NULL)
@@ -35,6 +36,7 @@ libloudmouthinclude_HEADERS =		\
 	lm-message-handler.h		\
 	lm-message-node.h		\
 	lm-utils.h			\
+	lm-proxy.h                      \
 	loudmouth.h			\
 	$(NULL)
 

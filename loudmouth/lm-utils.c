@@ -62,6 +62,69 @@ _lm_utils_generate_id (void)
 	return g_strdup_printf ("msg_%d", ++number);
 }
 
+gchar * 
+_lm_utils_base64_encode (const gchar *s)
+{
+	static const gchar *base64chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+	guint    i, j;
+	guint32  bits = 0;
+	guint    maxlen = (strlen(s) * 2) + 3;
+	gchar   *str;
+
+	str = g_malloc(maxlen);
+
+	j = 0;
+	for (i = 0; i < strlen(s); i++) {
+		bits <<= 8;
+		bits |= s[i] & 0xff;
+
+		if (!((i+1) % 3)) {
+			guint indices[4];
+
+			indices[0] = (bits >> 18) & 0x3f;
+			indices[1] = (bits >> 12) & 0x3f;
+			indices[2] = (bits >> 6) & 0x3f;
+			indices[3] = bits & 0x3f;
+			bits = 0;
+
+			str[j++] = base64chars[(indices[0])];
+			str[j++] = base64chars[(indices[1])];
+			str[j++] = base64chars[(indices[2])];
+			str[j++] = base64chars[(indices[3])];
+		}
+	}
+
+	if (j + 4 < maxlen) {
+		if ((i % 3) == 1) {
+			guint indices[2];
+
+			indices[0] = (bits >> 2) & 0x3f;
+			indices[1] = (bits << 4) & 0x3f;
+
+			str[j++] = base64chars[(indices[0])];
+			str[j++] = base64chars[(indices[1])];
+			str[j++] = '=';
+			str[j++] = '=';
+		} else if ((i % 3) == 2) {
+			guint indices[3];
+
+			indices[0] = (bits >> 10) & 0x3f;
+			indices[1] = (bits >> 4) & 0x3f;
+			indices[2] = (bits << 2) & 0x3f;
+
+			str[j++] = base64chars[(indices[0])];
+			str[j++] = base64chars[(indices[1])];
+			str[j++] = base64chars[(indices[2])];
+			str[j++] = '=';
+		}
+	}
+
+	str[j] = '\0';
+
+	return str;
+}
+
 struct tm *
 lm_utils_get_localtime (const gchar *stamp)
 {

@@ -26,6 +26,7 @@
 #error "Only <loudmouth/loudmouth.h> can be included directly, this file may di\sappear or change contents."
 #endif
 
+#include <loudmouth/lm-proxy.h>
 #include <loudmouth/lm-message.h>
 
 #define LM_CONNECTION(o) (LmConnection *) o;
@@ -55,11 +56,6 @@ typedef enum {
 	LM_DISCONNECT_REASON_ERROR,
 	LM_DISCONNECT_REASON_UNKNOWN
 } LmDisconnectReason;
-
-typedef enum {
-	LM_PROXY_TYPE_NONE = 0,
-	LM_PROXY_TYPE_HTTP
-} LmProxyType;
 
 typedef enum {
 	LM_CERT_INVALID,
@@ -149,21 +145,13 @@ void          lm_connection_set_use_ssl       (LmConnection       *connection,
 					       gpointer            user_data);
 gboolean      lm_connection_get_use_ssl       (LmConnection       *connection);
 
-LmProxyType   lm_connection_get_proxy_type    (LmConnection       *connection);
-void          lm_connection_set_proxy_type    (LmConnection       *connection,
-                                               LmProxyType         type);
-
-const gchar * lm_connection_get_proxy_server  (LmConnection       *connection);
-void          lm_connection_set_proxy_server  (LmConnection       *connection,
-                                               const gchar        *server);
-
-guint         lm_connection_get_proxy_port    (LmConnection       *connection);
-void          lm_connection_set_proxy_port    (LmConnection       *connection,
-                                               guint               port);
-
 const unsigned char * 
 lm_connection_get_fingerprint                 (LmConnection       *connection);
 					       
+LmProxy *     lm_connection_get_proxy         (LmConnection       *connection);
+void          lm_connection_set_proxy         (LmConnection       *connection,
+					       LmProxy            *proxy);
+
 gboolean      lm_connection_send              (LmConnection       *connection,
 					       LmMessage          *message,
 					       GError            **error);

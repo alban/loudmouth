@@ -18,6 +18,8 @@
  * Boston, MA 02111-1307, USA.
  */
 
+#include <config.h>
+
 #include "lm-internals.h"
 #include "lm-message-handler.h"
 
@@ -115,7 +117,7 @@ lm_message_handler_is_valid (LmMessageHandler *handler)
  * lm_message_handler_ref:
  * @handler: an #LmMessageHandler
  * 
- * Adds a reference to @node.
+ * Adds a reference to @handler.
  * 
  * Return value: the message handler
  **/
