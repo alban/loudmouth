@@ -40,7 +40,7 @@ struct _LmMessageNode {
 	LmMessageNode     *parent;
         LmMessageNode     *children;
 
-	/* Private */
+	/* < private > */
 	GSList     *attributes;
 	gint        ref_count;
 };
@@ -59,9 +59,9 @@ void           lm_message_node_set_attribute  (LmMessageNode *node,
 					       const gchar   *value);
 const gchar *  lm_message_node_get_attribute  (LmMessageNode *node,
 					       const gchar   *name);
-LmMessageNode *lm_message_node_get_child      (LmMessageNode *message_node,
+LmMessageNode *lm_message_node_get_child      (LmMessageNode *node,
 					       const gchar   *child_name);
-LmMessageNode *lm_message_node_find_child     (LmMessageNode *message_node,
+LmMessageNode *lm_message_node_find_child     (LmMessageNode *node,
 					       const gchar   *child_name);
 gboolean       lm_message_node_get_raw_mode   (LmMessageNode *node);
 void           lm_message_node_set_raw_mode   (LmMessageNode *node,

@@ -21,13 +21,11 @@ A struct representing a node in a message.
 
 @name: the name of the node
 @value: value of the node, can be NULL
-@raw_mode: 
+@raw_mode: if true, don't escape the content of the message. The content must be valid XML.
 @next: next sibling
 @prev: previous sibling
 @parent: node parent
 @children: pointing to first child
-@attributes: list of attributes. This shouldn't be accessed directly.
-@ref_count: Reference count of node, internal value.
 
 <!-- ##### FUNCTION lm_message_node_get_value ##### -->
 <para>
@@ -93,9 +91,11 @@ A struct representing a node in a message.
 
 </para>
 
-@message_node: 
+@node: 
 @child_name: 
 @Returns: 
+<!-- # Unused Parameters # -->
+@message_node: 
 
 
 <!-- ##### FUNCTION lm_message_node_find_child ##### -->
@@ -103,9 +103,11 @@ A struct representing a node in a message.
 
 </para>
 
-@message_node: 
+@node: 
 @child_name: 
 @Returns: 
+<!-- # Unused Parameters # -->
+@message_node: 
 
 
 <!-- ##### FUNCTION lm_message_node_get_raw_mode ##### -->

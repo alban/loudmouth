@@ -16,7 +16,6 @@ lm_connection_close
 lm_connection_authenticate
 lm_connection_authenticate_and_block
 lm_connection_is_open
-lm_connection_is_connected
 lm_connection_is_authenticated
 lm_connection_get_server
 lm_connection_set_server

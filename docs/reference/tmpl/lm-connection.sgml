@@ -52,7 +52,7 @@ The return type of an LmMessageHandler. This determines whether more message han
 
 <!-- ##### ENUM LmHandlerPriority ##### -->
 <para>
-Since the handlers decide whether to stop the calling chain with there return values it's sometimes decirable to be able to set priority. For example a handler that only logs all incoming messages and then pass the message on to another handler wants to have priority %LM_HANDLER_PRIORITY_FIRST. An handler that should take all messages that wasn't handled by anything else would want to have priority %LM_HANDLER_PRIORITY_LAST. If several handlers have the same priority nothing can be side about which handler will be called first of them.
+Since the handlers decide whether to stop the calling chain with there return values it's sometimes decirable to be able to set priority. For example a handler that only logs all incoming messages and then pass the message on to another handler wants to have priority %LM_HANDLER_PRIORITY_FIRST. An handler that should take all messages that wasn't handled by anything else would want to have priority %LM_HANDLER_PRIORITY_LAST. If several handlers have the same priority nothing can be said about the order the handlers will be called in.
 </para>
 
 @LM_HANDLER_PRIORITY_LAST: Call the handler after all handlers with #NORMAL and #FIRST priority.
@@ -65,7 +65,7 @@ Sent with #LmDisconnectFunction to describe why a connection was closed.
 </para>
 
 @LM_DISCONNECT_REASON_OK: 
-@LM_DISCONNECT_REASON_PING_TIME_OUT: Connection to the server pinged out.
+@LM_DISCONNECT_REASON_PING_TIME_OUT: Connection to the server timed out.
 @LM_DISCONNECT_REASON_HUP: The socket emitted that the connection was hung up.
 @LM_DISCONNECT_REASON_ERROR: A generic error somewhere in the transport layer.
 @LM_DISCONNECT_REASON_UNKNOWN: An unknown error.

@@ -907,7 +907,7 @@ lm_connection_new (const gchar *server)
  * @notify: Function for freeing that user_data, can be NULL.
  * @error: location to store error, or %NULL
  * 
- * An async call to open @connection. When the connection is open @function will be called.
+ * An asynchronous call to open @connection. When the connection is open @function will be called.
  * 
  * Return value: #TRUE if everything went fine, otherwise #FALSE.
  **/
@@ -1055,7 +1055,7 @@ lm_connection_open_and_block (LmConnection *connection, GError **error)
  * @connection: #LmConnection to close 
  * @error: location to store error, or %NULL
  * 
- * A synchronos call to close the connection. When returning the connection is considered to be closed and can be opened again with lm_connection_open().
+ * A synchronous call to close the connection. When returning the connection is considered to be closed and can be opened again with lm_connection_open().
  * 
  * Return value: Returns #TRUE if no errors where detected, otherwise #FALSE.
  **/
@@ -1100,7 +1100,7 @@ lm_connection_close (LmConnection      *connection,
  * @notify: Destroy function to free the memory used by @user_data, can be NULL.
  * @error: location to store error, or %NULL
  * 
- * Tries to authenticate a user against the server. The #LmResult in the result callback will tell if it succeeded or not. 
+ * Tries to authenticate a user against the server. The #LmResult in the result callback @function will say whether it succeeded or not. 
  * 
  * Return value: #TRUE if no errors where detected while sending the authentication message, #FALSE otherwise.
  **/
@@ -1279,7 +1279,7 @@ lm_connection_get_server (LmConnection *connection)
  * @connection: an #LmConnection
  * @server: Address of the server
  * 
- * Sets the server address to @connection. Notice that @connection can't be open while doing this.
+ * Sets the server address for @connection to @server. Notice that @connection can't be open while doing this.
  **/
 void
 lm_connection_set_server (LmConnection *connection, const gchar *server)
@@ -1300,7 +1300,7 @@ lm_connection_set_server (LmConnection *connection, const gchar *server)
  * lm_connection_get_port:
  * @connection: an #LmConnection
  * 
- * Fetches the port tnat @connection is using.
+ * Fetches the port that @connection is using.
  * 
  * Return value: 
  **/
@@ -1315,7 +1315,7 @@ lm_connection_get_port (LmConnection *connection)
  * @connection: an #LmConnection
  * @port: server port
  * 
- * Sets the server port of that @connection will be using.
+ * Sets the server port that @connection will be using.
  **/
 void
 lm_connection_set_port (LmConnection *connection, guint port)
@@ -1331,9 +1331,9 @@ lm_connection_set_port (LmConnection *connection, guint port)
 /**
  * lm_connection_supports_ssl:
  *
- * Checks whether Loudmouth supports SSL or not
+ * Checks whether Loudmouth supports SSL or not.
  *
- * Return value: #TRUE if this installation of Loudmouth supports SSL, otherwise returnes #FALSE.
+ * Return value: #TRUE if this installation of Loudmouth supports SSL, otherwise returns #FALSE.
  **/
 gboolean
 lm_connection_supports_ssl (void)
@@ -1349,7 +1349,7 @@ lm_connection_supports_ssl (void)
  * lm_connection_get_use_ssl:
  * @connection: an #LmConnection
  * 
- * Fetches if @connection is using SSL or not
+ * Returns if @connection is using SSL or not
  * 
  * Return value: #TRUE if @connection is using SSL, #FALSE otherwise.
  **/
@@ -1364,7 +1364,7 @@ lm_connection_get_use_ssl (LmConnection *connection)
  * @connection: an #LmConnection
  * @use_ssl: whether to use SSL or not.
  * 
- * Sets whether @connection should use SSL for encryping traffic to/from the server.
+ * Sets whether @connection should use SSL for encrypting traffic to/from the server.
  **/
 void
 lm_connection_set_use_ssl (LmConnection *connection, gboolean use_ssl)
@@ -1379,7 +1379,7 @@ lm_connection_set_use_ssl (LmConnection *connection, gboolean use_ssl)
 
 /**
  * lm_connection_send: 
- * @connection: #LmConnection to send connection over.
+ * @connection: #LmConnection to send message over.
  * @message: #LmMessage to send.
  * @error: location to store error, or %NULL
  * 
@@ -1419,7 +1419,7 @@ lm_connection_send (LmConnection  *connection,
  * 
  * Send a #LmMessage which will result in a reply. 
  * 
- * Return value: 
+ * Return value: Returns #TRUE if no errors where detected while sending, #FALSE otherwise.
  **/
 gboolean 
 lm_connection_send_with_reply (LmConnection      *connection,
@@ -1649,7 +1649,7 @@ lm_connection_ref (LmConnection *connection)
  * @connection: Connection to remove reference from.
  * 
  * Removes a reference on @connection. If there are no references to
- * @connection it will be fried and shouldn't be used again.
+ * @connection it will be freed and shouldn't be used again.
  **/
 void
 lm_connection_unref (LmConnection *connection)

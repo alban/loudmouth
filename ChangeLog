@@ -1,3 +1,23 @@
+2003-11-20  Ross Burton  <ross@burtonini.com>
+
+	* loudmouth/lm-message-node.h:
+	- Mark the private members how gtk-doc wants it.
+
+	* loudmouth/lm-message-node.c:
+	- Fix comment typos and document more parameters.
+
+	* loudmouth/lm-connection.c: Fix comment typos.
+
+	* docs/reference/loudmouth-sections.txt: 
+	- Removed a non-existent function.
+
+	* docs/reference/tmpl/lm-connection.sgml: Fix some typos.
+
+	* docs/reference/tmpl/lm-message-node.sgml:
+	- Document raw_node, and remove private fields.
+
+	* docs/reference/tmpl/lm-message.sgml: gtk-doc did this itself...
+
 2003-11-16  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-connection.c: 

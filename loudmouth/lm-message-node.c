@@ -191,6 +191,7 @@ lm_message_node_add_child (LmMessageNode *node,
  * lm_message_node_set_attributes:
  * @node: an #LmMessageNode
  * @name: the first attribute, should be followed by a string with the value
+ * @Varargs: The rest of the name/value pairs
  * 
  * Sets a list of attributes. The arguments should be names and corresponding 
  * value and needs to be ended with %NULL.
@@ -310,8 +311,8 @@ lm_message_node_get_child (LmMessageNode *node, const gchar *child_name)
 
 /**
  * lm_message_node_find_child:
- * @node: 
- * @child_name: 
+ * @node: A #LmMessageNode
+ * @child_name: The name of the child to find
  * 
  * Locates a child among all children of @node. The entire tree will be search 
  * until a child with name @child_name is located. 
