@@ -32,7 +32,7 @@ typedef enum {
 				LM_LOG_LEVEL_PARSER)
 } LmLogLevelFlags;
 
-#ifndef LL_LOG_DOMAIN
+#ifndef LM_LOG_DOMAIN
 #  define LM_LOG_DOMAIN "LM"
 #endif
 
