@@ -1,5 +1,19 @@
 2003-07-17  Mikael Hallendal  <micke@imendio.com>
 
+	* loudmouth/lm-connection.c:
+	(auth_req_data_free): Added, free's auth data
+	(connection_create_auth_req_msg): 
+	- Added, generates an auth request message
+	(connection_create_auth_msg):
+	- Added, generates an auth message
+	(connection_auth_req_reply): Added
+	(connection_check_auth_type): Added
+	(lm_connection_authenticate): Modified
+	(lm_connection_authenticate_and_block): Modified
+        - Fixes cf-bug #509
+
+2003-07-17  Mikael Hallendal  <micke@imendio.com>
+
 	* configure.in: Added GNUTLS_REQUIRED
 	* loudmouth.spec.in: Added gnutls dependency in RPM's.
 

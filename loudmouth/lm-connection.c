@@ -1,5 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
+ * Copyright (C) 2003 Imendio HB
  * Copyright (C) 2003 Mikael Hallendal <micke@imendio.com>
  * Copyright (C) 2003 CodeFactory AB. 
  *
@@ -92,6 +93,12 @@ struct _LmConnection {
 	gint        ref_count;
 };
 
+typedef enum {
+	AUTH_TYPE_PLAIN  = 1,
+	AUTH_TYPE_DIGEST = 2,
+	AUTH_TYPE_0K     = 4
+} AuthType;
+
 static void     connection_free (LmConnection *connection);
 
 
@@ -118,6 +125,18 @@ static gboolean connection_send              (LmConnection             *connecti
 					      const gchar          *str,
 					      gint                  len,
 					      GError               **error);
+static LmMessage *     connection_create_auth_req_msg (const gchar *username);
+static LmMessage *     connection_create_auth_msg     (LmConnection *connection,
+						       const gchar  *username,
+						       const gchar  *password,
+						       const gchar  *resource,
+						       gint          auth_type);
+static LmHandlerResult connection_auth_req_reply (LmMessageHandler *handler,
+						  LmConnection     *connection,
+						  LmMessage        *m,
+						  gpointer          user_data);
+static int connection_check_auth_type   (LmMessage           *auth_req_rpl);
+					      
 static LmHandlerResult connection_auth_reply (LmMessageHandler    *handler,
 					      LmConnection        *connection,
 					      LmMessage           *m,
@@ -156,7 +175,6 @@ connection_free (LmConnection *connection)
 
 	g_free (connection);
 }
-
 
 static void
 connection_handle_message (LmConnection *connection, LmMessage *m)
@@ -454,6 +472,143 @@ connection_send (LmConnection  *connection,
 #endif
 
 	return TRUE;
+}
+
+typedef struct {
+	gchar        *username;
+	gchar        *password;
+	gchar        *resource;
+} AuthReqData;
+
+static void 
+auth_req_data_free (AuthReqData *data) {
+	g_free (data->username);
+	g_free (data->password);
+	g_free (data->resource);
+	g_free (data);
+}
+
+static LmMessage *
+connection_create_auth_req_msg (const gchar *username)
+{
+	LmMessage     *m;
+	LmMessageNode *q_node;
+	
+	m = lm_message_new_with_sub_type (NULL, LM_MESSAGE_TYPE_IQ,
+					  LM_MESSAGE_SUB_TYPE_GET);
+	q_node = lm_message_node_add_child (m->node, "query", NULL);
+	lm_message_node_set_attributes (q_node,
+					"xmlns", "jabber:iq:auth",
+					NULL);
+	lm_message_node_add_child (q_node, "username", username);
+
+	return m;
+}
+
+static LmMessage *
+connection_create_auth_msg (LmConnection *connection,
+			    const gchar  *username,
+			    const gchar  *password,
+			    const gchar  *resource,
+			    gint          auth_type)
+{
+	LmMessage     *auth_msg;
+	LmMessageNode *q_node;
+
+	auth_msg = lm_message_new_with_sub_type (NULL, LM_MESSAGE_TYPE_IQ,
+						 LM_MESSAGE_SUB_TYPE_SET);
+	
+	q_node = lm_message_node_add_child (auth_msg->node, "query", NULL);
+	
+	lm_message_node_set_attributes (q_node,
+					"xmlns", "jabber:iq:auth", 
+					NULL);
+
+	lm_message_node_add_child (q_node, "username", username);
+	
+	if (auth_type & AUTH_TYPE_0K) {
+		lm_verbose ("Using 0k auth (not implemented yet)\n");
+		/* TODO: Should probably use this? */
+	}
+
+	if (auth_type & AUTH_TYPE_DIGEST) {
+		gchar       *str;
+		const gchar *digest;
+
+		lm_verbose ("Using digest\n");
+		str = g_strconcat (connection->stream_id, password, NULL);
+		digest = lm_sha_hash (str);
+		g_free (str);
+		lm_message_node_add_child (q_node, "digest", digest);
+	} 
+	else if (auth_type & AUTH_TYPE_PLAIN) {
+		lm_verbose ("Using plaintext auth\n");
+		lm_message_node_add_child (q_node, "password", password);
+	} else {
+		/* TODO: Report error somehow */
+	}
+	
+	lm_message_node_add_child (q_node, "resource", resource);
+
+	return auth_msg;
+}
+
+static LmHandlerResult
+connection_auth_req_reply (LmMessageHandler *handler,
+			   LmConnection     *connection,
+			   LmMessage        *m,
+			   gpointer          user_data)
+{
+	int               auth_type;
+	LmMessage        *auth_msg;
+	LmMessageHandler *auth_handler;
+	AuthReqData      *data = (AuthReqData *) user_data;      
+	gboolean          result;
+	
+	auth_type = connection_check_auth_type (m);
+
+	auth_msg = connection_create_auth_msg (connection, 
+					       data->username,
+					       data->password,
+					       data->resource,
+					       auth_type);
+
+	auth_handler = lm_message_handler_new (connection_auth_reply,
+					       NULL, NULL);
+	result = lm_connection_send_with_reply (connection, auth_msg, 
+						auth_handler, NULL);
+	lm_message_handler_unref (auth_handler);
+	lm_message_unref (auth_msg);
+	
+	return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+static int
+connection_check_auth_type (LmMessage *auth_req_rpl)
+{
+	LmMessageNode *q_node;
+	gint           ret_val = 0; 
+
+	q_node = lm_message_node_get_child (auth_req_rpl->node, "query");
+	
+	if (!q_node) {
+		return AUTH_TYPE_PLAIN;
+	}
+
+	if (lm_message_node_get_child (q_node, "password")) {
+		ret_val |= AUTH_TYPE_PLAIN;
+	}
+
+	if (lm_message_node_get_child (q_node, "digest")) {
+		ret_val |= AUTH_TYPE_DIGEST;
+	}
+
+	if (lm_message_node_get_child (q_node, "sequence") &&
+	    lm_message_node_get_child (q_node, "token")) {
+		ret_val |= AUTH_TYPE_0K;
+	}
+
+	return ret_val;
 }
 
 static LmHandlerResult 
@@ -848,9 +1003,9 @@ lm_connection_authenticate (LmConnection      *connection,
 			    GError           **error)
 {
 	LmMessage        *m;
-	LmMessageNode    *q_node;
 	LmMessageHandler *handler;
 	gboolean          result;
+	AuthReqData      *data;
 	
 	g_return_val_if_fail (connection != NULL, FALSE);
 	g_return_val_if_fail (username != NULL, FALSE);
@@ -868,30 +1023,17 @@ lm_connection_authenticate (LmConnection      *connection,
 	connection->auth_cb = _lm_utils_new_callback (function, 
 						      user_data, 
 						      notify);
+
+	m = connection_create_auth_req_msg (username);
+		
+	data = g_new0 (AuthReqData, 1);
+	data->username = g_strdup (username);
+	data->password = g_strdup (password);
+	data->resource = g_strdup (resource);
 	
-	m = lm_message_new_with_sub_type (NULL, LM_MESSAGE_TYPE_IQ,
-					  LM_MESSAGE_SUB_TYPE_SET);
-	q_node = lm_message_node_add_child (m->node, "query", NULL);
-	lm_message_node_set_attributes (q_node,
-					"xmlns", "jabber:iq:auth", 
-					NULL);
-	lm_message_node_add_child (q_node, "username", username);
-
-	/* Check what the server can handle */
-	if (TRUE) {
-		gchar       *str;
-		const gchar *digest;
-		str = g_strconcat (connection->stream_id, password, NULL);
-		digest = lm_sha_hash (str);
-		g_free (str);
-		lm_message_node_add_child (q_node, "digest", digest);
-	} else {
-		lm_message_node_add_child (q_node, "password", password);
-	}
-
-	lm_message_node_add_child (q_node, "resource", resource);
-	handler = lm_message_handler_new (connection_auth_reply, NULL, NULL);
-
+	handler = lm_message_handler_new (connection_auth_req_reply, 
+					  data, 
+					  (GDestroyNotify) auth_req_data_free);
 	result = lm_connection_send_with_reply (connection, m, handler, error);
 	
 	lm_message_handler_unref (handler);
@@ -919,9 +1061,9 @@ lm_connection_authenticate_and_block (LmConnection  *connection,
 				      const gchar   *resource,
 				      GError       **error)
 {
-	LmMessage     *m;
-	LmMessageNode *q_node;
-	LmMessage     *result;
+	LmMessage        *m;
+	LmMessage        *result;
+	LmMessageSubType  type;
 		
 	g_return_val_if_fail (connection != NULL, FALSE);
 	g_return_val_if_fail (username != NULL, FALSE);
@@ -935,37 +1077,31 @@ lm_connection_authenticate_and_block (LmConnection  *connection,
 			     "Connection is not open, call lm_connection_open() first");
 		return FALSE;
 	}
-	
-	m = lm_message_new_with_sub_type (NULL, LM_MESSAGE_TYPE_IQ,
-					  LM_MESSAGE_SUB_TYPE_SET);
-	q_node = lm_message_node_add_child (m->node, "query", NULL);
-	lm_message_node_set_attributes (q_node,
-					"xmlns", "jabber:iq:auth", 
-					NULL);
-	lm_message_node_add_child (q_node, "username", username);
 
-	/* Check what the server can handle */
-	if (TRUE) {
-		gchar       *str;
-		const gchar *digest;
-		str = g_strconcat (connection->stream_id, password, NULL);
-		digest = lm_sha_hash (str);
-		g_free (str);
-		lm_message_node_add_child (q_node, "digest", digest);
-	} else {
-		lm_message_node_add_child (q_node, "password", password);
-	}
-
-	lm_message_node_add_child (q_node, "resource", resource);
-
+	m = connection_create_auth_req_msg (username);
 	result = lm_connection_send_with_reply_and_block (connection, m, error);
 	lm_message_unref (m);
 
 	if (!result) {
 		return FALSE;
 	}
+
+	m = connection_create_auth_msg (connection,
+					username, 
+					password,
+					resource,
+					connection_check_auth_type (result));
+	lm_message_unref (result);
+
+	result = lm_connection_send_with_reply_and_block (connection, m, error);
+	if (!result) {
+		return FALSE;
+	}
+
+	type = lm_message_get_sub_type (result);
+	lm_message_unref (result);
 	
-	switch (lm_message_get_sub_type (result)) {
+	switch (type) {
 	case LM_MESSAGE_SUB_TYPE_RESULT:
 		return TRUE;
 		break;
