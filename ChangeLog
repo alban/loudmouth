@@ -1,3 +1,11 @@
+2004-10-30  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-parser.c: (lm_parser_parse):
+        - Removed that hack to try to convert to utf8, the stream should be 
+          utf8 according to the Jabber specs. This hack caused a lot of weird
+          problems.
+        - Solves bug #154228
+
 2004-10-22  Mikael Hallendal  <micke@imendio.com>
 
 	reviewed by: <delete if not using a buddy>

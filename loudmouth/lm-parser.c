@@ -246,40 +246,16 @@ lm_parser_parse (LmParser *parser, const gchar *string)
 {
 	g_return_if_fail (parser != NULL);
 	
-	if (!parser->context) {
-		parser->context = g_markup_parse_context_new (parser->m_parser, 0,
-							      parser, NULL);
-	}
-
-	if (!g_utf8_validate (string, -1, NULL)) {
-		gchar *tmp;
-		
-		/* We can't do much better than guess what charset the string is
-		 * encoded in... Try ISO-8859-1.
-		 */
-		tmp = g_convert (string, -1,
-				 "UTF-8", "ISO-8859-1",
-				 NULL, NULL,
-				 NULL);
-		
-		if (tmp) {
-			if (g_markup_parse_context_parse (parser->context, tmp, 
-							  strlen (tmp), NULL)) {
-			} else {
-				g_warning ("Parsing failed\n");
-			}
-			
-			g_free (tmp);
-		} else {
-			g_warning ("Trying to parse a string that is not UTF-8 and not ISO-8859-1.");
-		}
-	} else {
-		if (g_markup_parse_context_parse (parser->context, string, 
-						  strlen (string), NULL)) {
-		} else {
-			g_warning ("Parsing failed\n");
-		}
-	}
+        if (!parser->context) {
+                parser->context = g_markup_parse_context_new (parser->m_parser, 0,
+                                                              parser, NULL);
+        }
+        
+        if (g_markup_parse_context_parse (parser->context, string, 
+                                          strlen (string), NULL)) {
+        } else {
+                g_warning ("Parsing failed\n");
+        }
 }
 
 void
