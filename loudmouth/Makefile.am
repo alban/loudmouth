@@ -49,15 +49,3 @@ libloudmouthincludedir = $(includedir)/loudmouth-1.0/loudmouth
 
 # an explicit dependency here so alm generated files get built
 $(OBJECTS): $(built_sources)
-
-noinst_PROGRAMS = test-lm
-
-test_lm_SOURCES =			\
-	test-lm.c
-
-test_lm_LDADD =			 	\
-	$(LOUDMOUTH_LIBS)		\
-	libloudmouth-1.la		\
-	$(NULL)
-
-

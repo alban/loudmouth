@@ -33,6 +33,20 @@ typedef struct {
 	GDestroyNotify notify;
 } LmCallback;
 
+typedef struct {
+	LmConnection    *connection;
+
+	/* struct to save resolved address */
+	struct addrinfo *resolved_addrs;
+	struct addrinfo *current_addr;
+	int              fd;
+	GIOChannel           *io_channel;
+} LmConnectData;
+
+void             _lm_connection_failed_with_error (LmConnectData *connect_data,
+                                                   int error);
+void             _lm_connection_failed            (LmConnectData *connect_data);
+gboolean         _lm_connection_succeeded (LmConnectData *connect_data);
 LmCallback *     _lm_utils_new_callback             (gpointer          func, 
 						     gpointer          data,
 						     GDestroyNotify    notify);
@@ -52,6 +66,9 @@ gboolean         _lm_proxy_negotiate                (LmProxy          *proxy,
 						     gint              fd,
 						     const gchar      *server,
 						     guint             port);
+gboolean         _lm_proxy_connect_cb               (GIOChannel *source,
+                                                     GIOCondition condition,
+                                                     gpointer data);
 void             _lm_ssl_initialize                 (LmSSL            *ssl);
 gboolean         _lm_ssl_begin                      (LmSSL            *ssl,
 						     gint              fd,

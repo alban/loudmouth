@@ -1,3 +1,12 @@
+Changes in 0.16:
+----------------
+* Support for giving the context to which an LmConnection should run in
+  (should solve issues when wanting to run several LmConnections in various
+   threads)
+* HTTP proxy support
+* Memory leak fix
+* Distribute the win32-config.h file needed to build on Windows.
+ 
 Changes in 0.15.1:
 ------------------
 * Require GnuTLS >= 1.0.0

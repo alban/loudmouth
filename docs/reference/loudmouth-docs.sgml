@@ -14,5 +14,6 @@
     <xi:include href="xml/lm-message-handler.xml"/>
     <xi:include href="xml/lm-message-node.xml"/>
     <xi:include href="xml/lm-ssl.xml"/>
+    <xi:include href="xml/lm-proxy.xml"/>
   </chapter>
 </book>

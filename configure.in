@@ -2,7 +2,7 @@ AC_INIT(loudmouth/lm-message.h)
 
 AM_CONFIG_HEADER(config.h)
 
-AM_INIT_AUTOMAKE(loudmouth, 0.15.1)
+AM_INIT_AUTOMAKE(loudmouth, 0.16)
 
 AM_MAINTAINER_MODE
 
@@ -179,6 +179,7 @@ Makefile
 docs/Makefile
 docs/reference/Makefile
 loudmouth/Makefile
+examples/Makefile
 loudmouth-1.0.pc
 loudmouth.spec])
 
@@ -188,13 +189,11 @@ dnl mono/loudmouth/Makefile
 dnl ==========================================================================
 echo "
 
-                    Loudmouth $VERSION
-	=========================================
+          Loudmouth $VERSION from Imendio HB
+	==================================
 
         prefix:                   ${prefix}
         compiler:                 ${CC}
-        cflags:                   ${CFLAGS}
-
 	"
 		    
 dnl if test x$enable_mono = xyes ; then
@@ -208,15 +207,12 @@ dnl "        mcs:                     (not enabled)
 dnl "
 dnl fi
 
-echo \
 
 echo \
-"        Enable SSL               ${ac_ssl}
-"
+"        Enable SSL               ${ac_ssl}"
 echo \
 "        Enable Debug:            ${enable_debug}
 "
-
 echo \
 "        Now type 'make' to build Loudmouth
 "

@@ -28,6 +28,7 @@
 #include <loudmouth/lm-message.h>
 #include <loudmouth/lm-message-handler.h>
 #include <loudmouth/lm-message-node.h>
+#include <loudmouth/lm-proxy.h>
 #include <loudmouth/lm-utils.h>
 
 #undef LM_INSIDE_LOUDMOUTH_H

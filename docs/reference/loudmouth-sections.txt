@@ -21,9 +21,10 @@ lm_connection_get_server
 lm_connection_set_server
 lm_connection_get_port
 lm_connection_set_port
-lm_connection_supports_ssl
-lm_connection_get_use_ssl
-lm_connection_set_use_ssl
+lm_connection_get_ssl
+lm_connection_set_ssl
+lm_connection_get_proxy
+lm_connection_set_proxy
 lm_connection_send
 lm_connection_send_with_reply
 lm_connection_send_with_reply_and_block
@@ -90,6 +91,7 @@ LM_ERROR
 
 <SECTION>
 <FILE>lm-ssl</FILE>
+LmSSL
 LmCertificateStatus
 LmSSLStatus
 LmSSLResponse
@@ -99,4 +101,24 @@ lm_ssl_is_supported
 lm_ssl_get_fingerprint
 lm_ssl_ref
 lm_ssl_unref
+</SECTION>
+
+<SECTION>
+<FILE>lm-proxy</FILE>
+LmProxy
+LmProxyType
+lm_proxy_new
+lm_proxy_new_with_server
+lm_proxy_get_type
+lm_proxy_set_type
+lm_proxy_get_server
+lm_proxy_set_server
+lm_proxy_get_port
+lm_proxy_set_port
+lm_proxy_get_username
+lm_proxy_set_username
+lm_proxy_get_password
+lm_proxy_set_password
+lm_proxy_ref
+lm_proxy_unref
 </SECTION>

@@ -75,6 +75,8 @@ typedef void          (* LmDisconnectFunction) (LmConnection       *connection,
 						gpointer            user_data);
 
 LmConnection *lm_connection_new               (const gchar        *server);
+LmConnection *lm_connection_new_with_context  (const gchar        *server,
+					       GMainContext       *context);
 gboolean      lm_connection_open              (LmConnection       *connection,
 					       LmResultFunction    function,
 					       gpointer            user_data,
@@ -117,13 +119,9 @@ void          lm_connection_set_port          (LmConnection       *connection,
 LmSSL *       lm_connection_get_ssl           (LmConnection       *connection);
 void          lm_connection_set_ssl           (LmConnection       *connection,
 					       LmSSL              *ssl);
-/*
- * These will most likely change in the API 
- *
 LmProxy *     lm_connection_get_proxy         (LmConnection       *connection);
 void          lm_connection_set_proxy         (LmConnection       *connection,
 					       LmProxy            *proxy);
-*/
 gboolean      lm_connection_send              (LmConnection       *connection,
 					       LmMessage          *message,
 					       GError            **error);

@@ -33,6 +33,9 @@ typedef enum {
 } LmProxyType;
 
 LmProxy *     lm_proxy_new              (LmProxyType         type);
+LmProxy *     lm_proxy_new_with_server  (LmProxyType         type,
+					 const gchar        *server,
+					 guint               port);
 
 LmProxyType   lm_proxy_get_type         (LmProxy            *proxy);
 void          lm_proxy_set_type         (LmProxy            *proxy,

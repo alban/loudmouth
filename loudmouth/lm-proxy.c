@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
  * Copyright (C) 2004 Imendio HB
- * Copyright (C) Josh Beam <josh@3ddrome.com>
+ * Copyright (C) 2004 Josh Beam <josh@3ddrome.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License as
@@ -39,6 +39,7 @@ struct _LmProxy {
 	guint        port;
 	gchar       *username;
 	gchar       *password;
+	guint        io_watch;
 
         gint         ref_count;
 };
@@ -48,6 +49,12 @@ static gboolean      proxy_http_negotiate    (LmProxy     *proxy,
 					      gint         fd, 
 					      const gchar *server,
 					      guint        port);
+static gboolean      proxy_http_read_cb      (GIOChannel *source,
+                                              GIOCondition condition,
+                                              gpointer data);
+static gboolean      proxy_read_cb      (GIOChannel *source,
+                                              GIOCondition condition,
+                                              gpointer data);
 
 static void
 proxy_free (LmProxy *proxy)
@@ -62,10 +69,10 @@ proxy_free (LmProxy *proxy)
 static gboolean
 proxy_http_negotiate (LmProxy *proxy, gint fd, const gchar *server, guint port)
 {
-	gint   i, len;
-	gchar  buf[1024];
 	gchar *str;
 
+	g_print ("http negotiate\n");
+	
 	if (proxy->username && proxy->password) {
 		gchar *tmp1;
 		gchar *tmp2;
@@ -88,39 +95,69 @@ proxy_http_negotiate (LmProxy *proxy, gint fd, const gchar *server, guint port)
 	}
 
 	send (fd, str, strlen (str), 0);
-
 	g_free (str);
+	return TRUE;
+}
 
-	len = read (fd, buf, 12);
-	if (len <= 0) {
+/* returns TRUE when connected through proxy */
+static gboolean
+proxy_http_read_cb (GIOChannel *source, GIOCondition condition, gpointer data)
+{
+	gchar          buf[512];
+	gsize          bytes_read;
+	GError        *error = NULL;
+
+	g_io_channel_read_chars (source, buf, 512, &bytes_read, &error);
+
+	if (bytes_read < 16) {
 		return FALSE;
 	}
 
-	buf[len] = '\0';
-	if (strcmp (buf, "HTTP/1.1 200") != 0 && 
-	    strcmp (buf, "HTTP/1.0 200") != 0) {
+	if (strncmp (buf, "HTTP/1.1 200", 12) != 0 &&
+	    strncmp (buf, "HTTP/1.0 200", 12) != 0) {
 		return FALSE;
 	}
 
-	/* discard any headers that we don't need */
-	for (i = 0; i < 4; i++) {
-		len = read (fd, buf + i, 1);
-		if (len <= 0) {
-			return FALSE;
-		}
-	}
-	while (strncmp (buf, "\r\n\r\n", 4) != 0) {
-		for (i = 0; i < 3; i++) {
-			buf[i] = buf[i + 1];
-		}
-		
-		len = read (fd, buf + 3, 1);
-		if (len <= 0) {
-			return FALSE;
-		}
+	if (strncmp (buf + (bytes_read - 4), "\r\n\r\n", 4) != 0) {
+		return FALSE;
 	}
 
 	return TRUE;
+}
+
+static gboolean
+proxy_read_cb (GIOChannel *source, GIOCondition condition, gpointer data)
+{
+	LmConnectData *connect_data;
+	LmConnection  *connection;
+	LmProxy       *proxy;
+	gboolean       retval = FALSE;
+
+	connect_data = (LmConnectData *) data;
+	connection = connect_data->connection;
+	proxy = lm_connection_get_proxy (connection);
+
+	g_return_val_if_fail (proxy != NULL, FALSE);
+
+	if (lm_connection_is_open (connection))
+		return FALSE;
+
+	switch (lm_proxy_get_type (proxy)) {
+	default:
+	case LM_PROXY_TYPE_NONE:
+		g_assert_not_reached ();
+		break;
+	case LM_PROXY_TYPE_HTTP:
+		retval = proxy_http_read_cb (source, condition, data);
+		break;
+	}
+
+	if (retval == TRUE) {
+		g_source_remove (proxy->io_watch);
+		_lm_connection_succeeded ((LmConnectData *) data);
+	}
+
+	return FALSE;
 }
 
 gboolean
@@ -134,6 +171,42 @@ _lm_proxy_negotiate (LmProxy *proxy, gint fd, const gchar *server, guint port)
 	case LM_PROXY_TYPE_HTTP:
 		return proxy_http_negotiate (proxy, fd, server, port);
 	default:
+		g_assert_not_reached ();
+	}
+
+	return FALSE;
+}
+
+gboolean
+_lm_proxy_connect_cb (GIOChannel *source, GIOCondition condition, gpointer data)
+{
+	LmConnection  *connection;
+	LmConnectData *connect_data;
+	LmProxy       *proxy;
+	int            error;
+	int            len = sizeof(error);
+
+	connect_data = (LmConnectData *) data;
+	connection = connect_data->connection;
+	proxy = lm_connection_get_proxy (connection);
+
+	g_return_val_if_fail (proxy != NULL, FALSE);
+
+	if (condition == G_IO_ERR) {
+		getsockopt (connect_data->fd, SOL_SOCKET, SO_ERROR,
+		            &error, &len);
+		_lm_connection_failed_with_error (connect_data, error);
+		return FALSE;
+	} else if (condition == G_IO_OUT) {
+		if (!_lm_proxy_negotiate (lm_connection_get_proxy (connection), connect_data->fd, lm_connection_get_server (connection), lm_connection_get_port (connection))) {
+			_lm_connection_failed (connect_data);
+			return FALSE;
+		}
+		proxy->io_watch = g_io_add_watch (connect_data->io_channel,
+						  G_IO_IN|G_IO_ERR,
+						  (GIOFunc) proxy_read_cb,
+						  connect_data);
+	} else {
 		g_assert_not_reached ();
 	}
 
@@ -166,6 +239,31 @@ lm_proxy_new (LmProxyType type)
 	default:
 		proxy->port = 0;
 	}
+
+	return proxy;
+}
+
+/**
+ * lm_proxy_new_with_server
+ * @type: the type of the new proxy
+ * @server: the proxy server
+ * @port: the proxy server port
+ * 
+ * Creates a new Proxy. Use #lm_connection_set_proxy to make a connection 
+ * user this proxy.
+ * 
+ * Return value: a newly create proxy
+ **/
+LmProxy *
+lm_proxy_new_with_server (LmProxyType  type,
+			  const gchar *server,
+			  guint        port)
+{
+	LmProxy *proxy;
+
+	proxy = lm_proxy_new (type);
+	lm_proxy_set_server (proxy, server);
+	lm_proxy_set_port (proxy, port);
 
 	return proxy;
 }

@@ -51,58 +51,49 @@ typedef struct {
 } HandlerData;
 
 typedef struct {
-	LmConnection    *connection;
-	
-	/* struct to save resolved address */
-	struct addrinfo *resolved_addrs;
-	struct addrinfo *current_addr;
-	int              fd;
-	GIOChannel           *io_channel;
-} LmConnectData;
-
-typedef struct {
 	GSource       source;
 	LmConnection *connection;
 } LmIncomingSource;
 
 struct _LmConnection {
 	/* Parameters */
-	gchar      *server;
-	guint       port;
+	GMainContext *context;
+	gchar        *server;
+	guint         port;
 
-	LmSSL      *ssl;
+	LmSSL        *ssl;
 
-	LmProxy    *proxy;
+	LmProxy      *proxy;
 	
-	LmParser   *parser;
-	gchar      *stream_id;
+	LmParser     *parser;
+	gchar        *stream_id;
 
-	GHashTable *id_handlers;
-	GSList     *handlers[LM_MESSAGE_TYPE_UNKNOWN];
+	GHashTable   *id_handlers;
+	GSList       *handlers[LM_MESSAGE_TYPE_UNKNOWN];
 
 	/* Communication */
-	GIOChannel *io_channel;
-	guint       io_watch_in;
-	guint       io_watch_err;
-	guint       io_watch_hup;
-	guint       fd;
+	GIOChannel   *io_channel;
+	guint         io_watch_in;
+	guint         io_watch_err;
+	guint         io_watch_hup;
+	guint         fd;
 	
-	guint       open_id;
-	LmCallback *open_cb;
+	guint         open_id;
+	LmCallback   *open_cb;
 
-	gboolean    cancel_open;
-	LmCallback *close_cb;
-	LmCallback *auth_cb;
-	LmCallback *register_cb;
+	gboolean      cancel_open;
+	LmCallback   *close_cb;
+	LmCallback   *auth_cb;
+	LmCallback   *register_cb;
 
-	LmCallback *disconnect_cb;
+	LmCallback   *disconnect_cb;
 
-	LmQueue    *incoming_messages;
-	GSource    *incoming_source;
+	LmQueue      *incoming_messages;
+	GSource      *incoming_source;
 
 	LmConnectionState state;
 
-	gint        ref_count;
+	gint          ref_count;
 };
 
 typedef enum {
@@ -170,6 +161,12 @@ static void      connection_signal_disconnect   (LmConnection *connection,
 						 LmDisconnectReason reason);
 
 static void     connection_do_connect           (LmConnectData *connect_data);
+static guint    connection_add_watch            (LmConnection  *connection,
+						 GIOChannel    *channel,
+						 GIOCondition   condition,
+						 GIOFunc        func,
+						 gpointer       user_data);
+
 
 
 static GSourceFuncs incoming_funcs = {
@@ -265,8 +262,8 @@ connection_new_message_cb (LmParser     *parser,
 	lm_queue_push_tail (connection->incoming_messages, m);
 }
 
-static gboolean
-connection_succeeded (LmConnectData *connect_data)
+gboolean
+_lm_connection_succeeded (LmConnectData *connect_data)
 {
 	LmConnection *connection = connect_data->connection;
 	LmMessage    *m;
@@ -313,20 +310,26 @@ connection_succeeded (LmConnectData *connect_data)
 	g_io_channel_set_flags (connection->io_channel,
 				flags & G_IO_FLAG_NONBLOCK, NULL);
 	
-	connection->io_watch_in = g_io_add_watch (connection->io_channel,
-						  G_IO_IN,
-						  (GIOFunc) connection_in_event,
-						  connection);
+	connection->io_watch_in = 
+		connection_add_watch (connection,
+				      connection->io_channel,
+				      G_IO_IN,
+				      (GIOFunc) connection_in_event,
+				      connection);
 	
-	connection->io_watch_err = g_io_add_watch (connection->io_channel, 
-						   G_IO_ERR,
-						   (GIOFunc) connection_error_event,
+	connection->io_watch_err = 
+		connection_add_watch (connection,
+				      connection->io_channel, 
+				      G_IO_ERR,
+				      (GIOFunc) connection_error_event,
 						   connection);
-	connection->io_watch_hup = g_io_add_watch (connection->io_channel,
-						   G_IO_HUP,
-						   (GIOFunc) connection_hup_event,
-						   connection);
-
+	connection->io_watch_hup = 
+		connection_add_watch (connection,
+				      connection->io_channel,
+				      G_IO_HUP,
+				      (GIOFunc) connection_hup_event,
+				      connection);
+	
 	if (!connection_send (connection, 
 			      "<?xml version='1.0' encoding='UTF-8'?>", -1,
 			      NULL)) {
@@ -355,8 +358,8 @@ connection_succeeded (LmConnectData *connect_data)
 	return FALSE;
 }
 
-static void 
-connection_failed_with_error (LmConnectData *connect_data, int error) 
+void 
+_lm_connection_failed_with_error (LmConnectData *connect_data, int error) 
 {
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET,
 	       "Connection failed: %s (error %d)\n",
@@ -377,10 +380,10 @@ connection_failed_with_error (LmConnectData *connect_data, int error)
 	}
 }
 
-static void 
-connection_failed (LmConnectData *connect_data)
+void 
+_lm_connection_failed (LmConnectData *connect_data)
 {
-	connection_failed_with_error (connect_data,errno);
+	_lm_connection_failed_with_error (connect_data,errno);
 }
 	
 static gboolean 
@@ -400,16 +403,10 @@ connection_connect_cb (GIOChannel   *source,
 		/* get the real error from the socket */
 		getsockopt (connect_data->fd, SOL_SOCKET, SO_ERROR, 
 			    &error, &len);
-		connection_failed_with_error (connect_data, error);
+		_lm_connection_failed_with_error (connect_data, error);
 		return FALSE;
 	} else if (condition == G_IO_OUT) {
-		if (connect_data->connection->proxy) {
-			if (!_lm_proxy_negotiate (connection->proxy, connect_data->fd, connection->server, connection->port)) {
-				connection_failed (connect_data);
-				return FALSE;
-			}
-		}
-		connection_succeeded (connect_data);
+		_lm_connection_succeeded (connect_data);
 	} else {
 		g_assert_not_reached ();
 	}
@@ -454,7 +451,7 @@ connection_do_connect (LmConnectData *connect_data)
 		     addr->ai_protocol);
 	
 	if (fd < 0) {
-		connection_failed (connect_data);
+		_lm_connection_failed (connect_data);
 		return;
 	}
 
@@ -466,14 +463,48 @@ connection_do_connect (LmConnectData *connect_data)
 	
 	if (res < 0 && errno != EINPROGRESS) {
 		close (fd);
-		connection_failed (connect_data);
+		_lm_connection_failed (connect_data);
 		return;
 	}
 	
 	connect_data->io_channel = g_io_channel_unix_new (fd);
-	g_io_add_watch (connect_data->io_channel, G_IO_OUT|G_IO_ERR,
-			(GIOFunc) connection_connect_cb, connect_data);
+	if (connection->proxy) {
+		connection_add_watch (connection,
+				      connect_data->io_channel,
+				      G_IO_OUT|G_IO_ERR,
+				      (GIOFunc) _lm_proxy_connect_cb, 
+				      connect_data);
+	} else {
+		connection_add_watch (connection,
+				      connect_data->io_channel,
+				      G_IO_OUT|G_IO_ERR,
+				      (GIOFunc) connection_connect_cb,
+				      connect_data);
+	}
+
 	return;
+}
+
+static guint
+connection_add_watch (LmConnection *connection,
+		      GIOChannel   *channel,
+		      GIOCondition  condition,
+		      GIOFunc       func,
+		      gpointer      user_data)
+{
+	GSource *source;
+	guint    id;
+                                                                                
+	g_return_val_if_fail (channel != NULL, 0);
+                                                                                
+	source = g_io_create_watch (channel, condition);
+                                                                                
+	g_source_set_callback (source, (GSourceFunc)func, user_data, NULL);
+                                                                                
+	id = g_source_attach (source, connection->context);
+	g_source_unref (source);
+  
+	return id;
 }
 
 /* Returns directly */
@@ -503,7 +534,7 @@ connection_do_open (LmConnection *connection, GError **error)
 
 	/* source thingie for messages and stuff */
 	connection->incoming_source = connection_create_source (connection);
-	g_source_attach (connection->incoming_source,NULL);
+	g_source_attach (connection->incoming_source, connection->context);
 	
 	lm_verbose ("Connecting to: %s:%d\n", 
 		    connection->server, connection->port);
@@ -1022,7 +1053,8 @@ lm_connection_new (const gchar *server)
 	} else {
 		connection->server = NULL;
 	}
-	
+
+	connection->context           = NULL;
 	connection->port              = LM_CONNECTION_DEFAULT_PORT;
 	connection->ssl               = NULL;
 	connection->proxy             = NULL;
@@ -1048,6 +1080,29 @@ lm_connection_new (const gchar *server)
 	return connection;
 }
 
+/**
+ * lm_connection_new_with_context:
+ * @server: The hostname to the server for the connection.
+ * @context: The context this connection should be running in.
+ * 
+ * Creates a new closed connection running in a certain context. To open the 
+ * connection call #lm_connection_open. @server can be #NULL but must be set 
+ * before calling #lm_connection_open.
+ * 
+ * Return value: A newly created LmConnection, should be unreffed with lm_connection_unref().
+ **/
+LmConnection *
+lm_connection_new_with_context (const gchar *server, GMainContext *context)
+{
+	LmConnection *connection;
+
+	connection = lm_connection_new (server);
+	connection->context = context;
+
+	g_main_context_ref (connection->context);
+
+	return connection;
+}
 
 /**
  * lm_connection_open:
@@ -1101,8 +1156,8 @@ lm_connection_open_and_block (LmConnection *connection, GError **error)
 	}
 	
 	while ((state = lm_connection_get_state (connection)) == LM_CONNECTION_STATE_CONNECTING) {
-		if (g_main_context_pending (NULL)) {
-			g_main_context_iteration (NULL, TRUE);
+		if (g_main_context_pending (connection->context)) {
+			g_main_context_iteration (connection->context, TRUE);
 		} else {
 			usleep (10);
 		}
@@ -1461,7 +1516,6 @@ lm_connection_set_ssl (LmConnection *connection, LmSSL *ssl)
 	}
 }
 
-#if 0
 /**
  * lm_connection_get_proxy: 
  * @connection: an #LmConnection
@@ -1485,7 +1539,6 @@ lm_connection_get_proxy (LmConnection *connection)
  *
  * Sets the proxy to use for this connection.
  * 
- * Return value: The proxy or %NULL if no proxy is used. Notice that @connection can't be open while doing this.
  **/
 void
 lm_connection_set_proxy (LmConnection *connection, LmProxy *proxy)
@@ -1504,7 +1557,6 @@ lm_connection_set_proxy (LmConnection *connection, LmProxy *proxy)
 
 	connection->proxy = lm_proxy_ref (proxy);
 }
-#endif
 
 /**
  * lm_connection_send: 
@@ -1614,7 +1666,7 @@ lm_connection_send_with_reply_and_block (LmConnection  *connection,
 		const gchar *m_id;
 		gint         n;
 
-		g_main_context_iteration (NULL, TRUE);
+		g_main_context_iteration (connection->context, TRUE);
 	
 		if (lm_queue_is_empty (connection->incoming_messages)) {
 			continue;
@@ -1637,7 +1689,7 @@ lm_connection_send_with_reply_and_block (LmConnection  *connection,
 
 	g_free (id);
 	connection->incoming_source = connection_create_source (connection);
-	g_source_attach (connection->incoming_source, NULL);
+	g_source_attach (connection->incoming_source, connection->context);
 
 	return reply;
 }

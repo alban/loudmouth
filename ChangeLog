@@ -1,3 +1,48 @@
+2004-03-17  Mikael Hallendal  <micke@imendio.com>
+
+	* Synced from SVN.
+
+	* Released 0.16
+	
+	* configure.in: Bumped to 0.16 
+	* NEWS: Updated for 0.16
+ 
+2004-03-17  Mikael Hallendal  <micke@imendio.com>
+
+	* docs/reference/*: Updated documentation.
+	* loudmouth/*: Fixed the documentation in a couple of places. 
+
+2004-03-17  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-connection.[ch]
+	(lm_connection_new_with_context): 
+ 	- Added to be able to give what context the connection should be 
+	  running in. 
+	- All internal functions are updated to use the context or NULL if 
+	  lm_connection_new was called.
+	- Should make it possible to use several LmConnections in various 
+	  threads.
+
+2004-03-17  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-connection.c: 
+	* loudmouth/lm-internal.h:
+	* loudmouth/lm-proxy.c: 
+	- Make the HTTP proxy support asynchronous. Patch from Josh Beam.
+	- Re-enable the HTTP proxy support.
+	* examples/lm-send-sync.c: 
+	* examples/lm-send-async.c:
+	* examples/test-http-proxy.c:
+	- Added two of the old examples and a new one to test out the HTTP 
+	  proxy support.
+
+2004-03-17  Mikael Hallendal  <micke@imendio.com>
+
+	* configure.in: Generate examples/Makefile
+	* loudmouth/test-jid.c: Removed
+	* loudmouth/test-lm.c: Moved to examples/
+	* exmples/*: Moved out from loudmouth/
+
 2004-02-05  Mikael Hallendal  <micke@imendio.com>
 
 	* README: Updated information about website and bug reporting
