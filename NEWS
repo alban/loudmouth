@@ -1,3 +1,8 @@
+Changes in 0.11:
+----------------
+
+* SSL-support, patch by Bartosz Zapalowski
+
 Changes in 0.10.1:
 ------------------
 * Build fix for *BSD. Reported by Ralph Meijer.
