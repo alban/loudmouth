@@ -1,5 +1,11 @@
 2004-01-21  Mikael Hallendal  <micke@imendio.com>
 
+	* docs/reference/tmpl/lm-ssl.sgml:
+	* loudmouth/lm-ssl.c:
+	- Added API documentation
+
+2004-01-21  Mikael Hallendal  <micke@imendio.com>
+
 	* docs/reference/loudmouth-docs.sgml:
 	* docs/reference/loudmouth-sections.txt:
 	* docs/reference/tmpl/lm-connection.sgml:

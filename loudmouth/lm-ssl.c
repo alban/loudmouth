@@ -262,6 +262,17 @@ lm_ssl_is_supported (void)
 #endif
 }
 
+/**
+ * lm_ssl_new:
+ * @expected_fingerprint: The expected fingerprint. @ssl_function will be called if there is a mismatch. %NULL if you are not interested in this check.
+ * @ssl_function: Callback called to inform the user of a problem during setting up the SSL connection and how to proceed.
+ * @user_data: Data sent with the callback.
+ * @notify: Function to free @user_dataa when the connection is finished. %NULL if @user_data should not be freed.
+ *
+ * Creates a new SSL struct, call #lm_connection_set_ssl to use it. 
+ *
+ * Return value: A new #LmSSL struct.
+ **/
 LmSSL *
 lm_ssl_new (const gchar    *expected_fingerprint,
 	    LmSSLFunction   ssl_function,
@@ -303,6 +314,14 @@ lm_ssl_get_fingerprint (LmSSL *ssl)
 	return (unsigned char*) ssl->fingerprint;
 }
 
+/**
+ * lm_ssl_ref:
+ * @ssl: an #LmSSL
+ * 
+ * Adds a reference to @ssl.
+ * 
+ * Return value: the ssl
+ **/
 LmSSL *
 lm_ssl_ref (LmSSL *ssl)
 {
@@ -313,6 +332,13 @@ lm_ssl_ref (LmSSL *ssl)
 	return ssl;
 }
 
+/**
+ * lm_ssl_unref
+ * @ssl: an #LmSSL
+ * 
+ * Removes a reference from @ssl. When no more references are present
+ * @ssl is freed.
+ **/
 void 
 lm_ssl_unref (LmSSL *ssl)
 {
