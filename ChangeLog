@@ -1,7 +1,12 @@
+2003-11-16  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-connection.c: 
+	(lm_connection_new): Don't create and attach source here
+	(lm_connection_open): Do it here, 
+	(lm_connection_open_and_block): and here. Fixes #126983.
+
 2003-11-11  Mikael Hallendal  <micke@imendio.com>
 
-	* Makefile.am: 
-	- Added README.WIN32 so it will be distributed next release.
 	* loudmouth/lm-connection.c:
 	(connection_do_close): Remove the incoming source. Reported and fix
 	  proposed by Christopher G. Abiad

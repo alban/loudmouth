@@ -880,14 +880,13 @@ lm_connection_new (const gchar *server)
 	connection->use_ssl           = FALSE;
 	connection->disconnect_cb     = NULL;
 	connection->incoming_messages = lm_queue_new ();
-	connection->incoming_source   = connection_create_source (connection);
 	
 	connection->id_handlers = g_hash_table_new_full (g_str_hash, 
 							 g_str_equal,
 							 g_free, 
 							 (GDestroyNotify) lm_message_handler_unref);
 	connection->ref_count         = 1;
-	g_source_attach (connection->incoming_source, NULL);
+	// g_source_attach (connection->incoming_source, NULL);
 	
 	for (i = 0; i < LM_MESSAGE_TYPE_UNKNOWN; ++i) {
 		connection->handlers[i] = NULL;
@@ -939,6 +938,8 @@ lm_connection_open (LmConnection      *connection,
 			     "You need to set the server hostname in the call to lm_connection_new()");
 		return FALSE;
 	}
+	connection->incoming_source = connection_create_source (connection);
+	g_source_attach (connection->incoming_source, NULL);
 
 	connection->open_cb = _lm_utils_new_callback (function, user_data, notify);
 	
@@ -1016,8 +1017,8 @@ lm_connection_open_and_block (LmConnection *connection, GError **error)
 	result = lm_connection_send (connection, m, error);
 	lm_message_unref (m);
 
- 	g_source_remove (g_source_get_id (connection->incoming_source));
-	g_source_unref (connection->incoming_source);
+ 	// g_source_remove (g_source_get_id (connection->incoming_source));
+	// g_source_unref (connection->incoming_source);
 
 	while (!finished) {
 		gint n;
