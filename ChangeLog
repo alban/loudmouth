@@ -1,5 +1,9 @@
 2003-08-04  Mikael Hallendal  <micke@imendio.com>
 
+	* loudmouth/Makefile.am: Use -DRUNTIME_ENDIAN, fixes LM-8, bug #118502.
+
+2003-08-04  Mikael Hallendal  <micke@imendio.com>
+
 	* loudmouth/lm-connection.c: 
 	- Modifed patch from Mikhail Zabaluev, fixes LM-5.
 	* (connection_free): close connection if it's still open.

@@ -5,6 +5,7 @@ INCLUDES = 				\
 	-I$(top_srcdir)			\
 	$(LOUDMOUTH_CFLAGS)		\
 	-DLM_COMPILATION		\
+	-DRUNTIME_ENDIAN                \
 	$(NULL)
 
 lib_LTLIBRARIES = libloudmouth.la
