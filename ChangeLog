@@ -1,3 +1,11 @@
+2004-01-23  Mikael Hallendal  <micke@imendio.com>
+	
+	* Release 0.15.1
+
+	* NEWS: 
+	* configure.in:
+	- Updated to 0.15.1
+
 2004-01-22  Frederic Crozat  <fcrozat@mandrakesoft.com>
 
 	* configure.in:
