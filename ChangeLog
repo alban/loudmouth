@@ -1,6 +1,15 @@
 2005-03-31  Mikael Hallendal  <micke@imendio.com>
 
 	* Makefile.am:
+	* CONTRIBUTORS: 
+	* loudmouth/lm-connection.c:
+	* loudmouth/lm-ssl.c:
+	- More release work. 
+	- Adding CONTRIBUTORS file.
+
+2005-03-31  Mikael Hallendal  <micke@imendio.com>
+
+	* Makefile.am:
 	* configure.in:
 	- Removed the mono directory from the release tarball, never finished
 	  and should probably be redone from scratch if to be done now.
