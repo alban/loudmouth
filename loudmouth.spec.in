@@ -76,6 +76,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/gtk-doc/html/loudmouth
 
 %changelog
+* Wed Oct 01 2003 Mikael Hallendal <micke@imendio.com>
+- Added with_ssl to be able to easily turn of SSL dependency.
+  
 * Wed Jun 25 2003 Mikael Hallendal <micke@imendio.com>
 - Updated to reflect move of project.
 
