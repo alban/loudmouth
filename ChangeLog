@@ -1,3 +1,20 @@
+2003-12-19  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-connection.c: 
+	(connection_free): cleaned up a bit.
+	(connection_connect_nonblocking): added, nonblocking connect
+	(connection_do_open):
+	- Use the nonblocking connect
+	- set state
+	(connection_do_close): cleaned up 
+	(connection_auth_reply): set state
+	(lm_connection_cancel_open): added
+	(lm_connection_authenticate): set state
+	(lm_connection_is_open): use state
+	(lm_connection_is_authenticated): use state
+	(lm_connection_get_state): added
+	- Part fixes bug #122326
+
 2003-12-15  Mikael Hallendal  <micke@imendio.com>
 
 	* README: Updated information about bug reporting

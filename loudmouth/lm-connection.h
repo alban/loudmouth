@@ -1,5 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
+ * Copyright (C) 2003 Imendio HB
  * Copyright (C) 2003 Mikael Hallendal <micke@imendio.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -76,6 +77,14 @@ typedef enum {
 	LM_SSL_RESPONSE_STOP,
 } LmSSLResponse;
 
+typedef enum {
+	LM_CONNECTION_STATE_DISCONNECTED,
+	LM_CONNECTION_STATE_CONNECTING,
+	LM_CONNECTION_STATE_CONNECTED,
+	LM_CONNECTION_STATE_AUTHENTICATING,
+	LM_CONNECTION_STATE_AUTHENTICATED
+} LmConnectionState;
+
 typedef void          (* LmResultFunction)     (LmConnection       *connection,
 						gboolean            success,
 						gpointer            user_data);
@@ -111,6 +120,8 @@ gboolean      lm_connection_open_and_block_ssl (LmConnection      *connection,
 						LmSSLFunction      ssl_function,
 						gpointer           user_data,
 						GError           **error);
+void          lm_connection_cancel_open        (LmConnection      *connection);
+						
 
 gboolean      lm_connection_close             (LmConnection       *connection,
 					       GError            **error);
@@ -173,6 +184,7 @@ lm_connection_set_disconnect_function         (LmConnection       *connection,
 gboolean      lm_connection_send_raw          (LmConnection       *connection,
 					       const gchar        *str,
 					       GError            **error);
+LmConnectionState lm_connection_get_state     (LmConnection       *connection);
 LmConnection* lm_connection_ref               (LmConnection       *connection);
 void          lm_connection_unref             (LmConnection       *connection);
 

@@ -32,7 +32,8 @@
 typedef enum {
         LM_ERROR_CONNECTION_NOT_OPEN,
         LM_ERROR_CONNECTION_OPEN,
-        LM_ERROR_AUTH_FAILED
+        LM_ERROR_AUTH_FAILED,
+	LM_ERROR_CONNECTION_FAILED
 } LmError;
 
 GQuark lm_error_quark (void) G_GNUC_CONST;

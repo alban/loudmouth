@@ -28,6 +28,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <fcntl.h>
+#include <errno.h>
 #ifndef __WIN32__
   #include <netdb.h>
   #include <sys/socket.h>
@@ -69,9 +71,6 @@ struct _LmConnection {
 	gnutls_certificate_client_credentials gnutls_xcred;
 #endif
 	
-	gboolean    is_open;
-	gboolean    is_authenticated;
-	
 	LmParser   *parser;
 	gchar      *stream_id;
 
@@ -84,6 +83,7 @@ struct _LmConnection {
 	guint       io_watch_err;
 	guint       io_watch_hup;
 
+	gboolean    cancel_open;
 	LmCallback *open_cb;
 	LmCallback *close_cb;
 	LmCallback *auth_cb;
@@ -93,6 +93,8 @@ struct _LmConnection {
 
 	LmQueue    *incoming_messages;
 	GSource    *incoming_source;
+
+	LmConnectionState state;
 
 	gint        ref_count;
 };
@@ -193,8 +195,8 @@ connection_free (LmConnection *connection)
 	}
 
 	g_hash_table_destroy (connection->id_handlers);
-	
-	if (connection->is_open) {
+
+	if (lm_connection_is_open (connection)) {
 		connection_do_close (connection);
 	}
 
@@ -339,6 +341,83 @@ connection_verify_certificate (LmConnection  *connection,
 }
 #endif
 
+static int
+connection_connect_nonblocking (LmConnection *connection,
+				struct  addrinfo *addr,
+				char   *name, 
+				char   *portname)
+{
+	int res;
+	int fd;
+	int flags;
+	fd_set rset, wset;
+	struct timeval tval;
+	
+	((struct sockaddr_in *) addr->ai_addr)->sin_port = htons (connection->port);
+
+	getnameinfo (addr->ai_addr,
+		     addr->ai_addrlen,
+		     name,     sizeof (name),
+		     portname, sizeof (portname),
+		     NI_NUMERICHOST | NI_NUMERICSERV);
+
+	g_log (LM_LOG_DOMAIN,LM_LOG_LEVEL_NET,
+	       "Trying %s port %s...\n", name, portname);
+
+	fd = socket (addr->ai_family, 
+		     addr->ai_socktype, 
+		     addr->ai_protocol);
+	if (fd < 0) {
+		return -1;
+	}
+
+	flags = fcntl (fd, F_GETFL, 0);
+	fcntl (fd, F_SETFL, flags | O_NONBLOCK);
+	
+	g_print ("Connecting...");
+	res = connect (fd, addr->ai_addr, addr->ai_addrlen);
+	if (res == 0) {
+		/* connection successfull */
+		return fd;
+	} 
+	
+	if (errno != EINPROGRESS) {
+		close (fd);
+		return -1;
+	}
+
+	FD_ZERO (&rset);
+	FD_SET (fd, &rset);
+	wset = rset;
+	
+	do {
+		if (connection->cancel_open) {
+			return -1;
+		}
+		g_print (".");
+		tval.tv_sec = 0;
+		tval.tv_usec = 10;
+		while (g_main_context_pending (NULL)) {
+			g_main_context_iteration (NULL, FALSE);
+			if (connection->cancel_open) {
+				return -1;
+			}
+		}
+	} while (select (fd + 1, &rset, &wset, NULL, &tval) == 0);
+
+	g_print (" done!\n");
+	
+	/* Either things went fine or we have an error */
+
+	if (FD_ISSET (fd, &rset) && FD_ISSET (fd, &wset)) {
+		close (fd);
+		return -1;
+	}
+
+	return fd;
+}
+							
+
 static gboolean
 connection_do_open (LmConnection    *connection,
 		    const gchar     *fingerprint,
@@ -346,8 +425,8 @@ connection_do_open (LmConnection    *connection,
 		    gpointer         user_data,
 		    GError         **error)
 {
+	gint             err = -1;
 	gint             fd = -1;
-	int              err = -1;
 	struct addrinfo  req;
 	struct addrinfo *ans;
 	struct addrinfo *tmpaddr;
@@ -364,6 +443,9 @@ connection_do_open (LmConnection    *connection,
 
 	g_log (LM_LOG_DOMAIN,LM_LOG_LEVEL_NET,
 	       "Going to connect to %s\n",connection->server);
+
+	connection->cancel_open = FALSE;
+	connection->state = LM_CONNECTION_STATE_CONNECTING;
 	
 	if ((err = getaddrinfo (connection->server, NULL, &req, &ans)) != 0) {
 		g_set_error (error,
@@ -381,6 +463,16 @@ connection_do_open (LmConnection    *connection,
 #endif
 
 	for (tmpaddr = ans ; tmpaddr != NULL ; tmpaddr = tmpaddr->ai_next) {
+		if (connection->cancel_open) {
+			break;
+		}
+		fd = connection_connect_nonblocking (connection, 
+						     tmpaddr, name, portname);
+		if (fd < 0) {
+			break;
+		}
+						     
+#if 0
 		((struct sockaddr_in *) tmpaddr->ai_addr)->sin_port = htons (connection->port);
 
 		getnameinfo (tmpaddr->ai_addr,
@@ -406,6 +498,7 @@ connection_do_open (LmConnection    *connection,
 		}
 		
 		close (fd);
+#endif
 	}
 	
 	freeaddrinfo (ans);
@@ -489,7 +582,7 @@ connection_do_open (LmConnection    *connection,
 						   (GIOFunc) connection_hup_event,
 						   connection);
 
-	connection->is_open = TRUE;
+	connection->state = LM_CONNECTION_STATE_CONNECTED;
 
 	if (!connection_send (connection,
 			      "<?xml version='1.0' encoding='UTF-8'?>", -1, 
@@ -515,11 +608,11 @@ connection_do_close (LmConnection *connection)
 	g_source_remove (g_source_get_id (connection->incoming_source));
 	g_source_unref (connection->incoming_source);
 
-	if (!connection->is_open) {
+	if (!lm_connection_is_open (connection)) {
 		return;
 	}
 
-	connection->is_open = FALSE;
+	connection->state = LM_CONNECTION_STATE_DISCONNECTED;
 
 #ifdef HAVE_GNUTLS
 	if (connection->use_ssl) {
@@ -845,9 +938,11 @@ connection_auth_reply (LmMessageHandler *handler,
 	type = lm_message_node_get_attribute (m->node, "type");
 	if (strcmp (type, "result") == 0) {
 		result = TRUE;
+		connection->state = LM_CONNECTION_STATE_AUTHENTICATED;
 	} 
 	else if (strcmp (type, "error") == 0) {
 		result = FALSE;
+		connection->state = LM_CONNECTION_STATE_CONNECTED;
 	}
 	
 	lm_verbose ("AUTH reply: %d\n", result);
@@ -989,6 +1084,8 @@ lm_connection_new (const gchar *server)
 	connection->fingerprint[0]    = '\0';
 	connection->disconnect_cb     = NULL;
 	connection->incoming_messages = lm_queue_new ();
+	connection->cancel_open       = FALSE;
+	connection->state             = LM_CONNECTION_STATE_DISCONNECTED;
 	
 	connection->id_handlers = g_hash_table_new_full (g_str_hash, 
 							 g_str_equal,
@@ -1211,7 +1308,22 @@ gboolean
 lm_connection_open_and_block (LmConnection *connection,
 			      GError **error)
 {
-	return lm_connection_open_and_block_ssl (connection, NULL, NULL, NULL, error);
+	return lm_connection_open_and_block_ssl (connection, NULL, NULL, 
+						 NULL, error);
+}
+
+/**
+ * lm_connection_cancel_open:
+ * @connection: an #LmConnection to cancel opening on
+ *
+ * Cancels the open operation of a connection. The connection should be in the state #LM_CONNECTION_STATE_CONNECTING.
+ **/
+void
+lm_connection_cancel_open (LmConnection *connection)
+{
+	g_return_if_fail (connection != NULL);
+
+	connection->cancel_open = TRUE;
 }
 
 /**
@@ -1295,6 +1407,8 @@ lm_connection_authenticate (LmConnection      *connection,
 			     "Connection is not open, call lm_connection_open() first");
 		return FALSE;
 	}
+
+	connection->state = LM_CONNECTION_STATE_AUTHENTICATING;
 	
 	connection->auth_cb = _lm_utils_new_callback (function, 
 						      user_data, 
@@ -1407,7 +1521,7 @@ lm_connection_authenticate_and_block (LmConnection  *connection,
 gboolean
 lm_connection_is_open (LmConnection *connection)
 {
-	return connection->is_open;
+	return connection->state >= LM_CONNECTION_STATE_CONNECTED;
 }
 
 /**
@@ -1421,7 +1535,7 @@ lm_connection_is_open (LmConnection *connection)
 gboolean 
 lm_connection_is_authenticated (LmConnection *connection)
 {
-	return connection->is_authenticated;
+	return connection->state >= LM_CONNECTION_STATE_AUTHENTICATED;
 }
 
 /**
@@ -1783,6 +1897,22 @@ lm_connection_send_raw (LmConnection  *connection,
 	g_return_val_if_fail (connection != NULL, FALSE);
 
 	return connection_send (connection, str, -1, error);
+}
+/**
+ * lm_connection_get_state:
+ * @connection: Connection to get state on
+ *
+ * Returns the state of the connection.
+ *
+ * Return value: The state of the connection.
+ **/
+LmConnectionState 
+lm_connection_get_state (LmConnection *connection)
+{
+	g_return_val_if_fail (connection != NULL, 
+			      LM_CONNECTION_STATE_DISCONNECTED);
+
+	return connection->state;
 }
 
 /**

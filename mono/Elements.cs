@@ -102,7 +102,7 @@ namespace Loudmouth {
     public class Message : Element {
 	public MessageType Type {
 	    get {
-		return (MessageType) lm_message_get_sub_type(this._obj);
+		return (MessageType) this.GetElementSubType ();
 	    }
 	}
 	public string Body {
