@@ -1,5 +1,10 @@
 2004-01-15  Mikael Hallendal  <micke@imendio.com>
 
+	* loudmouth/lm-connection.c:
+	- Added Sjoerd Simons to copyright list.
+
+2004-01-15  Mikael Hallendal  <micke@imendio.com>
+
 	* loudmouth/Makefile.am:
 	- Added lm-proxy.[ch]
 	* loudmouth/lm-connection.c:
