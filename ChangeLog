@@ -1,3 +1,8 @@
+2004-10-08  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-connection.c: (connection_new_message_cb):
+	- Fix crash on Solaris when running in verbose mode.
+
 2004-10-05  Mikael Hallendal  <micke@imendio.com>
 
 	* examples/*.c

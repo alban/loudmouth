@@ -258,11 +258,18 @@ connection_new_message_cb (LmParser     *parser,
 			   LmMessage    *m,
 			   LmConnection *connection)
 {
+	const gchar *from;
+	
 	lm_message_ref (m);
 
+	from = lm_message_node_get_attribute (m->node, "from");
+	if (!from) {
+		from = "unknown";
+	}
+	
 	lm_verbose ("New message with type=\"%s\" from: %s\n",
 		    _lm_message_type_to_string (lm_message_get_type (m)),
-		    lm_message_node_get_attribute (m->node, "from"));
+		    from);
 
 	g_queue_push_tail (connection->incoming_messages, m);
 }
