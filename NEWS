@@ -1,10 +1,14 @@
+Changes in 0.13.1:
+------------------
+* Don't require GnuTLS to build
+
 Changes in 0.13:
 ----------------
-* Fixed bug in the sub type checking code for messages      (Mikael Hallendal)
-* Fixed bug that hang the app when disconnected uncleanly   (Mikael Hallendal)
-* Fixed autoconf problems with gnutls                       (Mikhail Zabaluev)
-* Disconnect cleanly                                        (Mikhail Zabaluev)
-* Fix sha implementation to work on Linux/PPC               (Mikael Hallendal)
+* Fixed bug in the sub type checking code for messages  
+* Fixed bug that hang the app when disconnected uncleanly
+* Fixed autoconf problems with gnutls                   
+* Disconnect cleanly                                   
+* Fix sha implementation to work on Linux/PPC         
 
 Changes in 0.12:
 ----------------

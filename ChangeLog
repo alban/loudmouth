@@ -1,7 +1,15 @@
 2003-08-05  Mikael Hallendal  <micke@imendio.com>
 
-	* acinclude.m4:
-	* configure.in:
+        * Release 0.13.1
+
+        * NEWS: Updated for 0.13.1
+	* configure.in: Bumped to 0.13.1
+
+2003-08-05  Mikael Hallendal  <micke@imendio.com>
+
+	* acinclude.m4: Added GnuTLS-macro from GnuTLS-distribution.
+ 
+	* configure.in: Added comment if SSL support disabled.
 
 	* loudmouth.spec.in: Added Build-requirment on gtk-doc.
 
