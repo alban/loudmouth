@@ -206,11 +206,17 @@ _lm_ssl_read (LmSSL *ssl, gchar *buf, gint len, gsize *bytes_read)
 	GIOStatus status;
 	
 	*bytes_read = gnutls_record_recv (ssl->gnutls_session, buf, len);
-	
+
+	//g_print ("%d bytes read\n", size);
+
 	if (*bytes_read == GNUTLS_E_AGAIN) {
 		status = G_IO_STATUS_AGAIN;
 	}
-	else if (*bytes_read <= 0) {
+	else if (*bytes_read > len) {
+		*bytes_read = 0;
+		status = G_IO_STATUS_EOF;
+	}
+	else if (*bytes_read < 0) {
 		status = G_IO_STATUS_ERROR;
 	} else {
 		status = G_IO_STATUS_NORMAL;

@@ -1,3 +1,12 @@
+2005-01-19  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-connection.c: (connection_in_event):
+	* loudmouth/lm-ssl.c: (_lm_ssl_read):
+	- Seems GnuTLS returns a huge size as read bytes when the server is
+	  disconnected. Check if returned read size is larger than asked for
+	  if so, set the connection to be hung up.
+	- Fixes bug #164592
+
 2004-11-08  Mikael Hallendal  <micke@imendio.com>
 
 	* examples/lm-change-password.c: Added SSL support
@@ -6,7 +15,7 @@
 2004-10-31  Mikael Hallendal  <micke@imendio.com>
 
 	* Release 0.17.2
-        
+
 	* NEWS: Updated for 0.17.2
 	* configure.in: Bumped version to 0.17.2
 
