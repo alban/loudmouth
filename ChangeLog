@@ -1,3 +1,15 @@
+2003-06-11  Mikael Hallendal  <micke@codefactory.se>
+
+	* docs/reference/loudmouth-sections.txt: Added new functions
+
+	* loudmouth/lm-message-node.c: 
+	(_lm_message_node_new): Set node->raw_mode = FALSE.
+	(lm_message_node_get_raw_mode): Added
+	(lm_message_node_set_raw_mode): Added
+	(lm_message_node_to_string): Don't escape if raw_mode == TRUE
+	
+	* loudmouth/lm-message-node.h: Added new functions.
+
 2003-04-26  Mikael Hallendal  <micke@codefactory.se>
 
         * loudmouth.spec.in: Enable gtk-doc

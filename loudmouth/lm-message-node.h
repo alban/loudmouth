@@ -26,7 +26,6 @@
 #error "Only <loudmouth/loudmouth.h> can be included directly, this file may disappear or change contents."
 #endif
 
-
 #include <glib.h>
 
 typedef struct _LmMessageNode LmMessageNode;
@@ -34,6 +33,7 @@ typedef struct _LmMessageNode LmMessageNode;
 struct _LmMessageNode {
 	gchar      *name;
 	gchar      *value;
+	gboolean    raw_mode;
 
         LmMessageNode     *next;
         LmMessageNode     *prev;
@@ -63,6 +63,9 @@ LmMessageNode *lm_message_node_get_child      (LmMessageNode *message_node,
 					       const gchar   *child_name);
 LmMessageNode *lm_message_node_find_child     (LmMessageNode *message_node,
 					       const gchar   *child_name);
+gboolean       lm_message_node_get_raw_mode   (LmMessageNode *node);
+void           lm_message_node_set_raw_mode   (LmMessageNode *node,
+					       gboolean       raw_mode);
 LmMessageNode *lm_message_node_ref            (LmMessageNode *node);
 void           lm_message_node_unref          (LmMessageNode *node);
 gchar *        lm_message_node_to_string      (LmMessageNode *node);

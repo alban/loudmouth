@@ -53,6 +53,8 @@ lm_message_node_get_attribute
 lm_message_node_set_attribute
 lm_message_node_get_child
 lm_message_node_find_child
+lm_message_node_get_raw_mode
+lm_message_node_set_raw_mode
 lm_message_node_ref
 lm_message_node_unref
 lm_message_node_to_string

@@ -92,6 +92,7 @@ _lm_message_node_new (const gchar *name)
         
         node->name       = g_ascii_strdown (name, -1);
         node->value      = NULL;
+	node->raw_mode   = FALSE;
         node->attributes = NULL;
         node->next       = NULL;
         node->prev       = NULL;
@@ -350,6 +351,37 @@ lm_message_node_find_child (LmMessageNode *node,
 }
 
 /**
+ * lm_message_node_get_raw_mode:
+ * @node: an #LmMessageNode
+ * 
+ * Checks if the nodes value should be sent as raw mode. 
+ *
+ * Return value: %TRUE if nodes value should be sent as is and %FALSE if the value will be escaped before sending.
+ **/
+gboolean
+lm_message_node_get_raw_mode (LmMessageNode *node)
+{
+	g_return_val_if_fail (node != NULL, FALSE);
+
+	return node->raw_mode;
+}
+
+/** 
+ * lm_message_node_set_raw_mode:
+ * @node: an #LmMessageNode
+ * @raw_mode: boolean specifying if node value should be escaped or not.
+ *
+ * Set @raw_mode to %TRUE if you don't want to escape the value. You need to make sure the value is valid XML yourself.
+ **/
+void
+lm_message_node_set_raw_mode (LmMessageNode *node, gboolean raw_mode)
+{
+	g_return_if_fail (node != NULL);
+
+	node->raw_mode = raw_mode;	
+}
+
+/**
  * lm_message_node_ref:
  * @node: an #LmMessageNode
  * 
@@ -430,10 +462,14 @@ lm_message_node_to_string (LmMessageNode *node)
 
 		str = ret_val;
 
-		tmp = g_markup_escape_text (node->value, -1);
-		ret_val = g_strconcat (str, tmp, NULL);
+		if (node->raw_mode == FALSE) {
+			tmp = g_markup_escape_text (node->value, -1);
+			ret_val = g_strconcat (str, tmp, NULL);
+			g_free (tmp);
+		} else {
+			ret_val = g_strconcat (str, node->value, NULL);
+		}
 		g_free (str);
-		g_free (tmp);
 	} 
 
 	for (child = node->children; child; child = child->next) {
