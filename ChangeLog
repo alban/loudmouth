@@ -1,3 +1,9 @@
+2005-01-27  Martyn Russell  <mr@gnome.org>
+
+	* loudmouth/lm-connection.c (_lm_connection_failed_with_error): 
+	- Added fix to call the open callback when all connection attempts
+	fail to the destination server.
+
 2005-01-19  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-connection.c: (connection_in_event):

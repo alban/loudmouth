@@ -395,6 +395,16 @@ _lm_connection_failed_with_error (LmConnectData *connect_data, int error)
 	}
 	
 	if (connect_data->current_addr == NULL) {
+		LmConnection *connection;
+
+		connection = connect_data->connection;
+		if (connection->open_cb && connection->open_cb->func) {
+			LmCallback *cb = connection->open_cb;
+			
+			(* ((LmResultFunction) cb->func)) (connection, FALSE,
+							   cb->user_data);
+		}
+
 		freeaddrinfo (connect_data->resolved_addrs);
 		g_free (connect_data);
 	} else {
