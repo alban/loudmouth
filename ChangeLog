@@ -1,3 +1,12 @@
+2003-10-13  Mikael Hallendal  <micke@imendio.com>
+
+	* NEWS: Updated for 0.14.1
+	
+	* configure.in: Bumped to 0.14.1
+	
+	* loudmouth/lm-connection.c: (connection_in_event): check if bytes_read
+	  equals GNUTLS_E_AGAIN, fixes crash. Patch by Marinus Schraal.
+
 2003-10-03  Mikael Hallendal  <micke@imendio.com>
 
         * Release 0.14

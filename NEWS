@@ -1,3 +1,7 @@
+Changes in 0.14.1:
+------------------
+* Patch from foser@gentoo.org for a problem when using GnuTLS.
+
 Changes in 0.14:
 ----------------
 * Added information about building on Windows

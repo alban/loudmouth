@@ -437,7 +437,10 @@ connection_in_event (GIOChannel   *source,
 	if (connection->use_ssl) {
 		bytes_read = gnutls_record_recv (connection->gnutls_session,
 						 buf,IN_BUFFER_SIZE - 1);
-		if (bytes_read <= 0) {
+		if (bytes_read == GNUTLS_E_AGAIN) {
+			status = G_IO_STATUS_AGAIN;
+		}
+		else if (bytes_read <= 0) {
 			status = G_IO_STATUS_ERROR;
 			
 			//connection_error_event (connection->io_channel, 
