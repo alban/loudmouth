@@ -123,6 +123,11 @@ main (int argc, char **argv)
 
         connection = lm_connection_new (argv[1]);
 
+	if (lm_connection_supports_ssl ()) {
+		lm_connection_set_port (connection, 5223);
+		lm_connection_set_use_ssl (connection, TRUE);
+	}
+
 	handler = lm_message_handler_new (handle_messages, NULL, NULL);
 	lm_connection_register_message_handler (connection, handler, 
 						LM_MESSAGE_TYPE_MESSAGE, 

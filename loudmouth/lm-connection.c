@@ -21,6 +21,10 @@
 
 #include <config.h>
 
+#ifdef HAVE_GNUTLS
+#include <gnutls/gnutls.h>
+#endif
+
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -54,10 +58,15 @@ typedef struct {
 
 struct _LmConnection {
 	/* Parameters */
-	gchar      *server;
-	guint       port;
-	gboolean    use_ssl;
+	gchar          *server;
+	guint           port;
+	gboolean        use_ssl;
 
+#ifdef HAVE_GNUTLS
+	gnutls_session  gnutls_session;
+	gnutls_certificate_client_credentials gnutls_xcred;
+#endif
+	
 	gboolean    is_open;
 	gboolean    is_authenticated;
 	
@@ -226,20 +235,58 @@ connection_do_open (LmConnection *connection, GError **error)
 
         haddr = ((struct in_addr *) (he->h_addr_list)[0]);
 
-        fd = socket(AF_INET, SOCK_STREAM, 0);
-        memset(&saddr, 0, sizeof(saddr));
-        memcpy(&saddr.sin_addr, haddr, sizeof(struct in_addr));
-        saddr.sin_family = AF_INET;
-        saddr.sin_port = htons (connection->port);
- 
+#ifdef HAVE_GNUTLS
+	if (connection->use_ssl) {
+		gnutls_global_init ();
+		gnutls_certificate_allocate_credentials(&connection->gnutls_xcred);
+	}
+#endif
+
+	fd = socket(AF_INET, SOCK_STREAM, 0);
+	memset(&saddr, 0, sizeof(saddr));
+	memcpy(&saddr.sin_addr, haddr, sizeof(struct in_addr));
+	saddr.sin_family = AF_INET;
+	saddr.sin_port = htons (connection->port);
+
         if (connect(fd, (struct sockaddr *)&saddr, sizeof(saddr)) < 0) {
- 		g_set_error (error,
+		g_set_error (error,
  			     LM_ERROR,           
  			     LM_ERROR_CONNECTION_OPEN,
  			     "connect() failed");
 		close (fd);
 		return FALSE;
         }
+
+#ifdef HAVE_GNUTLS
+	if (connection->use_ssl) {
+		int ret;
+		const int cert_type_priority[2] =
+		{ GNUTLS_CRT_X509, GNUTLS_CRT_OPENPGP };
+
+		gnutls_init (&connection->gnutls_session, GNUTLS_CLIENT);
+		gnutls_set_default_priority (connection->gnutls_session);
+		gnutls_certificate_type_set_priority (connection->gnutls_session,
+						      cert_type_priority);
+		gnutls_credentials_set (connection->gnutls_session,
+					GNUTLS_CRD_CERTIFICATE,
+					connection->gnutls_xcred);
+		
+		gnutls_transport_set_ptr (connection->gnutls_session, 
+					  (gnutls_transport_ptr) fd);
+
+		ret = gnutls_handshake (connection->gnutls_session);
+		
+		if (ret < 0) {
+			gnutls_perror (ret);
+			shutdown (fd, SHUT_RDWR);
+			close (fd);
+			connection_do_close (connection);
+			g_set_error (error, LM_ERROR, LM_ERROR_CONNECTION_OPEN,
+				     "*** GNUTLS handshake failed");
+			return FALSE;
+		}
+	}
+#endif
 	
 	connection->io_channel = g_io_channel_unix_new (fd);
 	g_io_channel_set_close_on_unref (connection->io_channel, TRUE);
@@ -281,6 +328,14 @@ connection_do_close (LmConnection *connection)
 
 	connection->io_channel = NULL;
 	connection->is_open = FALSE;
+
+#ifdef HAVE_GNUTLS
+	if (connection->use_ssl) {
+		gnutls_deinit (connection->gnutls_session);
+		gnutls_certificate_free_credentials (connection->gnutls_xcred);
+		gnutls_global_deinit ();
+	}
+#endif
 }
 
 
@@ -295,10 +350,25 @@ connection_in_event (GIOChannel   *source,
 	if (!connection->io_channel) {
 		return FALSE;
 	}
-	g_io_channel_read_chars (connection->io_channel,
-				 buf, IN_BUFFER_SIZE - 1,
-				 &bytes_read,
-				 NULL);
+#ifdef HAVE_GNUTLS
+	if (connection->use_ssl) {
+		bytes_read = gnutls_record_recv (connection->gnutls_session,
+						 buf,IN_BUFFER_SIZE - 1);
+		if (bytes_read <= 0) {
+			connection_error_event (connection->io_channel, 
+						G_IO_HUP,
+						connection);
+		}
+	} else {
+#endif
+	    g_io_channel_read_chars (connection->io_channel,
+				     buf, IN_BUFFER_SIZE - 1,
+				     &bytes_read,
+				     NULL);
+#ifdef HAVE_GNUTLS
+	}
+#endif
+
 	buf[bytes_read] = '\0';
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "\nRECV:\n");
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
@@ -365,8 +435,23 @@ connection_send (LmConnection  *connection,
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
 	       "-----------------------------------\n");
 	
-	g_io_channel_write_chars (connection->io_channel, str, len, 
-				  &bytes_written, NULL);
+#ifdef HAVE_GNUTLS
+	if (connection->use_ssl) {
+		while ((bytes_written = gnutls_record_send (connection->gnutls_session, str, len)) < 0)
+			if (bytes_written != GNUTLS_E_INTERRUPTED &&
+			    bytes_written != GNUTLS_E_AGAIN)
+			{
+				connection_error_event (connection->io_channel, G_IO_HUP,
+							connection);
+			}
+		    
+	} else {
+#endif
+		g_io_channel_write_chars (connection->io_channel, str, len, 
+					  &bytes_written, NULL);
+#ifdef HAVE_GNUTLS
+	}
+#endif
 
 	return TRUE;
 }
@@ -989,6 +1074,23 @@ lm_connection_set_port (LmConnection *connection, guint port)
 	}
 	
 	connection->port = port;
+}
+
+/**
+ * lm_connection_supports_ssl:
+ *
+ * Checks whether Loudmouth supports SSL or not
+ *
+ * Return value: #TRUE if this installation of Loudmouth supports SSL, otherwise returnes #FALSE.
+ **/
+gboolean
+lm_connection_supports_ssl (void)
+{
+#ifdef HAVE_GNUTLS
+	return TRUE;
+#else
+	return FALSE;
+#endif
 }
 
 /**

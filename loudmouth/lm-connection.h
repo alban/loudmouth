@@ -100,6 +100,7 @@ void          lm_connection_set_server        (LmConnection       *connection,
 guint         lm_connection_get_port          (LmConnection       *connection);
 void          lm_connection_set_port          (LmConnection       *connection,
 					       guint               port);
+gboolean      lm_connection_supports_ssl      (void);
 gboolean      lm_connection_get_use_ssl       (LmConnection       *connection);
 void          lm_connection_set_use_ssl       (LmConnection       *connection,
 					       gboolean            use_ssl);
@@ -135,6 +136,5 @@ gboolean      lm_connection_send_raw          (LmConnection       *connection,
 					       GError            **error);
 LmConnection* lm_connection_ref               (LmConnection       *connection);
 void          lm_connection_unref             (LmConnection       *connection);
-
 
 #endif /* __LM_CONNECTION_H__ */

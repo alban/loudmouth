@@ -88,6 +88,30 @@ dnl +--------------------------------------------------------+
 AC_CHECK_LIB(nsl,gethostbyname)
 AC_CHECK_LIB(socket,socket)
 
+dnl +--------------------------------------------------------+
+dnl | Checking for SSL (through GnuTLS) support              |
+dnl +--------------------------------------------------------+
+AC_MSG_CHECKING([for GnuTLS support])
+
+AC_ARG_WITH(ssl, [  --without-ssl           disable ssl support],
+	    ac_ssl=$withval,
+	    ac_ssl=yes
+	    )
+
+if test x$ac_ssl != xno; then
+  GNUTLS_CFLAGS=`libgnutls-config --cflags`
+  if test "x$GNUTLS_CFLAGS" = "x"; then
+    AC_MSG_RESULT(no)
+  else
+    AC_MSG_RESULT(yes)
+    GNUTLS_LDFLAGS=`libgnutls-config --libs`
+    CFLAGS="$CFLAGS $GNUTLS_CFLAGS"
+    LDFLAGS="$LDFLAGS $GNUTLS_LDFLAGS"
+    AC_DEFINE(HAVE_GNUTLS, 1, [whether to use GnuTSL support.])
+  fi
+else
+  AC_MSG_RESULT(no)
+fi
 
 dnl +-------------+
 dnl | Build Flags |--------------------------------------------
@@ -114,6 +138,8 @@ if test x$enable_debug = xno ; then
 else
 	echo "Debugging enabled"
 fi
+
+
 
 AC_SUBST(LOUDMOUTH_CFLAGS)
 AC_SUBST(LOUDMOUTH_LIBS)

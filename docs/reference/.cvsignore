@@ -1,0 +1,14 @@
+Makefile
+Makefile.in
+*.stamp
+html
+loudmouth-decl-list.txt
+loudmouth-decl.txt
+loudmouth-undocumented.txt
+loudmouth-unused.txt
+loudmouth.args
+loudmouth.hierarchy
+loudmouth.interfaces
+loudmouth.prerequisites
+loudmouth.signals
+xml

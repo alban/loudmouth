@@ -1,0 +1,13 @@
+Makefile
+Makefile.in
+aclocal.m4
+autom4te*
+config.h*
+config.log
+config.status
+configure
+libtool
+*.tar.gz
+loudmouth.spec
+stamp-h1
+loudmouth-1.0.pc
