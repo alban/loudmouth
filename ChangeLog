@@ -1,5 +1,12 @@
 2005-03-31  Mikael Hallendal  <micke@imendio.com>
 
+	* Makefile.am:
+	* configure.in:
+	- Removed the mono directory from the release tarball, never finished
+	  and should probably be redone from scratch if to be done now.
+
+2005-03-31  Mikael Hallendal  <micke@imendio.com>
+
 	* loudmouth/lm-debug.h: Correct log domain
 	* loudmouth/lm-ssl.c: (ssl_verify_certificate):
 	- Removed GNUTLS_CERT_NOT_TRUSTED which has been removed from GnuTLS.

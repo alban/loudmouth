@@ -1,7 +1,3 @@
-if HAVE_MONO
-    MONO_SUBDIR = mono
-endif
-
 SUBDIRS = loudmouth docs examples
 
 EXTRA_DIST =			\
