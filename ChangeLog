@@ -1,5 +1,11 @@
 2004-10-05  Mikael Hallendal  <micke@imendio.com>
 
+	* examples/*.c
+	* loudmouth/*.[ch]
+	- s/Imendio HB/Imendio AB/
+
+2004-10-05  Mikael Hallendal  <micke@imendio.com>
+
 	* docs/reference/loudmouth-sections.txt:
 	- Added missing function
 
