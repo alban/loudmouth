@@ -1,0 +1,5 @@
+Makefile
+Makefile.in
+loudmouth.c
+loudmouth.so
+loudmouth.la
