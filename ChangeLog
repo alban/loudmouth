@@ -1,3 +1,22 @@
+2003-12-27  Mikael Hallendal  <micke@imendio.com>
+
+	* docs/reference/tmpl/lm-error.sgml:
+	* loudmouth/lm-connection.c:
+	* loudmouth/lm-connection.h:
+	(connection_connect_nonblocking),
+	(connection_do_open),
+	(connection_http_proxy_negotiate),
+	(lm_connection_new),
+	(lm_connection_get_proxy_type),
+	(lm_connection_set_proxy_type),
+	(lm_connection_get_proxy_server),
+	(lm_connection_set_proxy_server),
+	(lm_connection_get_proxy_port),
+	(lm_connection_set_proxy_port):
+	- Add support for HTTP proxy
+	- Patch from Josh Beam <josh@3ddrome.com>
+	- Needed changes to Loudmouth to fix bug #117757 in Gossip.
+
 2003-12-19  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-connection.c: 

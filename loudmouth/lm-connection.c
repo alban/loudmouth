@@ -34,6 +34,7 @@
   #include <netdb.h>
   #include <sys/socket.h>
   #include <netinet/in.h>
+  #include <sys/time.h>
 #else
   #include <winsock2.h>
 #endif
@@ -65,6 +66,10 @@ struct _LmConnection {
 	guint           port;
 	gboolean        use_ssl;
 	char	        fingerprint[20];
+
+	LmProxyType     proxy_type;
+	gchar          *proxy_server;
+	guint           proxy_port;
 
 #ifdef HAVE_GNUTLS
 	gnutls_session  gnutls_session;
@@ -165,6 +170,8 @@ static gboolean connection_incoming_dispatch (GSource         *source,
 static GSource * connection_create_source    (LmConnection *connection);
 static void      connection_signal_disconnect (LmConnection *connection,
 					       LmDisconnectReason reason);
+
+static gboolean connection_http_proxy_negotiate (gint fd, LmConnection *connection);
 
 static GSourceFuncs incoming_funcs = {
 	connection_incoming_prepare,
@@ -353,7 +360,10 @@ connection_connect_nonblocking (LmConnection *connection,
 	fd_set rset, wset;
 	struct timeval tval;
 	
-	((struct sockaddr_in *) addr->ai_addr)->sin_port = htons (connection->port);
+	if (connection->proxy_type != LM_PROXY_TYPE_NONE)
+		((struct sockaddr_in *) addr->ai_addr)->sin_port = htons (connection->proxy_port);
+	else
+		((struct sockaddr_in *) addr->ai_addr)->sin_port = htons (connection->port);
 
 	getnameinfo (addr->ai_addr,
 		     addr->ai_addrlen,
@@ -371,14 +381,20 @@ connection_connect_nonblocking (LmConnection *connection,
 		return -1;
 	}
 
-	flags = fcntl (fd, F_GETFL, 0);
-	fcntl (fd, F_SETFL, flags | O_NONBLOCK);
-	
 	res = connect (fd, addr->ai_addr, addr->ai_addrlen);
 	if (res == 0) {
-		/* connection successfull */
-		return fd;
+		if (connection->proxy_type == LM_PROXY_TYPE_HTTP) {
+			if (connection_http_proxy_negotiate(fd, connection) == TRUE) {
+				return fd;
+			}
+		} else {
+			/* connection successfull */
+			return fd;
+		}
 	} 
+
+	flags = fcntl (fd, F_GETFL, 0);
+	fcntl (fd, F_SETFL, flags | O_NONBLOCK);
 	
 	if (errno != EINPROGRESS) {
 		close (fd);
@@ -437,18 +453,34 @@ connection_do_open (LmConnection    *connection,
 	req.ai_socktype = SOCK_STREAM;
 	req.ai_protocol = IPPROTO_TCP;
 
-	g_log (LM_LOG_DOMAIN,LM_LOG_LEVEL_NET,
-	       "Going to connect to %s\n",connection->server);
+	if (connection->proxy_type != LM_PROXY_TYPE_NONE) { /* connect through proxy */
+		g_log (LM_LOG_DOMAIN,LM_LOG_LEVEL_NET,
+		       "Going to connect to %s\n",connection->proxy_server);
 
-	connection->cancel_open = FALSE;
-	connection->state = LM_CONNECTION_STATE_CONNECTING;
+		connection->cancel_open = FALSE;
+		connection->state = LM_CONNECTION_STATE_CONNECTING;
 	
-	if ((err = getaddrinfo (connection->server, NULL, &req, &ans)) != 0) {
-		g_set_error (error,
-			     LM_ERROR,                 
-			     LM_ERROR_CONNECTION_OPEN,   
-			     "getaddrinfo() failed");
-		return FALSE;
+		if ((err = getaddrinfo (connection->proxy_server, NULL, &req, &ans)) != 0) {
+			g_set_error (error,
+				     LM_ERROR,                 
+				     LM_ERROR_CONNECTION_OPEN,   
+				     "getaddrinfo() failed");
+			return FALSE;
+		}
+	} else { /* connect directly */
+		g_log (LM_LOG_DOMAIN,LM_LOG_LEVEL_NET,
+		       "Going to connect to %s\n",connection->server);
+
+		connection->cancel_open = FALSE;
+		connection->state = LM_CONNECTION_STATE_CONNECTING;
+	
+		if ((err = getaddrinfo (connection->server, NULL, &req, &ans)) != 0) {
+			g_set_error (error,
+				     LM_ERROR,                 
+				     LM_ERROR_CONNECTION_OPEN,   
+				     "getaddrinfo() failed");
+			return FALSE;
+		}
 	}
 
 #ifdef HAVE_GNUTLS
@@ -1050,6 +1082,52 @@ connection_signal_disconnect (LmConnection       *connection,
 	}
 }
 
+static gboolean
+connection_http_proxy_negotiate (gint fd, LmConnection *connection)
+{
+	gint   i, len;
+	gchar  buf[1024];
+	gchar *str;
+
+	str = g_strdup_printf ("CONNECT %s:%u HTTP/1.1\r\nHost: %s:%u\r\n\r\n",
+			       connection->server, connection->port, 
+			       connection->server, connection->port);
+
+	send (fd, str, strlen (str), 0);
+
+	g_free (str);
+
+	len = read (fd, buf, 12);
+	if (len <= 0) {
+		return FALSE;
+	}
+
+	buf[len] = '\0';
+	if (strcmp (buf, "HTTP/1.1 200") != 0 && strcmp (buf, "HTTP/1.0 200") != 0) {
+		return FALSE;
+	}
+
+	/* discard any headers that we don't need */
+	for (i = 0; i < 4; i++) {
+		len = read (fd, buf + i, 1);
+		if (len <= 0) {
+			return FALSE;
+		}
+	}
+	while (strncmp (buf, "\r\n\r\n", 4) != 0) {
+		for (i = 0; i < 3; i++) {
+			buf[i] = buf[i + 1];
+		}
+		
+		len = read (fd, buf + 3, 1);
+		if (len <= 0) {
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
 /**
  * lm_connection_new:
  * @server: The hostname to the server for the connection.
@@ -1078,6 +1156,9 @@ lm_connection_new (const gchar *server)
 	connection->port              = LM_CONNECTION_DEFAULT_PORT;
 	connection->use_ssl           = FALSE;
 	connection->fingerprint[0]    = '\0';
+	connection->proxy_type        = LM_PROXY_TYPE_NONE;
+	connection->proxy_server      = NULL;
+	connection->proxy_port        = 8080;
 	connection->disconnect_cb     = NULL;
 	connection->incoming_messages = lm_queue_new ();
 	connection->cancel_open       = FALSE;
@@ -1600,6 +1681,106 @@ lm_connection_set_port (LmConnection *connection, guint port)
 	}
 	
 	connection->port = port;
+}
+
+/**
+ * lm_connection_get_proxy_type:
+ * @connection: an #LmConnection
+ * 
+ * Fetches the proxy type that @connection is using.
+ * 
+ * Return value: 
+ **/
+LmProxyType
+lm_connection_get_proxy_type (LmConnection *connection)
+{
+	return connection->proxy_type;
+}
+
+/**
+ * lm_connection_set_proxy_type:
+ * @connection: an #LmConnection
+ * @type: an LmProxyType
+ *
+ * Sets the proxy server type for @connection to @type. Notice that @connection can't be open while doing this.
+ **/
+void
+lm_connection_set_proxy_type (LmConnection *connection, LmProxyType type)
+{
+	if (lm_connection_is_open (connection)) {
+		g_warning ("Can't change proxy type while connected");
+		return;
+	}
+
+	connection->proxy_type = type;
+}
+
+/**
+ * lm_connection_get_proxy_server:
+ * @connection: an #LmConnection
+ * 
+ * Fetches the proxy server address that @connection is using.
+ * 
+ * Return value: the proxy server address
+ **/
+const gchar *
+lm_connection_get_proxy_server (LmConnection *connection)
+{
+	return connection->proxy_server;
+}
+
+/**
+ * lm_connection_set_proxy_server:
+ * @connection: an #LmConnection
+ * @server: Address of the proxy server
+ * 
+ * Sets the proxy server address for @connection to @server. Notice that @connection can't be open while doing this.
+ **/
+void
+lm_connection_set_proxy_server (LmConnection *connection, const gchar *server)
+{
+	if (lm_connection_is_open (connection)) {
+		g_warning ("Can't change proxy server address while connected");
+		return;
+	}
+	
+	if (connection->proxy_server) {
+		g_free (connection->proxy_server);
+	}
+	
+	connection->proxy_server = g_strdup (server);
+}
+
+/**
+ * lm_connection_get_proxy_port:
+ * @connection: an #LmConnection
+ * 
+ * Fetches the proxy port that @connection is using.
+ * 
+ * Return value: 
+ **/
+guint
+lm_connection_get_proxy_port (LmConnection *connection)
+{
+	return connection->proxy_port;
+}
+
+/**
+ * lm_connection_set_proxy_port:
+ * @connection: an #LmConnection
+ * @port: proxy server port
+ * 
+ * Sets the proxy server port that @connection will be using.
+ **/
+void
+lm_connection_set_proxy_port (LmConnection *connection, guint port)
+{
+	if (lm_connection_is_open (connection)) {
+		g_warning ("Can't change proxy server port while connected");
+		return;
+	}
+	
+	connection->proxy_port = port;
 }
 
 /**
