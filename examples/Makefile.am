@@ -8,7 +8,8 @@ noinst_PROGRAMS =                                  \
 	test-tunnel                                \
 	lm-send-sync                               \
 	lm-send-async                              \
-	lm-change-password
+	lm-change-password                         \
+	lm-register
 
 test_lm_SOURCES = test-lm.c
 
@@ -21,6 +22,8 @@ lm_send_sync_SOURCES = lm-send-sync.c
 lm_send_async_SOURCES = lm-send-async.c
 
 lm_change_password_SOURCES = lm-change-password.c
+
+lm_register_SOURCES = lm-register.c
 
 LDADD =                                            \
 	$(LOUDMOUTH_LIBS)                          \

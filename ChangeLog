@@ -1,3 +1,9 @@
+2004-09-03  Mikael Hallendal  <micke@imendio.com>
+
+	* examples/Makefile.am:
+	* examples/lm-register.c:
+	- Added small tool to register an account
+
 2004-09-02  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-connection.c: (lm_connection_set_proxy):
