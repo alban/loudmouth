@@ -467,6 +467,7 @@ lm_message_node_to_string (LmMessageNode *node)
 		str = ret_val;
 		ret_val = g_strconcat (str, "  ", child_str, NULL);
 		g_free (str);
+		g_free (child_str);
 	}
 
 	str = ret_val;

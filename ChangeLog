@@ -1,3 +1,10 @@
+2004-01-29  Richard Hult  <richard@imendio.com>
+
+	* loudmouth/lm-message-node.c: (lm_message_node_to_string):
+	* loudmouth/lm-message.c: (lm_message_new):
+	(lm_message_new_with_sub_type), (lm_message_unref): 
+	- Plug leaks and fix two small coding style issues.
+
 2004-01-23  Mikael Hallendal  <micke@imendio.com>
 	
 	* Release 0.15.1

@@ -202,8 +202,10 @@ _lm_message_new_from_node (LmMessageNode *node)
 LmMessage *
 lm_message_new (const gchar *to, LmMessageType type)
 {
-	LmMessage *m = g_new0 (LmMessage, 1);
-	
+	LmMessage *m;
+	gchar     *id;
+
+	m       = g_new0 (LmMessage, 1);
 	m->priv = g_new0 (LmMessagePriv, 1);
 
 	PRIV(m)->ref_count = 1;
@@ -212,7 +214,9 @@ lm_message_new (const gchar *to, LmMessageType type)
 	
 	m->node = _lm_message_node_new (_lm_message_type_to_string (type));
 
-	lm_message_node_set_attribute (m->node, "id", _lm_utils_generate_id());
+	id = _lm_utils_generate_id ();
+	lm_message_node_set_attribute (m->node, "id", id);
+	g_free (id);
 	
 	if (to) {
 		lm_message_node_set_attribute (m->node, "to", to);
@@ -241,8 +245,10 @@ lm_message_new_with_sub_type (const gchar      *to,
 			      LmMessageType     type, 
 			      LmMessageSubType  sub_type)
 {
-	LmMessage   *m = lm_message_new (to, type);
+	LmMessage   *m;
 	const gchar *type_str;
+
+	m = lm_message_new (to, type);
 
 	type_str = _lm_message_sub_type_to_string (sub_type);
 
@@ -337,6 +343,7 @@ lm_message_unref (LmMessage *message)
 	
 	if (PRIV(message)->ref_count == 0) {
 		lm_message_node_unref (message->node);
+		g_free (message->priv);
 		g_free (message);
 	}
 }
