@@ -1,5 +1,7 @@
 2003-08-05  Mikael Hallendal  <micke@imendio.com>
 
+	* loudmouth.spec.in: Added Build-requirment on gtk-doc.
+
         * Release 0.13
 	
 	* NEWS: Updated for 0.13  
