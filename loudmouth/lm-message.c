@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- * Copyright (C) 2003 Mikael Hallendal <micke@codefactory.se>
+ * Copyright (C) 2003 Mikael Hallendal <micke@imendio.com>
  * Copyright (C) 2003 CodeFactory AB. 
  *
  * This program is free software; you can redistribute it and/or
@@ -77,7 +77,7 @@ message_type_from_string (const gchar *type_str)
         for (i = LM_MESSAGE_TYPE_MESSAGE;
 	     i <= LM_MESSAGE_TYPE_STREAM_ERROR;
 	     ++i) {
-                if (g_ascii_strcasecmp (type_str, type_names[i].name) == 0) {
+                if (strcmp (type_str, type_names[i].name) == 0) {
                         return i;
                 }
         }

@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- * Copyright (C) 2003 Mikael Hallendal <micke@codefactory.se>
+ * Copyright (C) 2003 Mikael Hallendal <micke@imendio.com>
  * Copyright (C) 2003 CodeFactory AB. 
  *
  * This program is free software; you can redistribute it and/or
@@ -90,7 +90,7 @@ _lm_message_node_new (const gchar *name)
 
         node = g_new0 (LmMessageNode, 1);
         
-        node->name       = g_ascii_strdown (name, -1);
+        node->name       = g_strdup (name);
         node->value      = NULL;
 	node->raw_mode   = FALSE;
         node->attributes = NULL;
@@ -233,17 +233,13 @@ lm_message_node_set_attribute (LmMessageNode *node,
 {
 	gboolean  found = FALSE; 
 	GSList   *l;
-	gchar    *key;
-	
-	key = g_utf8_strdown (name, -1);
 
 	for (l = node->attributes; l; l = l->next) {
 		KeyValuePair *kvp = (KeyValuePair *) l->data;
                 
-		if (strcmp (kvp->key, key) == 0) {
+		if (strcmp (kvp->key, name) == 0) {
 			g_free (kvp->value);
 			kvp->value = g_strdup (value);
-			g_free (key);
 			found = TRUE;
 			break;
 		}
@@ -253,11 +249,10 @@ lm_message_node_set_attribute (LmMessageNode *node,
 		KeyValuePair *kvp;
 	
 		kvp = g_new0 (KeyValuePair, 1);                
-		kvp->key = key;
+		kvp->key = g_strdup (name);
 		kvp->value = g_strdup (value);
 		
-		node->attributes = g_slist_prepend (node->attributes,
-						    kvp);
+		node->attributes = g_slist_prepend (node->attributes, kvp);
 	}
 }
 
@@ -275,21 +270,16 @@ lm_message_node_get_attribute (LmMessageNode *node, const gchar *name)
 {
         GSList      *l;
         const gchar *ret_val = NULL;
-        gchar       *key;
 
         g_return_val_if_fail (node != NULL, NULL);
-
-        key = g_utf8_strdown (name, -1);
 
         for (l = node->attributes; l; l = l->next) {
                 KeyValuePair *kvp = (KeyValuePair *) l->data;
                 
-                if (strcmp (kvp->key, key) == 0) {
+                if (strcmp (kvp->key, name) == 0) {
                         ret_val = kvp->value;
                 }
         }
-        
-        g_free (key);
         
         return ret_val;
 }
@@ -310,7 +300,7 @@ lm_message_node_get_child (LmMessageNode *node, const gchar *child_name)
 	LmMessageNode *l;
 	
 	for (l = node->children; l; l = l->next) {
-		if (g_ascii_strcasecmp (l->name, child_name) == 0) {
+		if (strcmp (l->name, child_name) == 0) {
 			return l;
 		}
 	}
@@ -336,7 +326,7 @@ lm_message_node_find_child (LmMessageNode *node,
         LmMessageNode *ret_val = NULL;
 
         for (l = node->children; l; l = l->next) {
-                if (g_ascii_strcasecmp (l->name, child_name) == 0) {
+                if (strcmp (l->name, child_name) == 0) {
                         return l;
                 }
                 if (l->children) {

@@ -1,3 +1,16 @@
+2003-06-13  Mikael Hallendal  <micke@imendio.com>
+
+	* AUTHORS: updated contact information
+	* README: updated contact information
+	* loudmouth/*.[ch]: updated email address
+	* loudmouth/lm-message-node.c: don't lower case the XML
+	* loudmouth/lm-message.c:
+	(message_type_from_string): use strcmp rather than strcasecmp
+	* loudmouth/lm-parser.c: 
+	(parser_start_node_cb),
+	(parser_end_node_cb), 
+	(lm_parser_new): use strcmp instead of strcasecmp
+
 2003-06-11  Mikael Hallendal  <micke@codefactory.se>
 
 	* docs/reference/loudmouth-sections.txt: Added new functions

@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- * Copyright (C) 2003 Mikael Hallendal <micke@codefactory.se>
+ * Copyright (C) 2003 Mikael Hallendal <micke@imendio.com>
  * Copyright (C) 2003 CodeFactory AB. 
  *
  * This program is free software; you can redistribute it and/or
@@ -107,7 +107,7 @@ parser_start_node_cb (GMarkupParseContext  *context,
 						NULL);
 	}
 	
-	if (g_ascii_strcasecmp ("stream:stream", node_name) == 0) {
+	if (strcmp ("stream:stream", node_name) == 0) {
 		parser_end_node_cb (context,
 				    "stream:stream",
 				    user_data, 
@@ -128,8 +128,8 @@ parser_end_node_cb (GMarkupParseContext  *context,
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_PARSER,
 	       "Trying to close node: %s\n", node_name);
 
-	if (g_ascii_strcasecmp (parser->cur_node->name, node_name) != 0) {
-		if (g_ascii_strcasecmp (node_name, "stream:stream")) {
+	if (strcmp (parser->cur_node->name, node_name) != 0) {
+		if (strcmp (node_name, "stream:stream")) {
 			g_print ("Got an stream:stream end\n");
 		}
 		g_warning ("Trying to close node that isn't open: %s",
@@ -226,7 +226,7 @@ lm_parser_new (LmParserMessageFunction function,
 	parser->m_parser->error         = parser_error_cb;
 
 	parser->context = g_markup_parse_context_new (parser->m_parser, 0,
-						    parser, NULL);
+						      parser, NULL);
 
 	parser->cur_root = NULL;
 	parser->cur_node = NULL;
