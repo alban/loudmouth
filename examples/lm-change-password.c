@@ -36,7 +36,7 @@ ssl_func (LmSSL        *ssl,
 static void
 print_usage (const gchar *exec_name)
 {
-	g_print ("Usage: %s <server> <username> <oldpassword> <newpassword> [--ssl]\n",
+	g_print ("Usage: %s <server> <username> <oldpassword> <newpassword> [--ssl] [--host <host>]\n",
 		 exec_name);
 }
 
@@ -48,10 +48,13 @@ main (int argc, char **argv)
 	const gchar   *username;
 	const gchar   *old_pass;
 	const gchar   *new_pass;
+	const gchar   *host;
 	GError        *error = NULL;
 	LmMessage     *m;
+	LmMessage     *reply;
 	LmMessageNode *query;
 	gboolean       use_ssl = FALSE;
+	
 	
 	if (argc < 5) {
 		print_usage (argv[0]);
@@ -62,6 +65,7 @@ main (int argc, char **argv)
 	username = argv[2];
 	old_pass = argv[3];
 	new_pass = argv[4];
+	host = NULL;
 
 	if (argc >= 5) {
 		int i;
@@ -70,13 +74,31 @@ main (int argc, char **argv)
 			if (strcmp (argv[i], "-s") == 0 ||
 			    strcmp (argv[i], "--ssl") == 0) {
 				use_ssl = TRUE;
-				break;
+			}
+			else if (strcmp (argv[i], "-h") == 0 ||
+				 strcmp (argv[i], "--host") == 0) {
+				if (++i >= argc) {
+					print_usage (argv[0]);
+					return -1;
+				} 
+
+				host = argv[i];
+				g_print ("HOST: %s\n", host);
 			}
 		}
 	}
 
 	connection = lm_connection_new (server);
 
+	if (host) {
+		gchar *jid;
+
+		jid = g_strdup_printf ("%s@%s", username, host);
+		g_print ("Setting jid to %s\n", jid);
+		lm_connection_set_jid (connection, jid);
+		g_free (jid);
+	}
+	
 	if (use_ssl) {
 		LmSSL *ssl;
 
@@ -114,9 +136,18 @@ main (int argc, char **argv)
 					NULL);
 	lm_message_node_add_child (query, "username", username);
 	lm_message_node_add_child (query, "password", new_pass);
-	
-	if (!lm_connection_send (connection, m, &error)) {
-		g_error ("Failed to send: %s\n", error->message);
+
+	reply = lm_connection_send_with_reply_and_block (connection, m, &error);
+	if (!reply) {
+		g_error ("Failed to change password: %s\n", error->message);
+	}	
+
+	if (lm_message_get_sub_type (reply) == LM_MESSAGE_SUB_TYPE_RESULT) {
+		g_print ("Password changed\n");
+	} else {
+		g_print ("Failed to change password\n");
+		/* If this wasn't only an example we should check error code
+		 * here to tell the user why it failed */
 	}
 	
 	lm_connection_close (connection, NULL);

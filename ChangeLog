@@ -1,3 +1,9 @@
+2005-02-02  Mikael Hallendal  <micke@imendio.com>
+
+	* examples/lm-change-password.c: (print_usage), (main):
+	- Support sending --host which would be the host part of the jid if
+	  the connect server is different.
+
 2005-01-27  Martyn Russell  <mr@gnome.org>
 
 	* loudmouth/lm-connection.c (_lm_connection_failed_with_error): 
