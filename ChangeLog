@@ -1,3 +1,10 @@
+2003-08-05  Mikael Hallendal  <micke@imendio.com>
+
+        * Release 0.13
+	
+	* NEWS: Updated for 0.13  
+	* configure.in: Bumped to 0.13
+
 2003-08-04  Mikael Hallendal  <micke@imendio.com>
 
 	* README: 

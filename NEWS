@@ -1,3 +1,11 @@
+Changes in 0.13:
+----------------
+* Fixed bug in the sub type checking code for messages      (Mikael Hallendal)
+* Fixed bug that hang the app when disconnected uncleanly   (Mikael Hallendal)
+* Fixed autoconf problems with gnutls                       (Mikhail Zabaluev)
+* Disconnect cleanly                                        (Mikhail Zabaluev)
+* Fix sha implementation to work on Linux/PPC               (Mikael Hallendal)
+
 Changes in 0.12:
 ----------------
 * Added support for cancelling messages waiting for reply
