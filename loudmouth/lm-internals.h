@@ -62,10 +62,7 @@ void             _lm_message_node_add_child_node    (LmMessageNode    *node,
 LmMessageNode *  _lm_message_node_new               (const gchar      *name);
 void             _lm_debug_init                     (void);
 
-gboolean         _lm_proxy_negotiate                (LmProxy          *proxy,
-						     gint              fd,
-						     const gchar      *server,
-						     guint             port);
+
 gboolean         _lm_proxy_connect_cb               (GIOChannel *source,
                                                      GIOCondition condition,
                                                      gpointer data);

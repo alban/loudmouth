@@ -44,17 +44,21 @@ struct _LmProxy {
         gint         ref_count;
 };
 
-static void          proxy_free              (LmProxy     *proxy);
-static gboolean      proxy_http_negotiate    (LmProxy     *proxy,
-					      gint         fd, 
-					      const gchar *server,
-					      guint        port);
-static gboolean      proxy_http_read_cb      (GIOChannel *source,
-                                              GIOCondition condition,
-                                              gpointer data);
-static gboolean      proxy_read_cb      (GIOChannel *source,
-                                              GIOCondition condition,
-                                              gpointer data);
+static void          proxy_free              (LmProxy       *proxy);
+static gboolean      proxy_http_negotiate    (LmProxy       *proxy,
+					      gint           fd, 
+					      const gchar   *server,
+					      guint          port);
+static gboolean      proxy_negotiate         (LmProxy       *proxy,
+					      gint           fd,
+					      const gchar   *server,
+					      guint          port);
+static gboolean      proxy_http_read_cb      (GIOChannel    *source,
+					      GIOCondition   condition,
+					      gpointer       data);
+static gboolean      proxy_read_cb           (GIOChannel    *source,
+                                              GIOCondition   condition,
+                                              gpointer       data);
 
 static void
 proxy_free (LmProxy *proxy)
@@ -71,8 +75,6 @@ proxy_http_negotiate (LmProxy *proxy, gint fd, const gchar *server, guint port)
 {
 	gchar *str;
 
-	g_print ("http negotiate\n");
-	
 	if (proxy->username && proxy->password) {
 		gchar *tmp1;
 		gchar *tmp2;
@@ -139,8 +141,9 @@ proxy_read_cb (GIOChannel *source, GIOCondition condition, gpointer data)
 
 	g_return_val_if_fail (proxy != NULL, FALSE);
 
-	if (lm_connection_is_open (connection))
+	if (lm_connection_is_open (connection)) {
 		return FALSE;
+	}
 
 	switch (lm_proxy_get_type (proxy)) {
 	default:
@@ -161,7 +164,7 @@ proxy_read_cb (GIOChannel *source, GIOCondition condition, gpointer data)
 }
 
 gboolean
-_lm_proxy_negotiate (LmProxy *proxy, gint fd, const gchar *server, guint port)
+proxy_negotiate (LmProxy *proxy, gint fd, const gchar *server, guint port)
 {
 	g_return_val_if_fail (proxy != NULL, FALSE);
 
@@ -198,14 +201,19 @@ _lm_proxy_connect_cb (GIOChannel *source, GIOCondition condition, gpointer data)
 		_lm_connection_failed_with_error (connect_data, error);
 		return FALSE;
 	} else if (condition == G_IO_OUT) {
-		if (!_lm_proxy_negotiate (lm_connection_get_proxy (connection), connect_data->fd, lm_connection_get_server (connection), lm_connection_get_port (connection))) {
+		if (!proxy_negotiate (lm_connection_get_proxy (connection), connect_data->fd, lm_connection_get_server (connection), lm_connection_get_port (connection))) {
 			_lm_connection_failed (connect_data);
 			return FALSE;
 		}
-		proxy->io_watch = g_io_add_watch (connect_data->io_channel,
-						  G_IO_IN|G_IO_ERR,
-						  (GIOFunc) proxy_read_cb,
-						  connect_data);
+		if (proxy->type == LM_PROXY_TYPE_NONE) {
+			_lm_connection_succeeded (connect_data);
+		}
+		else {
+			proxy->io_watch = g_io_add_watch (connect_data->io_channel,
+							  G_IO_IN|G_IO_ERR,
+							  (GIOFunc) proxy_read_cb,
+							  connect_data);
+		}
 	} else {
 		g_assert_not_reached ();
 	}

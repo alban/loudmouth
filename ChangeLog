@@ -1,3 +1,14 @@
+2004-08-08  Mikael Hallendal  <micke@imendio.com>
+
+	* docs/reference/tmpl/lm-proxy.sgml: Added LM_PROXY_TYPE_NONE
+	* examples/Makefile.am: Added test-tunnel.c
+	* examples/test-tunnel.c: 
+	- Added test that uses LM_PROXY_TYPE_NONE.
+	* loudmouth/lm-internals.h: Cleaning
+	* loudmouth/lm-proxy.c: 
+	- Support using LM_PROXY_TYPE_NONE for direct 
+	  (for example an ssh-tunnel) "proxy".
+
 2004-08-03  Mikael Hallendal  <micke@imendio.com>
 
 	* Synced from SVN. Going to continue working on it here.

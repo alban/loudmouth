@@ -35,7 +35,7 @@ This should not be accessed directly. Use the accessor functions as described be
 The type of the proxy.
 </para>
 
-@LM_PROXY_TYPE_NONE: 
+@LM_PROXY_TYPE_NONE: A direct proxy, for example when using through a simple tunnel.
 @LM_PROXY_TYPE_HTTP: An HTTP proxy.
 
 <!-- ##### FUNCTION lm_proxy_new ##### -->

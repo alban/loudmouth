@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- * Copyright (C) 2004 Imendio HB
+ * Copyright (C) 2003-2004 Imendio HB
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License as
@@ -102,7 +102,7 @@ main (int argc, char **argv)
                                                                                 
         connection = lm_connection_new (argv[1]);
 
-	proxy = lm_proxy_new (LM_PROXY_TYPE_HTTP);
+	proxy = lm_proxy_new (LM_PROXY_TYPE_NONE);
 	lm_proxy_set_server (proxy, argv[4]);
 
 	proxy_port = strtol (argv[5], (char **) NULL, 10);
