@@ -2,7 +2,6 @@
 /*
  * Copyright (C) 2003 Imendio HB
  * Copyright (C) 2003 Mikael Hallendal <micke@imendio.com>
- * Copyright (C) 2003 CodeFactory AB. 
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License as
@@ -24,18 +23,66 @@
 
 #include <glib.h>
 #include <string.h>
+#include <stdlib.h>
 #include <loudmouth/loudmouth.h>
 #ifdef __WIN32__
 #include <winsock2.h>
 #endif
 #include "lm-internals.h"
 
-#define USAGE "Usage: test-lm <server> <username> <password>\n"
-
 typedef struct {
 	gchar *name;
 	gchar *passwd;
 } UserInfo;
+
+static unsigned char expected_fingerprint[20];
+
+static void
+print_finger (const unsigned char *fpr, unsigned int size)
+{
+	gint i;
+	for (i = 0; i < size-1; i++)
+		g_print ("%02X:", (unsigned char) fpr[i]);
+	g_print ("%02X", (unsigned char) fpr[size-1]);
+}
+
+static LmSSLResponse
+ssl_cb (LmConnection *connection, LmSSLStatus status, gpointer ud)
+{
+	g_print ("SSL status: %d\n", status);
+	switch (status) {
+	case LM_SSL_STATUS_NO_CERT_FOUND:
+		g_print ("No certificate found!\n");
+		break;
+	case LM_SSL_STATUS_UNTRUSTED_CERT:
+		g_print ("Certificate is not trusted!\n"); 
+		break;
+	case LM_SSL_STATUS_CERT_EXPIRED:
+		g_print ("Certificate has expired!\n"); 
+		break;
+	case LM_SSL_STATUS_CERT_NOT_ACTIVATED:
+		g_print ("Certificate has not been activated!\n"); 
+		break;
+	case LM_SSL_STATUS_CERT_HOSTNAME_MISMATCH:
+		g_print ("Certificate hostname does not match expected hostname!\n"); 
+		break;
+	case LM_SSL_STATUS_CERT_FINGERPRINT_MISMATCH: {
+		const unsigned char *fpr = lm_connection_get_fingerprint (connection);
+		g_print ("Certificate fingerprint does not match expected fingerprint!\n"); 
+		g_print ("Remote fingerprint: ");
+		print_finger (fpr, 16);
+		g_print ("\nExpected fingerprint: ");
+		print_finger (expected_fingerprint, 16);
+		g_print ("\n");
+		break;
+	}
+	case LM_SSL_STATUS_GENERIC_ERROR:
+		g_print ("Generic SSL error!\n"); 
+		break;
+	}
+
+	return LM_SSL_RESPONSE_CONTINUE;
+}
 
 static void
 authentication_cb (LmConnection *connection, gboolean result, gpointer ud)
@@ -92,7 +139,8 @@ main (int argc, char **argv)
 #endif
 	
 	if (argc < 4) {
-		g_print (USAGE);
+		g_print ("Usage: test-lm <server> <username> <password>\n"
+			 "       test-lm <server> <username> <password> <fingerprint>\n");
 		return 1;
 	}
 
@@ -124,12 +172,11 @@ main (int argc, char **argv)
 
         connection = lm_connection_new (argv[1]);
 
-	/*
-	if (lm_connection_supports_ssl ()) {
-		lm_connection_set_port (connection, 5223);
-		lm_connection_set_use_ssl (connection, TRUE);
+	if (argc > 4 && !lm_connection_supports_ssl ()) {
+		g_error ("No SSL support!");
+		exit (1);
 	}
-	*/
+
 
 	handler = lm_message_handler_new (handle_messages, NULL, NULL);
 	lm_connection_register_message_handler (connection, handler, 
@@ -142,9 +189,25 @@ main (int argc, char **argv)
 	info->name = g_strdup (argv[2]);
 	info->passwd = g_strdup (argv[3]);
 	
-	result = lm_connection_open (connection,
-				     (LmResultFunction) connection_open_cb,
-				     info, NULL, NULL);
+	if (argc > 4) {
+		int i;
+		char *p;
+		lm_connection_set_port (connection,
+					LM_CONNECTION_DEFAULT_PORT_SSL);
+		
+		for (i = 0, p = argv[4]; *p && *(p+1); i++, p += 3)
+			expected_fingerprint[i] = (unsigned char) g_ascii_strtoull (p, NULL, 16);
+		
+		result = lm_connection_open_ssl (connection,
+						 expected_fingerprint,
+						 (LmSSLFunction) ssl_cb,
+						 (LmResultFunction) connection_open_cb,
+						 info, NULL, NULL);
+	} else {
+		result = lm_connection_open (connection,
+					     (LmResultFunction) connection_open_cb,
+					     info, NULL, NULL);
+	}
 
 	if (!result) {
 		g_print ("Opening connection failed: %d\n", result);

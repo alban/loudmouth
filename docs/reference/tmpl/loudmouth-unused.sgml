@@ -27,6 +27,14 @@ lm-result
 @value: 
 @user_data: 
 
+<!-- ##### FUNCTION lm_connection_set_use_ssl ##### -->
+<para>
+
+</para>
+
+@connection: 
+@use_ssl: 
+
 <!-- ##### FUNCTION lm_message_node_add_child_message_node ##### -->
 <para>
 

@@ -1,7 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
  * Copyright (C) 2003 Mikael Hallendal <micke@imendio.com>
- * Copyright (C) 2003 CodeFactory AB. 
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License as
@@ -56,13 +55,38 @@ typedef enum {
 	LM_DISCONNECT_REASON_UNKNOWN
 } LmDisconnectReason;
 
-typedef void (* LmResultFunction)     (LmConnection *connection,
-				       gboolean      success,
-				       gpointer      user_data);
+typedef enum {
+	LM_CERT_INVALID,
+	LM_CERT_ISSUER_NOT_FOUND,
+	LM_CERT_REVOKED,
+} LmCertificateStatus;
 
-typedef void (* LmDisconnectFunction) (LmConnection *connection,
-				       LmDisconnectReason reason,
-				       gpointer           user_data);
+typedef enum {
+	LM_SSL_STATUS_NO_CERT_FOUND,	
+	LM_SSL_STATUS_UNTRUSTED_CERT,
+	LM_SSL_STATUS_CERT_EXPIRED,
+	LM_SSL_STATUS_CERT_NOT_ACTIVATED,
+	LM_SSL_STATUS_CERT_HOSTNAME_MISMATCH,			
+	LM_SSL_STATUS_CERT_FINGERPRINT_MISMATCH,			
+	LM_SSL_STATUS_GENERIC_ERROR,	
+} LmSSLStatus;
+
+typedef enum {
+	LM_SSL_RESPONSE_CONTINUE,
+	LM_SSL_RESPONSE_STOP,
+} LmSSLResponse;
+
+typedef void          (* LmResultFunction)     (LmConnection       *connection,
+						gboolean            success,
+						gpointer            user_data);
+
+typedef void          (* LmDisconnectFunction) (LmConnection       *connection,
+						LmDisconnectReason  reason,
+						gpointer            user_data);
+
+typedef LmSSLResponse (* LmSSLFunction)        (LmConnection *connection,
+						LmSSLStatus   status,
+						gpointer      user_data);
 
 
 LmConnection *lm_connection_new               (const gchar        *server);
@@ -71,8 +95,22 @@ gboolean      lm_connection_open              (LmConnection       *connection,
 					       gpointer            user_data,
 					       GDestroyNotify      notify,
 					       GError            **error);
+gboolean      lm_connection_open_ssl          (LmConnection       *connection,
+					       const gchar        *fingerprint,
+					       LmSSLFunction       ssl_function,
+					       LmResultFunction    function,
+					       gpointer            user_data,
+					       GDestroyNotify      notify,
+					       GError            **error);
+
 gboolean      lm_connection_open_and_block    (LmConnection       *connection,
 					       GError            **error);
+
+gboolean      lm_connection_open_and_block_ssl (LmConnection      *connection,
+						const gchar       *fingerprint,
+						LmSSLFunction      ssl_function,
+						gpointer           user_data,
+						GError           **error);
 
 gboolean      lm_connection_close             (LmConnection       *connection,
 					       GError            **error);
@@ -102,8 +140,9 @@ void          lm_connection_set_port          (LmConnection       *connection,
 					       guint               port);
 gboolean      lm_connection_supports_ssl      (void);
 gboolean      lm_connection_get_use_ssl       (LmConnection       *connection);
-void          lm_connection_set_use_ssl       (LmConnection       *connection,
-					       gboolean            use_ssl);
+
+const unsigned char * 
+lm_connection_get_fingerprint                 (LmConnection       *connection);
 					       
 gboolean      lm_connection_send              (LmConnection       *connection,
 					       LmMessage          *message,

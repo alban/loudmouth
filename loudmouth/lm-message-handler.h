@@ -2,7 +2,6 @@
 /*
  * Copyright (C) 2003 Imendio HB
  * Copyright (C) 2003 Mikael Hallendal <micke@imendio.com>
- * Copyright (C) 2003 CodeFactory AB. 
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License as
