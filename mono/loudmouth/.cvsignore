@@ -1,0 +1,5 @@
+Makefile
+Makefile.in
+generated
+generated-stamp
+loudmouth.dll

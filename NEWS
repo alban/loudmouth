@@ -1,3 +1,14 @@
+Changes in 0.15:
+----------------
+* Better Win32 instructions.
+* Fixed bug when disconnecting and then connecting again using the same 
+  LmConnection.
+* Documentation typos and errors fixed by Ross Burton.
+* Better SSL support, now gives the application the possibility to decide
+  if it wants to connect on bogus SSL certificates.
+* The SSL API changed a bit, take a look at the API docs.
+* Fixed timestamp error on FreeBSD.
+
 Changes in 0.14.1:
 ------------------
 * Patch from foser@gentoo.org for a problem when using GnuTLS.

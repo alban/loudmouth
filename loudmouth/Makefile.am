@@ -8,9 +8,9 @@ INCLUDES = 				\
 	-DRUNTIME_ENDIAN                \
 	$(NULL)
 
-lib_LTLIBRARIES = libloudmouth.la
+lib_LTLIBRARIES = libloudmouth-1.la
 
-libloudmouth_la_SOURCES =		\
+libloudmouth_1_la_SOURCES =		\
 	lm-connection.c	 		\
 	lm-debug.c                      \
 	lm-debug.h                      \
@@ -42,7 +42,7 @@ libloudmouthinclude_HEADERS =		\
 	loudmouth.h			\
 	$(NULL)
 
-libloudmouth_la_LIBADD = 		\
+libloudmouth_1_la_LIBADD = 		\
 	$(LOUDMOUTH_LIBS)
 
 libloudmouthincludedir = $(includedir)/loudmouth-1.0/loudmouth
@@ -57,7 +57,7 @@ test_lm_SOURCES =			\
 
 test_lm_LDADD =			 	\
 	$(LOUDMOUTH_LIBS)		\
-	libloudmouth.la			\
+	libloudmouth-1.la		\
 	$(NULL)
 
 

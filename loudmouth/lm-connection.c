@@ -1466,6 +1466,7 @@ lm_connection_set_ssl (LmConnection *connection, LmSSL *ssl)
 	}
 }
 
+#if 0
 /**
  * lm_connection_get_proxy: 
  * @connection: an #LmConnection
@@ -1508,6 +1509,7 @@ lm_connection_set_proxy (LmConnection *connection, LmProxy *proxy)
 
 	connection->proxy = lm_proxy_ref (proxy);
 }
+#endif
 
 /**
  * lm_connection_send: 

@@ -117,11 +117,13 @@ void          lm_connection_set_port          (LmConnection       *connection,
 LmSSL *       lm_connection_get_ssl           (LmConnection       *connection);
 void          lm_connection_set_ssl           (LmConnection       *connection,
 					       LmSSL              *ssl);
-
+/*
+ * These will most likely change in the API 
+ *
 LmProxy *     lm_connection_get_proxy         (LmConnection       *connection);
 void          lm_connection_set_proxy         (LmConnection       *connection,
 					       LmProxy            *proxy);
-
+*/
 gboolean      lm_connection_send              (LmConnection       *connection,
 					       LmMessage          *message,
 					       GError            **error);

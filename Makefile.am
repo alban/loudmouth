@@ -1,4 +1,8 @@
-SUBDIRS = loudmouth docs
+if HAVE_MONO
+    MONO_SUBDIR = mono
+endif
+
+SUBDIRS = loudmouth docs $(MONO_SUBDIR)
 
 EXTRA_DIST =			\
 	loudmouth-1.0.pc.in     \
