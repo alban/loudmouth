@@ -29,7 +29,7 @@
 #include "lm-error.h"
 
 #ifdef HAVE_GNUTLS
-#include <gnutls/gnutls.h>
+#include <gnutls/x509.h>
 #endif
 
 struct _LmSSL {
@@ -72,7 +72,6 @@ ssl_verify_certificate (LmSSL *ssl, const gchar *server)
 	
 	if (status & GNUTLS_CERT_INVALID
 	    || status & GNUTLS_CERT_NOT_TRUSTED
-	    || status & GNUTLS_CERT_CORRUPTED
 	    || status & GNUTLS_CERT_REVOKED) {
 		if (ssl->func (ssl, LM_SSL_STATUS_UNTRUSTED_CERT,
 			       ssl->func_data) != LM_SSL_RESPONSE_CONTINUE) {
@@ -98,6 +97,7 @@ ssl_verify_certificate (LmSSL *ssl, const gchar *server)
 		const gnutls_datum* cert_list;
 		int cert_list_size;
 		int digest_size;
+		gnutls_x509_crt cert;
 		
 		cert_list = gnutls_certificate_get_peers (ssl->gnutls_session, &cert_list_size);
 		if (cert_list == NULL) {
@@ -106,14 +106,25 @@ ssl_verify_certificate (LmSSL *ssl, const gchar *server)
 				return FALSE;
 			}
 		}
+
+		gnutls_x509_crt_init (&cert);
+
+		if (!gnutls_x509_crt_import (cert, &cert_list[0],
+					     GNUTLS_X509_FMT_DER)) {
+			if (ssl->func (ssl, LM_SSL_STATUS_NO_CERT_FOUND, 
+				       ssl->func_data) != LM_SSL_RESPONSE_CONTINUE) {
+				return FALSE;
+			}
+		}
 		
-		if (!gnutls_x509_check_certificates_hostname (&cert_list[0],
-							      server)) {
+		if (!gnutls_x509_crt_check_hostname (cert, server)) {
 			if (ssl->func (ssl, LM_SSL_STATUS_CERT_HOSTNAME_MISMATCH,
 				       ssl->func_data) != LM_SSL_RESPONSE_CONTINUE) {
 				return FALSE;
 			}
 		}
+
+		gnutls_x509_crt_deinit (cert);
 
 		if (gnutls_x509_fingerprint (GNUTLS_DIG_MD5, &cert_list[0],
 					     ssl->fingerprint,

@@ -1,3 +1,10 @@
+2004-01-22  Frederic Crozat  <fcrozat@mandrakesoft.com>
+
+	* configure.in:
+	* loudmouth/lm-ssl.c: (ssl_verify_certificate):
+	Don't use deprecated function of gnutls.
+	Now requires gnutls >= 1.0.0
+
 2004-01-21  Mikael Hallendal  <micke@imendio.com>
 
 	* Release 0.15.
