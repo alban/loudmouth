@@ -1,5 +1,9 @@
 2004-01-21  Mikael Hallendal  <micke@imendio.com>
 
+	* Release 0.7
+
+2004-01-21  Mikael Hallendal  <micke@imendio.com>
+
 	* Makefile.am:
 	* configure.in:
 	- Removed the mono bindings for now.
