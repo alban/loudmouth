@@ -1,5 +1,9 @@
 2003-12-15  Mikael Hallendal  <micke@imendio.com>
 
+	* README: Updated information about bug reporting
+
+2003-12-15  Mikael Hallendal  <micke@imendio.com>
+
 	* loudmouth/lm-connection.c:
 	- Fixed issue with the SSL parts. Patch from Colin Walters
 
