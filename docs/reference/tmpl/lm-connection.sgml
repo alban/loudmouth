@@ -209,6 +209,15 @@ Callback called when a connection is closed.
 @Returns: 
 
 
+<!-- ##### FUNCTION lm_connection_set_keep_alive_rate ##### -->
+<para>
+
+</para>
+
+@connection: 
+@rate: 
+
+
 <!-- ##### FUNCTION lm_connection_is_open ##### -->
 <para>
 
@@ -243,6 +252,24 @@ Callback called when a connection is closed.
 
 @connection: 
 @server: 
+
+
+<!-- ##### FUNCTION lm_connection_get_jid ##### -->
+<para>
+
+</para>
+
+@connection: 
+@Returns: 
+
+
+<!-- ##### FUNCTION lm_connection_set_jid ##### -->
+<para>
+
+</para>
+
+@connection: 
+@jid: 
 
 
 <!-- ##### FUNCTION lm_connection_get_port ##### -->
