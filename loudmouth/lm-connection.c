@@ -93,6 +93,9 @@ struct _LmConnection {
 
 	LmConnectionState state;
 
+	guint         keep_alive_rate;
+	guint         keep_alive_id;
+
 	gint          ref_count;
 };
 
@@ -166,8 +169,9 @@ static guint    connection_add_watch            (LmConnection  *connection,
 						 GIOCondition   condition,
 						 GIOFunc        func,
 						 gpointer       user_data);
-
-
+static gboolean connection_send_keep_alive      (LmConnection  *connection);
+static void     connection_start_keep_alive     (LmConnection  *connection);
+static void     connection_stop_keep_alive      (LmConnection  *connection);
 
 static GSourceFuncs incoming_funcs = {
 	connection_incoming_prepare,
@@ -519,6 +523,38 @@ connection_add_watch (LmConnection *connection,
 	return id;
 }
 
+static gboolean
+connection_send_keep_alive (LmConnection *connection)
+{ 
+	if (!connection_send (connection, " ", -1, NULL)) {
+		lm_verbose ("Error while sending keep alive package");
+	}
+
+	return TRUE;
+}
+
+static void
+connection_start_keep_alive (LmConnection *connection)
+{
+	if (connection->keep_alive_id != 0) {
+		connection_stop_keep_alive (connection);
+	}
+
+	connection->keep_alive_id = g_timeout_add (connection->keep_alive_rate,
+						   (GSourceFunc) connection_send_keep_alive,
+						   connection);
+}
+
+static void
+connection_stop_keep_alive (LmConnection *connection)
+{
+	if (connection->keep_alive_id != 0) {
+		g_source_remove (connection->keep_alive_id);
+	}
+
+	connection->keep_alive_id = 0;
+}
+
 /* Returns directly */
 /* Setups all data needed to start the connection attempts */
 static gboolean
@@ -610,6 +646,8 @@ connection_do_open (LmConnection *connection, GError **error)
 static void
 connection_do_close (LmConnection *connection)
 {
+	connection_stop_keep_alive (connection);
+
 	if (connection->io_channel) {
 		g_source_remove (connection->io_watch_in);
 		g_source_remove (connection->io_watch_err);
@@ -625,7 +663,7 @@ connection_do_close (LmConnection *connection)
 	if (!lm_connection_is_open (connection)) {
 		return;
 	}
-
+	
 	connection->state = LM_CONNECTION_STATE_DISCONNECTED;
 
 	if (connection->ssl) {
@@ -966,6 +1004,8 @@ connection_stream_received (LmConnection *connection, LmMessage *m)
 	/* Check to see if the stream is correctly set up */
 	result = TRUE;
 
+	connection_start_keep_alive (connection);
+
 	if (connection->open_cb && connection->open_cb->func) {
 		LmCallback *cb = connection->open_cb;
 		
@@ -1077,6 +1117,7 @@ lm_connection_new (const gchar *server)
 	connection->incoming_messages = g_queue_new ();
 	connection->cancel_open       = FALSE;
 	connection->state             = LM_CONNECTION_STATE_DISCONNECTED;
+	connection->keep_alive_id     = 0;
 	
 	connection->id_handlers = g_hash_table_new_full (g_str_hash, 
 							 g_str_equal,
@@ -1179,6 +1220,7 @@ lm_connection_open_and_block (LmConnection *connection, GError **error)
 	}
 
 	if (lm_connection_is_open (connection)) {
+		connection_start_keep_alive (connection);
 		return TRUE;
 	}
 
@@ -1221,7 +1263,7 @@ lm_connection_close (LmConnection      *connection,
 			     "Connection is not open, call lm_connection_open() first");
 		return FALSE;
 	}
-	
+
 	lm_verbose ("Disconnecting from: %s:%d\n", 
 		    connection->server, connection->port);
 	
@@ -1380,6 +1422,33 @@ lm_connection_authenticate_and_block (LmConnection  *connection,
 	} 
 
 	return FALSE;
+}
+
+/**
+ * lm_connection_set_keep_alive_rate:
+ * @connection: #LmConnection to check if it is open.
+ * @rate: Number of seconds between keep alive packages are sent.
+ * 
+ * Set the keep alive rate, in seconds. Set to 0 to prevent keep alive messages to be sent.
+ * A keep alive message is a single space character.
+ **/
+void
+lm_connection_set_keep_alive_rate (LmConnection *connection, guint rate)
+{
+	g_return_if_fail (connection != NULL);
+
+	connection_stop_keep_alive (connection);
+
+	if (rate == 0) {
+		connection->keep_alive_id = 0;
+		return;
+	}
+
+	connection->keep_alive_rate = rate * 1000;
+	
+	if (lm_connection_is_open (connection)) {
+		connection_start_keep_alive (connection);
+	}
 }
 
 /**

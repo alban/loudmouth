@@ -85,9 +85,7 @@ gboolean      lm_connection_open              (LmConnection       *connection,
 gboolean      lm_connection_open_and_block    (LmConnection       *connection,
 					       GError            **error);
 
-void          lm_connection_cancel_open        (LmConnection      *connection);
-						
-
+void          lm_connection_cancel_open       (LmConnection      *connection);
 gboolean      lm_connection_close             (LmConnection       *connection,
 					       GError            **error);
 gboolean      lm_connection_authenticate      (LmConnection       *connection,
@@ -104,6 +102,9 @@ lm_connection_authenticate_and_block          (LmConnection       *connection,
 					       const gchar        *password,
 					       const gchar        *resource,
 					       GError            **error);
+void        lm_connection_set_keep_alive_rate (LmConnection       *connection,
+					       guint               rate);
+
 gboolean      lm_connection_is_open           (LmConnection       *connection);
 gboolean      lm_connection_is_authenticated  (LmConnection       *connection);
 

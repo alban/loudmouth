@@ -1,3 +1,13 @@
+2004-08-25  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-connection.[ch]: 
+	(connection_send_keep_alive),
+	(connection_start_keep_alive), 
+	(connection_stop_keep_alive): Added
+	(lm_connection_set_keep_alive_rate): 
+	- Added support to have Loudmouth send keep alive packages, a single 
+	  space, at regular intervals.
+
 2004-08-09  Mikael Hallendal  <micke@imendio.com>
 
 	* examples/test-tunnel.c: Updated.
