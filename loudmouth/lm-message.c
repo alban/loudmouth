@@ -212,6 +212,8 @@ lm_message_new (const gchar *to, LmMessageType type)
 	PRIV(m)->sub_type  = message_sub_type_when_unset (type);
 	
 	m->node = _lm_message_node_new (_lm_message_type_to_string (type));
+
+	lm_message_node_set_attribute (m->node, "id", _lm_utils_generate_id());
 	
 	if (to) {
 		lm_message_node_set_attribute (m->node, "to", to);

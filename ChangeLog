@@ -1,4 +1,9 @@
 2003-10-13  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-message.c: 
+	(lm_message_new): Always set an ID on the message.
+
+2003-10-13  Mikael Hallendal  <micke@imendio.com>
  
 	* mono/*: Added first cut at C-sharp bindings that I hacked up a while
 	  ago. Can't continue development at the moment since the mono compiler
