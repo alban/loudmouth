@@ -1,3 +1,8 @@
+2003-11-11  Mikael Hallendal  <micke@imendio.com>
+
+	* Makefile.am: 
+	- Added README.WIN32 so it will be distributed next release.
+
 2003-10-13  Mikael Hallendal  <micke@imendio.com>
 
 	* configure.in: Bumped version to 0.14.1.99
