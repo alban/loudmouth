@@ -1,5 +1,12 @@
 2003-10-01  Mikael Hallendal  <micke@imendio.com>
 
+	* loudmouth/lm-connection.c: (connection_do_open):
+	- Added a patch for IPv6-support submitted by Sjoerd Simons.
+	- Sjoerd also seems to know this stuff better than me since his 
+	  connection code looked more sane than mine. Thanks alot!
+
+2003-10-01  Mikael Hallendal  <micke@imendio.com>
+
 	* loudmouth/Makefile.am: 
 	- added lm-queue.[ch]
 	  

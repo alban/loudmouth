@@ -239,45 +239,78 @@ connection_new_message_cb (LmParser     *parser,
 static gboolean
 connection_do_open (LmConnection *connection, GError **error)
 {
-	struct hostent     *he;
-        struct in_addr     *haddr;
-        struct sockaddr_in  saddr;
-	gint                fd;
+	gint             fd = -1;
+	int              err = -1;
+	struct addrinfo  req;
+	struct addrinfo *ans;
+	struct addrinfo *tmpaddr;
+	char             name[NI_MAXHOST];
+	char             portname[NI_MAXSERV];
 	
 	g_return_val_if_fail (connection != NULL, FALSE);
 	
-        he = gethostbyname(connection->server);
-        if (he == NULL) {
- 		g_set_error (error,
- 			     LM_ERROR,                 
- 			     LM_ERROR_CONNECTION_OPEN,   
- 			     "gethostbyname() failed");
-		return FALSE;
-        }
+	memset (&req, 0, sizeof(req));
 
-        haddr = ((struct in_addr *) (he->h_addr_list)[0]);
+	req.ai_family   = AF_UNSPEC;
+	req.ai_socktype = SOCK_STREAM;
+	req.ai_protocol = IPPROTO_TCP;
+
+	g_log (LM_LOG_DOMAIN,LM_LOG_LEVEL_NET,
+	       "Going to connect to %s\n",connection->server);
+	
+	if ((err = getaddrinfo (connection->server, NULL, &req, &ans)) != 0) {
+		g_set_error (error,
+			     LM_ERROR,                 
+			     LM_ERROR_CONNECTION_OPEN,   
+			     "getaddrinfo() failed");
+		return FALSE;
+	}
 
 #ifdef HAVE_GNUTLS
 	if (connection->use_ssl) {
 		gnutls_global_init ();
-		gnutls_certificate_allocate_credentials(&connection->gnutls_xcred);
+		gnutls_certificate_allocate_credentials (&connection->gnutls_xcred);
 	}
 #endif
 
-	fd = socket(AF_INET, SOCK_STREAM, 0);
-	memset(&saddr, 0, sizeof(saddr));
-	memcpy(&saddr.sin_addr, haddr, sizeof(struct in_addr));
-	saddr.sin_family = AF_INET;
-	saddr.sin_port = htons (connection->port);
+	for (tmpaddr = ans ; tmpaddr != NULL ; tmpaddr = tmpaddr->ai_next) {
+		((struct sockaddr_in *) tmpaddr->ai_addr)->sin_port = htons (connection->port);
 
-        if (connect(fd, (struct sockaddr *)&saddr, sizeof(saddr)) < 0) {
-		g_set_error (error,
- 			     LM_ERROR,           
- 			     LM_ERROR_CONNECTION_OPEN,
- 			     "connect() failed");
+		getnameinfo (tmpaddr->ai_addr,
+			     tmpaddr->ai_addrlen,
+			     name,     sizeof (name),
+			     portname, sizeof (portname),
+			     NI_NUMERICHOST | NI_NUMERICSERV);
+
+		g_log (LM_LOG_DOMAIN,LM_LOG_LEVEL_NET,
+		      "Trying %s port %s...\n", name, portname);
+
+		fd = socket (tmpaddr->ai_family, 
+			     tmpaddr->ai_socktype, 
+			     tmpaddr->ai_protocol);
+		if (fd < 0) {
+			continue;
+		}
+		
+		err = connect (fd,tmpaddr->ai_addr, tmpaddr->ai_addrlen);
+		if (err == 0) {
+			/* connection successfull */
+			break;
+		}
+		
 		close (fd);
+	}
+	
+	freeaddrinfo (ans);
+
+	/* check for failure */
+	if (fd < 0 || err < 0) {
+		g_set_error (error,
+			     LM_ERROR,
+			     LM_ERROR_CONNECTION_OPEN,
+			     "connection failed");
 		return FALSE;
-        }
+	}
 
 #ifdef HAVE_GNUTLS
 	if (connection->use_ssl) {
