@@ -203,7 +203,7 @@ connection_free (LmConnection *connection)
 
 	g_hash_table_destroy (connection->id_handlers);
 
-	if (lm_connection_is_open (connection)) {
+	if (connection->state >= LM_CONNECTION_STATE_OPENING) {
 		connection_do_close (connection);
 	}
 
