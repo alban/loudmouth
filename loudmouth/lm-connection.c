@@ -183,7 +183,8 @@ static GSourceFuncs incoming_funcs = {
 static void
 connection_free (LmConnection *connection)
 {
-	int i;
+	int        i;
+	LmMessage *m;
 
 	g_free (connection->server);
 	g_free (connection->jid);
@@ -203,11 +204,15 @@ connection_free (LmConnection *connection)
 	}
 
 	g_hash_table_destroy (connection->id_handlers);
-
 	if (connection->state >= LM_CONNECTION_STATE_OPENING) {
 		connection_do_close (connection);
 	}
 
+	while ((m = g_queue_pop_head (connection->incoming_messages)) != NULL) {
+		lm_message_unref (m);
+	}
+
+	g_queue_free (connection->incoming_messages);
 	g_free (connection);
 }
 

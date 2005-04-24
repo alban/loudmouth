@@ -1,5 +1,10 @@
 2005-04-24  Mikael Hallendal  <micke@imendio.com>
 
+	* loudmouth/lm-connection.c: (connection_free):
+	- Free the incoming message queue, reported by Daniel Lavalliere.
+
+2005-04-24  Mikael Hallendal  <micke@imendio.com>
+
 	* loudmouth/lm-connection.c: (_lm_connection_succeeded),
 	(_lm_connection_failed_with_error), (connection_connect_cb),
 	(connection_do_connect), (connection_do_close):
