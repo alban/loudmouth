@@ -76,6 +76,7 @@ struct _LmConnection {
 	guint         io_watch_err;
 	guint         io_watch_hup;
 	guint         fd;
+    guint         io_watch_connect;
 	
 	guint         open_id;
 	LmCallback   *open_cb;
@@ -283,6 +284,12 @@ _lm_connection_succeeded (LmConnectData *connect_data)
 	gchar        *ch;
 
 	connection = connect_data->connection;
+	
+	if (connection->io_watch_connect != 0) {
+		g_source_destroy (g_main_context_find_source_by_id(connection->context,
+								   connection->io_watch_connect));
+		connection->io_watch_connect = 0;
+	}
 
 	/* Need some way to report error/success */
 	if (connection->cancel_open) {
@@ -383,20 +390,27 @@ _lm_connection_succeeded (LmConnectData *connect_data)
 void 
 _lm_connection_failed_with_error (LmConnectData *connect_data, int error) 
 {
+	LmConnection *connection;
+	
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET,
 	       "Connection failed: %s (error %d)\n",
 	       strerror (error), error);
 	
+	connection = connect_data->connection;
+	
 	connect_data->current_addr = connect_data->current_addr->ai_next;
 	
+	if (connection->io_watch_connect != 0) {
+		g_source_destroy (g_main_context_find_source_by_id(connection->context,
+								   connection->io_watch_connect));
+		connection->io_watch_connect = 0;
+	}
+
 	if (connect_data->io_channel != NULL) {
 		g_io_channel_unref (connect_data->io_channel);
 	}
 	
 	if (connect_data->current_addr == NULL) {
-		LmConnection *connection;
-
-		connection = connect_data->connection;
 		if (connection->open_cb && connection->open_cb->func) {
 			LmCallback *cb = connection->open_cb;
 			
@@ -423,13 +437,11 @@ connection_connect_cb (GIOChannel   *source,
 		       GIOCondition  condition,
 		       gpointer      data) 
 {
-	LmConnection  *connection;
 	LmConnectData *connect_data;
 	int            error;
 	int            len  = sizeof(error);
 
 	connect_data = (LmConnectData *) data;
-	connection   = connect_data->connection;
 	
 	if (condition == G_IO_ERR) {
 		/* get the real error from the socket */
@@ -501,12 +513,14 @@ connection_do_connect (LmConnectData *connect_data)
 	
 	connect_data->io_channel = g_io_channel_unix_new (fd);
 	if (connection->proxy) {
+        connection->io_watch_connect =
 		connection_add_watch (connection,
 				      connect_data->io_channel,
 				      G_IO_OUT|G_IO_ERR,
 				      (GIOFunc) _lm_proxy_connect_cb, 
 				      connect_data);
 	} else {
+        connection->io_watch_connect =
 		connection_add_watch (connection,
 				      connect_data->io_channel,
 				      G_IO_OUT|G_IO_ERR,
@@ -675,10 +689,17 @@ connection_do_close (LmConnection *connection)
 		g_source_destroy (g_main_context_find_source_by_id (
 			connection->context, connection->io_watch_hup));
 
+		if (connection->io_watch_connect != 0) {
+			g_source_destroy (g_main_context_find_source_by_id(connection->context,
+									   connection->io_watch_connect));
+			connection->io_watch_connect = 0;
+		}
+
 		g_io_channel_unref (connection->io_channel);
 		connection->io_channel = NULL;
 	}
 
+	
 	g_source_destroy (connection->incoming_source);
 	g_source_unref (connection->incoming_source);
 
