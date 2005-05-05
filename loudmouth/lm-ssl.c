@@ -202,8 +202,10 @@ GIOStatus
 _lm_ssl_read (LmSSL *ssl, gchar *buf, gint len, gsize *bytes_read)
 {
 	GIOStatus status;
-	
-	*bytes_read = gnutls_record_recv (ssl->gnutls_session, buf, len);
+	gint      b_read;
+
+	*bytes_read = 0;
+	b_read = gnutls_record_recv (ssl->gnutls_session, buf, len);
 
 	//g_print ("%d bytes read\n", size);
 
@@ -211,12 +213,12 @@ _lm_ssl_read (LmSSL *ssl, gchar *buf, gint len, gsize *bytes_read)
 		status = G_IO_STATUS_AGAIN;
 	}
 	else if (*bytes_read > len) {
-		*bytes_read = 0;
 		status = G_IO_STATUS_EOF;
 	}
 	else if (*bytes_read < 0) {
 		status = G_IO_STATUS_ERROR;
 	} else {
+		*bytes_read = (guint) b_read;
 		status = G_IO_STATUS_NORMAL;
 	}
 

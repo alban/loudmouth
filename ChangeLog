@@ -1,5 +1,11 @@
 2005-05-05  Mikael Hallendal  <micke@imendio.com>
 
+	* loudmouth/lm-ssl.c: (_lm_ssl_read):
+	- Don't accidently return a negative bytes_read.
+	- Fixes LM-3, reported by Daniel Lavalliere.
+
+2005-05-05  Mikael Hallendal  <micke@imendio.com>
+
 	* loudmouth/lm-connection.c: (connection_free):
 	- Unref LmSSL when freeing connection. Reported by Daniel Lavalliere.
 	- Fixes LM-4.
