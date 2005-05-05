@@ -1,5 +1,14 @@
 2005-05-05  Mikael Hallendal  <micke@imendio.com>
 
+	* loudmouth/lm-connection.c: 
+	(_lm_connection_succeeded):
+	- Don't unref io_channel here as well, already done in do_close.
+	- Fixes LM-5, reported by Daniel Lavalliere.
+	(connection_do_close):
+	- Set fd to -1 to be sure it's not used again.
+
+2005-05-05  Mikael Hallendal  <micke@imendio.com>
+
 	* loudmouth/lm-ssl.c: (_lm_ssl_read):
 	- Don't accidently return a negative bytes_read.
 	- Fixes LM-3, reported by Daniel Lavalliere.

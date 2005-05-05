@@ -330,11 +330,6 @@ _lm_connection_succeeded (LmConnectData *connect_data)
 			close (connection->fd);
 		
 			connection_do_close (connection);
-			connection->fd = -1;
-			
-			g_io_channel_unref(connection->io_channel);
-			connection->io_channel = NULL;
-			
 			return FALSE;
 		}
 	}
@@ -710,6 +705,8 @@ connection_do_close (LmConnection *connection)
 
 		g_io_channel_unref (connection->io_channel);
 		connection->io_channel = NULL;
+
+		connection->fd = -1;
 	}
 
 	
