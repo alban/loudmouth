@@ -212,6 +212,10 @@ connection_free (LmConnection *connection)
 		lm_message_unref (m);
 	}
 
+	if (connection->ssl) {
+		lm_ssl_unref (connection->ssl);
+	}
+
 	g_queue_free (connection->incoming_messages);
 	g_free (connection);
 }
@@ -324,9 +328,13 @@ _lm_connection_succeeded (LmConnectData *connect_data)
 				    NULL)) {
 			shutdown (connection->fd, SHUT_RDWR);
 			close (connection->fd);
+		
 			connection_do_close (connection);
 			connection->fd = -1;
+			
 			g_io_channel_unref(connection->io_channel);
+			connection->io_channel = NULL;
+			
 			return FALSE;
 		}
 	}

@@ -1,3 +1,9 @@
+2005-05-05  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-connection.c: (connection_free):
+	- Unref LmSSL when freeing connection. Reported by Daniel Lavalliere.
+	- Fixes LM-4.
+
 2005-04-24  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-connection.c: (connection_free):
