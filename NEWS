@@ -1,3 +1,11 @@
+Changes in 0.90:
+----------------
+* Two crashers for ssl read fixed (Micke, Daniel Lavalliere)
+* Fixed a couple of leaks when freeing the connection (Daniel Lavalliere)
+* A couple of thread related issues solved (Micke, Daniel Lavalliere)
+* Work with latest GnuTLS (foser)
+* Improved the example tools some (Micke)
+
 Changes in 0.17.2:
 ------------------
 * Unset proxy by setting it to NULL.

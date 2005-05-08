@@ -1,3 +1,11 @@
+2005-05-08  Mikael Hallendal  <micke@imendio.com>
+
+	* Release 0.90
+
+	* NEWS:
+	* configure.in:
+	- Updated for 0.90
+
 2005-05-05  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-connection.c: 
