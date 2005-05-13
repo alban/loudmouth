@@ -209,13 +209,13 @@ _lm_ssl_read (LmSSL *ssl, gchar *buf, gint len, gsize *bytes_read)
 
 	//g_print ("%d bytes read\n", size);
 
-	if (*bytes_read == GNUTLS_E_AGAIN) {
+	if (b_read == GNUTLS_E_AGAIN) {
 		status = G_IO_STATUS_AGAIN;
 	}
-	else if (*bytes_read > len) {
+	else if (b_read > len) {
 		status = G_IO_STATUS_EOF;
 	}
-	else if (*bytes_read < 0) {
+	else if (b_read < 0) {
 		status = G_IO_STATUS_ERROR;
 	} else {
 		*bytes_read = (guint) b_read;
