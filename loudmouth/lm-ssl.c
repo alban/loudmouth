@@ -93,8 +93,8 @@ ssl_verify_certificate (LmSSL *ssl, const gchar *server)
 	
 	if (gnutls_certificate_type_get (ssl->gnutls_session) == GNUTLS_CRT_X509) {
 		const gnutls_datum* cert_list;
-		int cert_list_size;
-		int digest_size;
+		guint cert_list_size;
+		size_t digest_size;
 		gnutls_x509_crt cert;
 		
 		cert_list = gnutls_certificate_get_peers (ssl->gnutls_session, &cert_list_size);
@@ -323,12 +323,12 @@ lm_ssl_new (const gchar    *expected_fingerprint,
  * 
  * Return value: A 16-byte array representing the fingerprint or %NULL if unknown.
  **/
-const unsigned char *
+const gchar *
 lm_ssl_get_fingerprint (LmSSL *ssl)
 {
 	g_return_val_if_fail (ssl != NULL, NULL);
 	
-	return (unsigned char*) ssl->fingerprint;
+	return ssl->fingerprint;
 }
 
 /**

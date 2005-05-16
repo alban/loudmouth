@@ -49,9 +49,9 @@ typedef enum {
 	LM_SSL_RESPONSE_STOP,
 } LmSSLResponse;
 
-typedef LmSSLResponse (* LmSSLFunction)        (LmSSL        *ssl,
-						LmSSLStatus   status,
-						gpointer      user_data);
+typedef LmSSLResponse (* LmSSLFunction)      (LmSSL        *ssl,
+					      LmSSLStatus   status,
+					      gpointer      user_data);
 
 LmSSL *               lm_ssl_new             (const gchar *expected_fingerprint,
 					      LmSSLFunction   ssl_function,
@@ -60,7 +60,7 @@ LmSSL *               lm_ssl_new             (const gchar *expected_fingerprint,
 
 gboolean              lm_ssl_is_supported    (void);
 
-const unsigned char * lm_ssl_get_fingerprint (LmSSL          *ssl);
+const gchar *         lm_ssl_get_fingerprint (LmSSL          *ssl);
 
 
 LmSSL *               lm_ssl_ref             (LmSSL          *ssl);

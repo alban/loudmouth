@@ -447,7 +447,7 @@ connection_connect_cb (GIOChannel   *source,
 {
 	LmConnectData *connect_data;
 	int            error;
-	int            len  = sizeof(error);
+	guint          len  = sizeof(error);
 
 	connect_data = (LmConnectData *) data;
 	
@@ -773,14 +773,14 @@ connection_in_event (GIOChannel   *source,
 
 	buf[bytes_read] = '\0';
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "\nRECV [%d]:\n", 
-	       bytes_read);
+	       (int)bytes_read);
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
 	       "-----------------------------------\n");
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "'%s'\n", buf);
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
 	       "-----------------------------------\n");
 
-	lm_verbose ("Read: %d chars\n", bytes_read);
+	lm_verbose ("Read: %d chars\n", (int)bytes_read);
 
 	lm_parser_parse (connection->parser, buf);
 	

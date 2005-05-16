@@ -187,7 +187,7 @@ _lm_proxy_connect_cb (GIOChannel *source, GIOCondition condition, gpointer data)
 	LmConnectData *connect_data;
 	LmProxy       *proxy;
 	int            error;
-	int            len = sizeof(error);
+	guint          len = sizeof(error);
 
 	connect_data = (LmConnectData *) data;
 	connection = connect_data->connection;

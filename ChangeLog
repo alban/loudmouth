@@ -1,3 +1,12 @@
+2005-05-17  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-ssl.c: 
+	* loudmouth/lm-connection.c:
+	* loudmouth/lm-proxy.c:
+	- Fixed some gcc 4.0 warnings.
+	* loudmouth/lm-ssl.[ch]: Made the API more consistent.
+	* examples/test-lm.c: Fixed some gcc 4.0 warnings.
+	
 2005-05-13  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-ssl.c: (_lm_ssl_read):

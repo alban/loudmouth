@@ -43,15 +43,18 @@ free_user_info (UserInfo *info)
 	g_free (info);
 }
 
-static unsigned char expected_fingerprint[20];
+static char expected_fingerprint[20];
 
 static void
-print_finger (const unsigned char *fpr, unsigned int size)
+print_finger (const char *fpr, unsigned int size)
 {
 	gint i;
-	for (i = 0; i < size-1; i++)
-		g_print ("%02X:", (unsigned char) fpr[i]);
-	g_print ("%02X", (unsigned char) fpr[size-1]);
+	
+	for (i = 0; i < size-1; i++) {
+		g_print ("%02X:", fpr[i]);
+	}
+	
+	g_print ("%02X", fpr[size-1]);
 }
 
 static LmSSLResponse
@@ -75,7 +78,7 @@ ssl_cb (LmSSL *ssl, LmSSLStatus status, gpointer ud)
 		g_print ("Certificate hostname does not match expected hostname!\n"); 
 		break;
 	case LM_SSL_STATUS_CERT_FINGERPRINT_MISMATCH: {
-		const unsigned char *fpr = lm_ssl_get_fingerprint (ssl);
+		const char *fpr = lm_ssl_get_fingerprint (ssl);
 		g_print ("Certificate fingerprint does not match expected fingerprint!\n"); 
 		g_print ("Remote fingerprint: ");
 		print_finger (fpr, 16);
