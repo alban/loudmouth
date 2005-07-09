@@ -1,3 +1,8 @@
+2005-07-09  Martyn Russell  <mr@gnome.org>
+
+	* loudmouth/lm-connection.c (lm_connection_set_ssl): 
+	- Error when trying to set up SSL knowing it is not supported.
+
 2005-05-17  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-ssl.c: 

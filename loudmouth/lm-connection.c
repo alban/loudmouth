@@ -1676,6 +1676,7 @@ void
 lm_connection_set_ssl (LmConnection *connection, LmSSL *ssl)
 {
 	g_return_if_fail (connection != NULL);
+	g_return_if_fail (lm_ssl_is_supported () == TRUE);
 
 	if (connection->ssl) {
 		lm_ssl_unref (connection->ssl);
