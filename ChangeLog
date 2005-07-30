@@ -1,3 +1,10 @@
+2005-07-30  Mikael Hallendal  <micke@imendio.com>
+
+	* autogen.sh:
+	* configure.in:
+	* loudmouth/lm-connection.c: (connection_add_watch):
+	- Gtk-doc fixes.
+
 2005-07-09  Martyn Russell  <mr@gnome.org>
 
 	* loudmouth/lm-connection.c (lm_connection_set_ssl): 

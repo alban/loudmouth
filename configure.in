@@ -147,6 +147,9 @@ fi
 AC_SUBST(LOUDMOUTH_CFLAGS)
 AC_SUBST(LOUDMOUTH_LIBS)
 
+dnl Gtk doc
+GTK_DOC_CHECK(1.0)
+
 dnl +--------------------------------------+
 dnl | Check if we shoudl build C# bindings |-------------------
 dnl +--------------------------------------+

@@ -7,6 +7,9 @@ have_autoconf=false
 have_automake=false
 need_configure_in=false
 
+have_gtk_doc=false
+want_gtk_doc=false
+
 if libtool --version < /dev/null > /dev/null 2>&1 ; then
 	libtool_version=`libtoolize --version | sed 's/^[^0-9]*\([0-9.][0-9.]*\).*/\1/'`
 	have_libtool=true
@@ -34,6 +37,18 @@ if $have_libtool ; then : ; else
 	exit;
 fi
 
+if grep "^GTK_DOC_CHECK" ./configure.in; then
+	want_gtk_doc=true
+fi
+
+if $want_gtk_doc; then
+	(gtkdocize --version) < /dev/null > /dev/null 2>&1 || {
+	        echo;
+		echo "You need gtk-doc to build $PACKAGE";
+		echo;
+	}
+fi
+
 (automake --version) < /dev/null > /dev/null 2>&1 || {
 	echo;
 	echo "You must have automake installed to compile $PACKAGE";
@@ -54,6 +69,7 @@ fi
 
 aclocal $ACLOCAL_FLAGS
 libtoolize --force
+gtkdocize || exit 1
 autoheader
 automake --add-missing
 autoconf

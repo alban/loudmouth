@@ -556,6 +556,7 @@ connection_add_watch (LmConnection *connection,
 	g_source_set_callback (source, (GSourceFunc)func, user_data, NULL);
                                                                                 
 	id = g_source_attach (source, connection->context);
+
 	g_source_unref (source);
   
 	return id;
