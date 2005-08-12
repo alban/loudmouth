@@ -76,7 +76,7 @@ struct _LmConnection {
 	guint         io_watch_err;
 	guint         io_watch_hup;
 	guint         fd;
-    guint         io_watch_connect;
+	guint         io_watch_connect;
 	
 	guint         open_id;
 	LmCallback   *open_cb;
@@ -521,14 +521,14 @@ connection_do_connect (LmConnectData *connect_data)
 	
 	connect_data->io_channel = g_io_channel_unix_new (fd);
 	if (connection->proxy) {
-        connection->io_watch_connect =
+		connection->io_watch_connect =
 		connection_add_watch (connection,
 				      connect_data->io_channel,
 				      G_IO_OUT|G_IO_ERR,
 				      (GIOFunc) _lm_proxy_connect_cb, 
 				      connect_data);
 	} else {
-        connection->io_watch_connect =
+		connection->io_watch_connect =
 		connection_add_watch (connection,
 				      connect_data->io_channel,
 				      G_IO_OUT|G_IO_ERR,
@@ -1437,11 +1437,14 @@ lm_connection_authenticate_and_block (LmConnection  *connection,
 		return FALSE;
 	}
 
+	connection->state = LM_CONNECTION_STATE_AUTHENTICATING;
+
 	m = connection_create_auth_req_msg (username);
 	result = lm_connection_send_with_reply_and_block (connection, m, error);
 	lm_message_unref (m);
 
 	if (!result) {
+		connection->state = LM_CONNECTION_STATE_OPEN;
 		return FALSE;
 	}
 
@@ -1454,6 +1457,7 @@ lm_connection_authenticate_and_block (LmConnection  *connection,
 
 	result = lm_connection_send_with_reply_and_block (connection, m, error);
 	if (!result) {
+		connection->state = LM_CONNECTION_STATE_OPEN;
 		return FALSE;
 	}
 
@@ -1462,9 +1466,11 @@ lm_connection_authenticate_and_block (LmConnection  *connection,
 	
 	switch (type) {
 	case LM_MESSAGE_SUB_TYPE_RESULT:
+		connection->state = LM_CONNECTION_STATE_AUTHENTICATED;
 		return TRUE;
 		break;
 	case LM_MESSAGE_SUB_TYPE_ERROR:
+		connection->state = LM_CONNECTION_STATE_OPEN;
 		g_set_error (error,
 			     LM_ERROR,
 			     LM_ERROR_AUTH_FAILED,
@@ -1824,6 +1830,15 @@ lm_connection_send_with_reply_and_block (LmConnection  *connection,
 
 	g_return_val_if_fail (connection != NULL, NULL);
 	g_return_val_if_fail (message != NULL, NULL);
+
+	if (connection->state < LM_CONNECTION_STATE_OPENING) {
+		g_set_error (error,
+			     LM_ERROR,
+			     LM_ERROR_CONNECTION_NOT_OPEN,
+			     "Connection is not open, call lm_connection_open() first");
+		return FALSE;
+	}
+
 
 	if (lm_message_node_get_attribute (message->node, "id")) {
 		id = g_strdup (lm_message_node_get_attribute (message->node, 
