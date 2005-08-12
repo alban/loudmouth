@@ -1,5 +1,11 @@
 2005-08-12  Mikael Hallendal  <micke@imendio.com>
 
+	* loudmouth/lm-connection.c: (_lm_connection_failed_with_error):
+	- Set state to LM_CONNECTION_STATE_CLOSED if we failed to connect.
+	- Fixes LM-8.
+
+2005-08-12  Mikael Hallendal  <micke@imendio.com>
+
 	* loudmouth/lm-connection.c:
 	(lm_connection_authenticate_and_block):
 	- Set state correctly.
@@ -7,11 +13,6 @@
 	(lm_connection_send_with_reply_and_block):
 	- Check that connection is open before using it.
 	- Fixes LM-6.
-
-2005-08-12  Mikael Hallendal  <micke@imendio.com>
-
-	* loudmouth/lm-connection.c: 
-	(lm_connection_authenticate_and_block):
 
 2005-07-30  Mikael Hallendal  <micke@imendio.com>
 
