@@ -1,3 +1,9 @@
+2005-08-14  Mikael Hallendal  <micke@imendio.com>
+
+	* NEWS:
+	* configure.in:
+	- Version 1.0, yiiiha!
+
 2005-08-12  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-connection.c: (_lm_connection_failed_with_error):

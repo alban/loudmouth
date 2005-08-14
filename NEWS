@@ -1,3 +1,14 @@
+Changes in 1.0:
+---------------
+* Fix crash when connection goes down using SSL, LM-3 (Mikael Hallendal)
+* Fixed some GCC 4.0 warnings                         (Mikael Hallendal)
+* Some API fixups for consistency in LmSLL            (Mikael Hallendal)
+* Don't try to setup SSL if it's not supported        (Martyn Russel)
+* Documentation fixes                                 (Mikael Hallendal)
+* State fixes when using blocking API, LM-7           (Mikael Hallendal)
+* Check that connection is open before using it, LM-6 (Mikael Hallendal)
+* Fix infinite loop in blocking open if failed, LM-8  (Mikael Hallendal)
+ 
 Changes in 0.90:
 ----------------
 * Two crashers for ssl read fixed (Micke, Daniel Lavalliere)
