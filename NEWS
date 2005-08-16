@@ -1,3 +1,7 @@
+Changes in 1.0.1:
+-----------------
+* Unref contexts when freeing the connection          (Mikael Hallendal)
+
 Changes in 1.0:
 ---------------
 * Fix crash when connection goes down using SSL, LM-3 (Mikael Hallendal)

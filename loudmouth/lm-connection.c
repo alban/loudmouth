@@ -217,7 +217,12 @@ connection_free (LmConnection *connection)
 	}
 
 	g_queue_free (connection->incoming_messages);
-	g_free (connection);
+        
+        if (connection->context) {
+                g_main_context_unref (connection->context);
+        }
+        
+        g_free (connection);
 }
 
 static void
@@ -1211,7 +1216,7 @@ lm_connection_new_with_context (const gchar *server, GMainContext *context)
 	connection = lm_connection_new (server);
 	connection->context = context;
 
-	g_main_context_ref (connection->context);
+        g_main_context_ref (connection->context);
 
 	return connection;
 }
