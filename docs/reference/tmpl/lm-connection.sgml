@@ -147,6 +147,16 @@ Callback called when a connection is closed.
 @Returns: 
 
 
+<!-- ##### FUNCTION lm_connection_new_with_context ##### -->
+<para>
+
+</para>
+
+@server: 
+@context: 
+@Returns: 
+
+
 <!-- ##### FUNCTION lm_connection_open ##### -->
 <para>
 
