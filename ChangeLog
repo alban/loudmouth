@@ -1,5 +1,15 @@
 2006-03-20  Mikael Hallendal  <micke@imendio.com>
 
+	* Makefile.am:
+	* acinclude.m4:
+	* configure.in:
+	* tests/.cvsignore:
+	* tests/Makefile.am:
+	* tests/test-objects.[ch]:
+	- Started to add support for the Check unit test framework.
+
+2006-03-20  Mikael Hallendal  <micke@imendio.com>
+
 	* loudmouth/lm-connection.c: Fixes LM-16.
 	(_lm_connection_failed_with_error): 
 	- Call connection_do_close to remove sources.

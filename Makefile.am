@@ -1,4 +1,4 @@
-SUBDIRS = loudmouth docs examples
+SUBDIRS = loudmouth docs examples tests
 
 EXTRA_DIST =			\
 	loudmouth-1.0.pc.in     \
