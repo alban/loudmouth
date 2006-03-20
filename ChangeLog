@@ -1,5 +1,13 @@
 2006-03-20  Mikael Hallendal  <micke@imendio.com>
 
+	* loudmouth/lm-connection.c: 
+	(connection_do_open): Fixed up some of the error codes replied.
+	(lm_connection_open_and_block):
+	- Set the error if connection fails. 
+	- Fixes LM-15.
+
+2006-03-20  Mikael Hallendal  <micke@imendio.com>
+
 	* Makefile.am:
 	* acinclude.m4:
 	* configure.in:

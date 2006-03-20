@@ -615,7 +615,7 @@ connection_do_open (LmConnection *connection, GError **error)
 	if (lm_connection_is_open (connection)) {
 		g_set_error (error,
 			     LM_ERROR,
-			     LM_ERROR_CONNECTION_NOT_OPEN,
+			     LM_ERROR_CONNECTION_OPEN,
 			     "Connection is already open, call lm_connection_close() first");
 		return FALSE;
 	}
@@ -623,7 +623,7 @@ connection_do_open (LmConnection *connection, GError **error)
 	if (!connection->server) {
 		g_set_error (error,
 			     LM_ERROR,
-			     LM_ERROR_CONNECTION_OPEN,
+			     LM_ERROR_CONNECTION_FAILED,
 			     "You need to set the server hostname in the call to lm_connection_new()");
 		return FALSE;
 	}
@@ -655,7 +655,7 @@ connection_do_open (LmConnection *connection, GError **error)
 		if (getaddrinfo (proxy_server, NULL, &req, &ans) != 0) {
 			g_set_error (error,
 				     LM_ERROR,                 
-				     LM_ERROR_CONNECTION_OPEN,   
+				     LM_ERROR_CONNECTION_FAILED,   
 				     "getaddrinfo() failed");
 			return FALSE;
 		}
@@ -668,7 +668,7 @@ connection_do_open (LmConnection *connection, GError **error)
 				 NULL, &req, &ans) != 0) {
 			g_set_error (error,
 				     LM_ERROR,                 
-				     LM_ERROR_CONNECTION_OPEN,   
+				     LM_ERROR_CONNECTION_FAILED,   
 				     "getaddrinfo() failed");
 			return FALSE;
 		}
@@ -1284,6 +1284,12 @@ lm_connection_open_and_block (LmConnection *connection, GError **error)
 		connection_start_keep_alive (connection);
 		return TRUE;
 	}
+
+	/* Need to set the error here: LM-15 */
+	g_set_error (error,
+		     LM_ERROR,
+		     LM_ERROR_CONNECTION_FAILED,
+		     "Opening the connection failed");
 
 	return FALSE;
 }
