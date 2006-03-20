@@ -424,7 +424,7 @@ _lm_connection_failed_with_error (LmConnectData *connect_data, int error)
 	}
 	
 	if (connect_data->current_addr == NULL) {
-		connection->state = LM_CONNECTION_STATE_CLOSED;
+		connection_do_close (connection);
 		if (connection->open_cb && connection->open_cb->func) {
 			LmCallback *cb = connection->open_cb;
 			
@@ -715,17 +715,17 @@ connection_do_close (LmConnection *connection)
 
 		connection->fd = -1;
 	}
-
 	
 	g_source_destroy (connection->incoming_source);
 	g_source_unref (connection->incoming_source);
 
 	if (!lm_connection_is_open (connection)) {
+		/* lm_connection_is_open is FALSE for state OPENING as well */
+		connection->state = LM_CONNECTION_STATE_CLOSED;
 		return;
 	}
 	
 	connection->state = LM_CONNECTION_STATE_CLOSED;
-
 	if (connection->ssl) {
 		_lm_ssl_close (connection->ssl);
 	}

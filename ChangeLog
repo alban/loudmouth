@@ -1,3 +1,10 @@
+2006-03-20  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-connection.c: Fixes LM-16.
+	(_lm_connection_failed_with_error): 
+	- Call connection_do_close to remove sources.
+	(connection_do_close): Always set the connection state to CLOSED.
+
 2006-01-02  Mikael Hallendal  <micke@imendio.com>
 
 	* MAINTAINERS: Added
