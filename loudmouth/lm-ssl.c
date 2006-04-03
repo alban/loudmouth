@@ -45,11 +45,14 @@ struct _LmSSL {
 #endif
 };
 
-static void      ssl_free                (LmSSL       *ssl);
+static void           ssl_free                  (LmSSL       *ssl);
 
 #ifdef HAVE_GNUTLS
-static gboolean  ssl_verify_certificate  (LmSSL       *ssl,
-					  const gchar *server);
+static gboolean       ssl_verify_certificate    (LmSSL       *ssl,
+						 const gchar *server);
+static LmSSLResponse  ssl_func_always_continue  (LmSSL       *ssl,
+						 LmSSLStatus  status,
+						 gpointer     user_data);
 
 static gboolean
 ssl_verify_certificate (LmSSL *ssl, const gchar *server)
@@ -145,6 +148,14 @@ ssl_verify_certificate (LmSSL *ssl, const gchar *server)
 	return TRUE;
 }
 
+static LmSSLResponse  
+ssl_func_always_continue (LmSSL       *ssl,
+			  LmSSLStatus  status,
+			  gpointer     user_data)
+{
+	return LM_SSL_RESPONSE_CONTINUE;;
+}
+
 void
 _lm_ssl_initialize (LmSSL *ssl) 
 {
@@ -223,7 +234,7 @@ _lm_ssl_read (LmSSL *ssl, gchar *buf, gint len, gsize *bytes_read)
 	return status;
 }
 
-gboolean
+gint
 _lm_ssl_send (LmSSL *ssl, const gchar *str, gint len)
 {
 	gint bytes_written;
@@ -233,14 +244,14 @@ _lm_ssl_send (LmSSL *ssl, const gchar *str, gint len)
 	while (bytes_written < 0) {
 		if (bytes_written != GNUTLS_E_INTERRUPTED &&
 		    bytes_written != GNUTLS_E_AGAIN) {
-			return FALSE;
+			return -1;
 		}
 	
 		bytes_written = gnutls_record_send (ssl->gnutls_session, 
 						    str, len);
 	}
 
-	return TRUE;
+	return bytes_written;
 }
 
 void 
@@ -280,7 +291,7 @@ lm_ssl_is_supported (void)
 /**
  * lm_ssl_new:
  * @expected_fingerprint: The expected fingerprint. @ssl_function will be called if there is a mismatch. %NULL if you are not interested in this check.
- * @ssl_function: Callback called to inform the user of a problem during setting up the SSL connection and how to proceed.
+ * @ssl_function: Callback called to inform the user of a problem during setting up the SSL connection and how to proceed. If %NULL is passed the default function that always continues will be used.
  * @user_data: Data sent with the callback.
  * @notify: Function to free @user_dataa when the connection is finished. %NULL if @user_data should not be freed.
  *
@@ -308,6 +319,13 @@ lm_ssl_new (const gchar    *expected_fingerprint,
 		ssl->expected_fingerprint = g_strdup (expected_fingerprint);
 	} else {
 		ssl->expected_fingerprint = NULL;
+	}
+
+	if (!ssl->func) {
+		/* If user didn't provide an SSL func the default will be used
+		 * this function will always tell the connection to continue.
+		 */
+		ssl->func = ssl_func_always_continue;
 	}
 
 	return ssl;

@@ -96,6 +96,9 @@ struct _LmConnection {
 	guint         keep_alive_rate;
 	guint         keep_alive_id;
 
+	guint         io_watch_out;
+	GString      *out_buf;
+
 	gint          ref_count;
 };
 
@@ -118,6 +121,10 @@ static gboolean connection_do_open           (LmConnection         *connection,
 					      GError              **error);
 
 static void     connection_do_close           (LmConnection        *connection);
+static gint     connection_do_write          (LmConnection         *connection,
+					      const gchar          *buf,
+					      gint                  len);
+
 static gboolean connection_in_event          (GIOChannel   *source,
 					      GIOCondition  condition,
 					      LmConnection *connection);
@@ -127,7 +134,7 @@ static gboolean connection_error_event       (GIOChannel   *source,
 static gboolean connection_hup_event         (GIOChannel   *source,
 					      GIOCondition  condition,
 					      LmConnection *connection);
-static gboolean connection_send              (LmConnection             *connection,
+static gboolean connection_send              (LmConnection         *connection,
 					      const gchar          *str,
 					      gint                  len,
 					      GError               **error);
@@ -148,8 +155,8 @@ static LmHandlerResult connection_auth_reply (LmMessageHandler    *handler,
 					      LmMessage           *m,
 					      gpointer             user_data);
 
-static void     connection_stream_received   (LmConnection             *connection, 
-					      LmMessage                *m);
+static void     connection_stream_received   (LmConnection        *connection, 
+					      LmMessage           *m);
 
 static gint     connection_handler_compare_func (HandlerData  *a,
 						 HandlerData  *b);
@@ -172,6 +179,15 @@ static guint    connection_add_watch            (LmConnection  *connection,
 static gboolean connection_send_keep_alive      (LmConnection  *connection);
 static void     connection_start_keep_alive     (LmConnection  *connection);
 static void     connection_stop_keep_alive      (LmConnection  *connection);
+static gboolean connection_buffered_write_cb    (GIOChannel    *source, 
+						 GIOCondition   condition,
+						 LmConnection  *connection);
+static gboolean connection_output_is_buffered   (LmConnection  *connection,
+						 const gchar   *buffer,
+						 gint           len);
+static void     connection_setup_output_buffer  (LmConnection  *connection,
+						 const gchar   *buffer,
+						 gint           len);
 
 static GSourceFuncs incoming_funcs = {
 	connection_incoming_prepare,
@@ -221,6 +237,10 @@ connection_free (LmConnection *connection)
         if (connection->context) {
                 g_main_context_unref (connection->context);
         }
+
+	if (connection->out_buf) {
+		g_string_free (connection->out_buf, TRUE);
+	}
         
         g_free (connection);
 }
@@ -365,7 +385,9 @@ _lm_connection_succeeded (LmConnectData *connect_data)
 				      G_IO_HUP,
 				      (GIOFunc) connection_hup_event,
 				      connection);
-	
+
+	/* FIXME: Set up according to XMPP 1.0 specification */
+	/*        StartTLS and the like */
 	if (!connection_send (connection, 
 			      "<?xml version='1.0' encoding='UTF-8'?>", -1,
 			      NULL)) {
@@ -603,6 +625,75 @@ connection_stop_keep_alive (LmConnection *connection)
 	connection->keep_alive_id = 0;
 }
 
+static gboolean
+connection_buffered_write_cb (GIOChannel   *source, 
+			      GIOCondition  condition,
+			      LmConnection *connection)
+{
+	gint     b_written;
+	GString *out_buf;
+	/* FIXME: Do the writing */
+
+	out_buf = connection->out_buf;
+	if (!out_buf) {
+		/* Should not be possible */
+		return FALSE;
+	}
+
+	b_written = connection_do_write (connection, out_buf->str, out_buf->len);
+
+	if (b_written < 0) {
+		connection_error_event (connection->io_channel, 
+					G_IO_HUP,
+					connection);
+		return FALSE;
+	}
+
+	g_string_erase (out_buf, 0, (gsize) b_written);
+	if (out_buf->len == 0) {
+		lm_verbose ("Output buffer is empty, going back to normal output\n");
+		g_source_destroy (g_main_context_find_source_by_id (
+			connection->context, connection->io_watch_out));
+		connection->io_watch_out = 0;
+		g_string_free (out_buf, TRUE);
+		connection->out_buf = NULL;
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static gboolean
+connection_output_is_buffered (LmConnection *connection,
+			       const gchar  *buffer,
+			       gint          len)
+{
+	if (connection->out_buf) {
+		lm_verbose ("Appending %d bytes to output buffer\n", len);
+		g_string_append_len (connection->out_buf, buffer, len);
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+static void
+connection_setup_output_buffer (LmConnection *connection,
+				const gchar  *buffer,
+				gint          len)
+{
+	lm_verbose ("OUTPUT BUFFER ENABLED\n");
+
+	connection->out_buf = g_string_new_len (buffer, len);
+
+	connection->io_watch_out =
+		connection_add_watch (connection,
+				      connection->io_channel,
+				      G_IO_OUT,
+				      (GIOFunc) connection_buffered_write_cb,
+				      connection);
+}
+
 /* Returns directly */
 /* Setups all data needed to start the connection attempts */
 static gboolean
@@ -704,6 +795,12 @@ connection_do_close (LmConnection *connection)
 		g_source_destroy (g_main_context_find_source_by_id (
 			connection->context, connection->io_watch_hup));
 
+		if (connection->io_watch_out != 0) {
+			g_source_destroy (g_main_context_find_source_by_id (
+				connection->context, connection->io_watch_out));
+			connection->io_watch_out = 0;
+		}
+
 		if (connection->io_watch_connect != 0) {
 			g_source_destroy (g_main_context_find_source_by_id(connection->context,
 									   connection->io_watch_connect));
@@ -731,6 +828,35 @@ connection_do_close (LmConnection *connection)
 	}
 }
 
+static gint
+connection_do_write (LmConnection *connection,
+		     const gchar  *buf,
+		     gint          len)
+{
+	gint b_written;
+
+	if (connection->ssl) {
+		b_written = _lm_ssl_send (connection->ssl, buf, len);
+	} else {
+		GIOStatus io_status = G_IO_STATUS_AGAIN;
+		gsize     bytes_written;
+
+		while (io_status == G_IO_STATUS_AGAIN) {
+			io_status = g_io_channel_write_chars (connection->io_channel, 
+							      buf, len, 
+							      &bytes_written,
+							      NULL);
+		}
+
+		b_written = bytes_written;
+
+		if (io_status != G_IO_STATUS_NORMAL) {
+			b_written = -1;
+		}
+	}
+
+	return b_written;
+}
 
 static gboolean
 connection_in_event (GIOChannel   *source,
@@ -834,7 +960,7 @@ connection_send (LmConnection  *connection,
 		 gint           len, 
 		 GError       **error)
 {
-	gsize             bytes_written;
+	gint b_written;
 	
 	if (connection->state < LM_CONNECTION_STATE_OPENING) {
 		g_set_error (error,
@@ -855,16 +981,27 @@ connection_send (LmConnection  *connection,
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
 	       "-----------------------------------\n");
 
-	if (connection->ssl) {
-		if (!_lm_ssl_send (connection->ssl, str, len)) {
-			
-			connection_error_event (connection->io_channel, 
-						G_IO_HUP,
-						connection);
-		}
-	} else {
-		g_io_channel_write_chars (connection->io_channel, str, len, 
-					  &bytes_written, NULL);
+	/* Check to see if there already is an output buffer, if so, add to the
+	   buffer and return */
+
+	if (connection_output_is_buffered (connection, str, len)) {
+		return TRUE;
+	}
+
+	b_written = connection_do_write (connection, str, len);
+
+
+	if (b_written < 0) {
+		connection_error_event (connection->io_channel, 
+					G_IO_HUP,
+					connection);
+		return FALSE;
+	}
+
+	if (b_written < len) {
+		connection_setup_output_buffer (connection, 
+						str + b_written, 
+						len - b_written);
 	}
 
 	return TRUE;
@@ -1179,6 +1316,7 @@ lm_connection_new (const gchar *server)
 	connection->state             = LM_CONNECTION_STATE_CLOSED;
 	connection->keep_alive_id     = 0;
 	connection->keep_alive_rate   = 0;
+	connection->out_buf           = NULL;
 	
 	connection->id_handlers = g_hash_table_new_full (g_str_hash, 
 							 g_str_equal,
@@ -1388,6 +1526,8 @@ lm_connection_authenticate (LmConnection      *connection,
 			     "Connection is not open, call lm_connection_open() first");
 		return FALSE;
 	}
+
+	/* FIXME: Do SASL authentication here (if XMPP 1.0 is used) */
 
 	connection->state = LM_CONNECTION_STATE_AUTHENTICATING;
 	

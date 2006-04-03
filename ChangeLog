@@ -1,3 +1,19 @@
+2006-04-03  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-connection.c: (connection_free),
+	(_lm_connection_succeeded), (connection_buffered_write_cb),
+	(connection_output_is_buffered), (connection_setup_output_buffer),
+	(connection_do_close), (connection_do_write), (connection_send),
+	(lm_connection_new), (lm_connection_authenticate):
+	- Added an output buffer that will be enabled if the nonblocking write
+	  cannot be performed in one go (for large messages).
+	- Fixes LM-17.
+	* loudmouth/lm-internals.h:
+	* loudmouth/lm-ssl.c: (ssl_func_always_continue), (_lm_ssl_send),
+	(lm_ssl_new):
+	- Added a default SSL function that will always continue, this will 
+	  be used if NULL is passed in as SSL function to lm_ssl_new.
+
 2006-03-20  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-connection.c: 
