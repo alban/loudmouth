@@ -1,3 +1,7 @@
+Changes in 1.0.3:
+-----------------
+* Quick build fix release when building without SSL, LM-25.
+
 Changes in 1.0.2:
 -----------------
 * Fixed issue when opening in blocking mode failed, LM-15

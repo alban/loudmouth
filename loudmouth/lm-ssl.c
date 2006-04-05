@@ -47,12 +47,13 @@ struct _LmSSL {
 
 static void           ssl_free                  (LmSSL       *ssl);
 
-#ifdef HAVE_GNUTLS
-static gboolean       ssl_verify_certificate    (LmSSL       *ssl,
-						 const gchar *server);
 static LmSSLResponse  ssl_func_always_continue  (LmSSL       *ssl,
 						 LmSSLStatus  status,
 						 gpointer     user_data);
+
+#ifdef HAVE_GNUTLS
+static gboolean       ssl_verify_certificate    (LmSSL       *ssl,
+						 const gchar *server);
 
 static gboolean
 ssl_verify_certificate (LmSSL *ssl, const gchar *server)
@@ -146,14 +147,6 @@ ssl_verify_certificate (LmSSL *ssl, const gchar *server)
 	}
 
 	return TRUE;
-}
-
-static LmSSLResponse  
-ssl_func_always_continue (LmSSL       *ssl,
-			  LmSSLStatus  status,
-			  gpointer     user_data)
-{
-	return LM_SSL_RESPONSE_CONTINUE;;
 }
 
 void
@@ -263,12 +256,20 @@ _lm_ssl_close (LmSSL *ssl)
 }
 #endif 
 
-
 static void
 ssl_free (LmSSL *ssl)
 {
 	g_free (ssl->expected_fingerprint);
 	g_free (ssl);
+}
+
+
+static LmSSLResponse  
+ssl_func_always_continue (LmSSL       *ssl,
+			  LmSSLStatus  status,
+			  gpointer     user_data)
+{
+	return LM_SSL_RESPONSE_CONTINUE;;
 }
 
 /**

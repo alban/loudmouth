@@ -1,5 +1,14 @@
 2006-04-05  Mikael Hallendal  <micke@imendio.com>
 
+	* Speed release of 1.0.3
+	* NEWS: Updated
+	* configure.in: Bumped to 1.0.3
+	* loudmouth/lm-ssl.c: (ssl_free), (ssl_func_always_continue):
+	- Build fix for building without SSL, thanks foser, LM-25.
+
+2006-04-05  Mikael Hallendal  <micke@imendio.com>
+
+	* Release 1.0.2
 	* NEWS: Updated for 1.0.2
 	* configure.in: Bumped version to 1.0.2
 
