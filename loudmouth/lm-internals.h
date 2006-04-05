@@ -66,20 +66,6 @@ void             _lm_debug_init                     (void);
 gboolean         _lm_proxy_connect_cb               (GIOChannel *source,
                                                      GIOCondition condition,
                                                      gpointer data);
-void             _lm_ssl_initialize                 (LmSSL            *ssl);
-gboolean         _lm_ssl_begin                      (LmSSL            *ssl,
-						     gint              fd,
-						     const gchar      *server,
-						     GError          **error);
-GIOStatus        _lm_ssl_read                       (LmSSL            *ssl,
-						     gchar            *buf,
-						     gint              len,
-						     gsize             *bytes_read);
-gint             _lm_ssl_send                       (LmSSL            *ssl,
-						     const gchar      *str,
-						     gint              len);
-void             _lm_ssl_close                      (LmSSL            *ssl);
-
 LmHandlerResult    
 _lm_message_handler_handle_message                (LmMessageHandler *handler,
 						   LmConnection     *connection,

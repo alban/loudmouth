@@ -21,6 +21,8 @@
 #ifndef __LM_SSL_H__
 #define __LM_SSL_H__
 
+#include <glib.h>
+
 #if !defined (LM_INSIDE_LOUDMOUTH_H) && !defined (LM_COMPILATION)
 #error "Only <loudmouth/loudmouth.h> can be included directly, this file may disappear or change contents."
 #endif
@@ -28,6 +30,7 @@
 G_BEGIN_DECLS
 
 typedef struct _LmSSL LmSSL;
+
 typedef enum {
 	LM_CERT_INVALID,
 	LM_CERT_ISSUER_NOT_FOUND,

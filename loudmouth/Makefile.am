@@ -23,7 +23,11 @@ libloudmouth_1_la_SOURCES =		\
 	lm-internals.h			\
 	lm-sha.c			\
 	lm-sha.h			\
-	lm-ssl.c                        \
+	lm-ssl-generic.c                \
+	lm-ssl-gnutls.c                 \
+	lm-ssl-base.c                   \
+	lm-ssl-base.h                   \
+	lm-ssl-internals.h              \
 	lm-utils.c			\
 	lm-proxy.c                      \
 	$(NULL)

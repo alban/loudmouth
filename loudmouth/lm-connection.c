@@ -37,6 +37,7 @@
 #include "lm-debug.h"
 #include "lm-error.h"
 #include "lm-internals.h"
+#include "lm-ssl-internals.h"
 #include "lm-parser.h"
 #include "lm-sha.h"
 #include "lm-connection.h"

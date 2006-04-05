@@ -123,6 +123,10 @@ else
   echo "Disabling SSL support"
 fi
 
+if test x$enable_ssl = xyes; then
+  AC_DEFINE(HAVE_SSL, 1, [whether to use SSL support.])
+fi
+
 dnl +-------------+
 dnl | Build Flags |--------------------------------------------
 dnl +-------------+

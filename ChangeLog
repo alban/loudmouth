@@ -1,5 +1,23 @@
 2006-04-05  Mikael Hallendal  <micke@imendio.com>
 
+	* configure.in: Define HAVE_SSL which will be set if GnuTLS or OpenSSL
+	  is supported.
+	* loudmouth/Makefile.am:
+	* loudmouth/lm-connection.c:
+	* loudmouth/lm-internals.h:
+	* loudmouth/lm-ssl-base.[ch]:
+	* loudmouth/lm-ssl-generic.c:
+	* loudmouth/lm-ssl-gnutls.c:
+	* loudmouth/lm-ssl-internals.h: Took out the SSL functions from
+	  lm-internals.h
+	* loudmouth/lm-ssl.[ch]:
+	- Refactored the SSL stuff to make room for an OpenSSL implementation.
+	- lm-ssl-generic and lm-ssl-base contains the shared parts between the
+	  GnuTLS and the OpenSSL implementations. lm-ssl-gnutls.c will contain
+	  GnuTLS specifics and lm-ssl-openssl.c will contain OpenSSL.
+
+2006-04-05  Mikael Hallendal  <micke@imendio.com>
+
 	* Speed release of 1.0.3
 	* NEWS: Updated
 	* configure.in: Bumped to 1.0.3
