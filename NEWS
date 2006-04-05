@@ -1,3 +1,9 @@
+Changes in 1.0.2:
+-----------------
+* Fixed issue when opening in blocking mode failed, LM-15
+* Unregister sources when connection fails to avoid later segfault, LM-16
+* Fixed an issue where large messages would get trunkated, LM-17
+
 Changes in 1.0.1:
 -----------------
 * Unref contexts when freeing the connection          (Mikael Hallendal)
