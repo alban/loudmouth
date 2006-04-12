@@ -1,6 +1,6 @@
 NULL=
 
-INCLUDES = 				\
+AM_CPPFLAGS = 				\
 	-I.				\
 	-I$(top_srcdir)			\
 	$(LOUDMOUTH_CFLAGS)		\
@@ -9,6 +9,16 @@ INCLUDES = 				\
 	$(NULL)
 
 lib_LTLIBRARIES = libloudmouth-1.la
+
+if USE_GNUTLS
+ssl_sources =                           \
+	lm-ssl-gnutls.c
+endif
+
+if USE_OPENSSL
+ssl_sources =                           \
+	lm-ssl-openssl.c
+endif
 
 libloudmouth_1_la_SOURCES =		\
 	lm-connection.c	 		\
@@ -24,10 +34,10 @@ libloudmouth_1_la_SOURCES =		\
 	lm-sha.c			\
 	lm-sha.h			\
 	lm-ssl-generic.c                \
-	lm-ssl-gnutls.c                 \
 	lm-ssl-base.c                   \
 	lm-ssl-base.h                   \
 	lm-ssl-internals.h              \
+	$(ssl_sources)                  \
 	lm-utils.c			\
 	lm-proxy.c                      \
 	$(NULL)

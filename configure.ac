@@ -1,8 +1,10 @@
-AC_INIT(loudmouth/lm-message.h)
+AC_INIT(Loudmouth, 1.0.3, loudmouth)
+AC_PREREQ(2.59)
+AC_COPYRIGHT([Copyright (C) 2003-2006 Imendio AB])
 
+AC_CONFIG_SRCDIR(loudmouth/loudmouth.h)
 AM_CONFIG_HEADER(config.h)
-
-AM_INIT_AUTOMAKE(loudmouth, 1.0.3)
+AM_INIT_AUTOMAKE(1.9 dist-bzip2 no-define)
 
 AM_MAINTAINER_MODE
 
@@ -101,31 +103,65 @@ AC_CHECK_LIB(nsl,gethostbyname)
 AC_CHECK_LIB(socket,socket)
 
 dnl +--------------------------------------------------------+
-dnl | Checking for SSL (through GnuTLS) support              |
+dnl | Checking for SSL support                               |-
 dnl +--------------------------------------------------------+
-AC_ARG_WITH(ssl, [  --with-ssl=no/yes           define whether to look for SSL, default=yes],
+AC_ARG_WITH(ssl,
+	    AS_HELP_STRING([--with-ssl@<:@=gnutls|openssl|no@:>@], 
+			   [Which SSL implementation to use, default is gnutls]),
 	    ac_ssl=$withval,
-	    ac_ssl=yes
+	    ac_ssl=gnutls)
+
+AC_ARG_WITH(openssl-includes,
+	    AC_HELP_STRING([--with-openssl-includes=DIR],[OpenSSL includes]),
+	    [ use_openssl=yes CPPFLAGS="$CPPFLAGS -I$withval" ]
+	    )
+
+AC_ARG_WITH(openssl-libs,
+	    AC_HELP_STRING([--with-openssl-libs=DIR],[OpenSSL libraries]),
+	    [ use_openssl=yes LDFLAGS="$LDFLAGS -L$withval" ]
 	    )
 
 enable_ssl=no
-if test x$ac_ssl != xno; then
-  AM_PATH_LM_LIBGNUTLS($GNUTLS_REQUIRED, have_libgnutls=yes, have_libgnutls=no)
-  if test x$have_libgnutls = xyes; then
-    CFLAGS="$CFLAGS $LIBGNUTLS_CFLAGS"
-    LIBS="$LIBS $LIBGNUTLS_LIBS"
-    AC_DEFINE(HAVE_GNUTLS, 1, [whether to use GnuTSL support.])
-    enable_ssl=yes
-  else 
-    echo "Couldn't find GnuTLS, disabling SSL support"
-  fi
+if test x$ac_ssl = xgnutls; then
+	dnl Look for GnuTLS
+	AM_PATH_LM_LIBGNUTLS($GNUTLS_REQUIRED, have_libgnutls=yes, have_libgnutls=no)
+	if test x$have_libgnutls = xyes; then
+		CFLAGS="$CFLAGS $LIBGNUTLS_CFLAGS"
+		LIBS="$LIBS $LIBGNUTLS_LIBS"
+		AC_DEFINE(HAVE_GNUTLS, 1, [whether to use GnuTSL support.])
+		enable_ssl=GnuTLS
+	else
+		AC_MSG_ERROR([GnuTLS was not found, use --with-ssl=no|openssl to build without SSL support or with OpenSSL])
+	fi
+elif test x$ac_ssl = xopenssl; then
+	dnl Look for OpenSSL
+	AC_CHECK_HEADERS([openssl/ssl.h])
+	OLDLIBS="$LIBS"
+	AC_CHECK_LIB(crypto, BIO_f_base64, [
+					    AC_CHECK_LIB(ssl, SSL_new, [ SSL_LIB="-lssl -lcrypto"
+									AC_DEFINE(HAVE_OPENSSL, [], [Have OpenSSL]) ], [ have_openssl=no ], [ -lcrypto ])
+					    ], [ have_openssl=no ], [])
+
+	if test x$have_openssl = xno; then
+		AC_MSG_ERROR([OpenSSL was not found, use --with-ssl=no|gnutls to build without SSL support or with GnuTLS])
+	else 
+		LIBS="$OLDLIBS $SSL_LIB"
+		enable_ssl=OpenSSL
+	fi
 else
-  echo "Disabling SSL support"
+	echo "Disabling SSL support"
 fi
 
-if test x$enable_ssl = xyes; then
-  AC_DEFINE(HAVE_SSL, 1, [whether to use SSL support.])
+if test x$enable_ssl != xno; then
+	AC_DEFINE(HAVE_SSL, 1, [whether to use SSL support.])
+else
+	if test x$ac_ssl != xno; then
+		AC_MSG_ERROR([No SSL implementation was found, if you do not want to build with SSL use --with-ssl=no])
+	fi
 fi
+
+AM_CONDITIONAL(USE_OPENSSL, test x$enable_ssl = xOpenSSL)
+AM_CONDITIONAL(USE_GNUTLS, test x$enable_ssl = xGnuTLS)
 
 dnl +-------------+
 dnl | Build Flags |--------------------------------------------

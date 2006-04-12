@@ -1,3 +1,17 @@
+2006-04-12  Mikael Hallendal  <micke@imendio.com>
+
+	* autogen.sh:
+	* configure.ac:
+	* configure.in:
+	- Bumped the autoconf and automake requirements.
+	- Added support to compile with --with-ssl=gnutls|openssl|no. The
+	  default is to build against gnutls and you must explicitely tell that
+	  you don't want SSL support or configure will fail if you don't have
+	  GnuTLS (or building with --with-ssl=openssl).
+	* loudmouth/Makefile.am:
+	* loudmouth/lm-ssl-openssl.c:
+	- Added an OpenSSL backend. Currently doesn't verify certificates.
+
 2006-04-05  Mikael Hallendal  <micke@imendio.com>
 
 	* configure.in: Define HAVE_SSL which will be set if GnuTLS or OpenSSL
