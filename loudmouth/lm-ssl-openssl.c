@@ -122,19 +122,36 @@ _lm_ssl_initialize (LmSSL *ssl)
 gboolean
 _lm_ssl_begin (LmSSL *ssl, gint fd, const gchar *server, GError **error)
 {
-	BIO      *sbio;
+	BIO       *sbio;
+	GIOStatus  status;
 
 	ssl->session = SSL_new (ssl->ctx);
 	sbio = BIO_new_socket (fd, BIO_NOCLOSE);
 	SSL_set_bio (ssl->session, sbio, sbio);
 
-	if (SSL_connect (ssl->session) <= 0) {
-		g_set_error (error, 
-			     LM_ERROR, LM_ERROR_CONNECTION_OPEN,
-			     "*** OpenSSL handshake failed");
+	while (TRUE) {
+		gint ret;
 
-		return FALSE;	/* Error */
-	} 
+		ret = SSL_connect (ssl->session);
+
+		if (ret > 0) {
+			/* Successful */
+			break;
+		}
+		else {
+			status = ssl_io_status_from_return (ssl, ret);
+			if (status == G_IO_STATUS_AGAIN) {
+				/* Try again */
+				continue;
+			} else {
+				g_set_error (error, 
+					     LM_ERROR, LM_ERROR_CONNECTION_OPEN,
+					     "*** OpenSSL handshake failed");
+				return FALSE;
+			}
+
+		}
+	}
 
 	if (!ssl_verify_certificate (ssl, server)) {
 		g_set_error (error,
