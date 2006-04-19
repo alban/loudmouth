@@ -1,5 +1,14 @@
 2006-04-19  Mikael Hallendal  <micke@imendio.com>
 
+	* configure.ac:
+	- Move back to use the GTK_DOC_CHECK() macro.
+	
+	* docs/reference/Makefile.am:
+	- Updated to newer format from gtk-doc (old one failed distcheck with
+	  new auto*).
+
+2006-04-19  Mikael Hallendal  <micke@imendio.com>
+
 	* Landing a patch by Martyn Russell for Win32.
 
 	* configure.ac: Updated for Win32 work
