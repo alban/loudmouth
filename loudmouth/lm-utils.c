@@ -23,6 +23,12 @@
 #include <stdio.h>
 #include <time.h>
 
+#include <glib.h>
+
+#ifndef G_OS_WIN32
+#include <unistd.h>
+#endif
+
 #include "lm-internals.h"
 #include "lm-utils.h"
 

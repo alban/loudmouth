@@ -40,6 +40,8 @@ libloudmouth_1_la_SOURCES =		\
 	$(ssl_sources)                  \
 	lm-utils.c			\
 	lm-proxy.c                      \
+	lm-sock.h			\
+	lm-sock.c			\
 	$(NULL)
 
 libloudmouthinclude_HEADERS =		\

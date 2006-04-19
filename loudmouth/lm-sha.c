@@ -189,7 +189,7 @@ SHA1Init (SHA1Context *sc)
   setEndian ();
 #endif /* RUNTIME_ENDIAN */
 
-#ifdef __WIN32__
+#ifdef G_OS_WIN32
   sc->totalLength = 0L;
 #else
   sc->totalLength = 0LL;
@@ -597,7 +597,7 @@ SHA1Final (SHA1Context *sc, guint8 hash[SHA1_HASH_SIZE])
   }
 }
 
-#ifdef __WIN32__
+#ifdef G_OS_WIN32
 #define snprintf _snprintf
 #endif
 

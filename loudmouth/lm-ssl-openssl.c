@@ -116,7 +116,6 @@ _lm_ssl_initialize (LmSSL *ssl)
 
 	meth = SSLv23_method ();
 	ssl->ctx = SSL_CTX_new (meth);
-
 }
 
 gboolean

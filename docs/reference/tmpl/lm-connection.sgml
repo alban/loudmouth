@@ -51,6 +51,9 @@ main (int argc, char **argv)
 
 </para>
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### MACRO LM_CONNECTION ##### -->
 <para>
 Convenience macro used to cast a pointer to a #LmConnection.

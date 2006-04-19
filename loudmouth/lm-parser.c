@@ -252,7 +252,7 @@ lm_parser_parse (LmParser *parser, const gchar *string)
         }
         
         if (g_markup_parse_context_parse (parser->context, string, 
-                                          strlen (string), NULL)) {
+                                          (gssize)strlen (string), NULL)) {
         } else {
                 g_warning ("Parsing failed\n");
         }

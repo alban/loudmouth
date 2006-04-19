@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- * Copyright (C) 2003 Imendio AB
+ * Copyright (C) 2003-2006 Imendio AB
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -28,159 +28,205 @@
 
 #include <stdlib.h>
 #include <string.h>
+
 #include <loudmouth/loudmouth.h>
 
-typedef struct {
-        const gchar *recipient;
-        const gchar *message;
-} MessageData;
-
-typedef struct {
-        const gchar *username;
-        const gchar *password;
-        const gchar *resource;
-        MessageData *msg_data;
-} ConnectData;
-
 static GMainLoop *main_loop;
+static gboolean   test_success = FALSE;
+
+static gchar      expected_fingerprint[20];
+
+static gchar     *server = NULL;
+static gint       port = 5222;
+static gchar     *username = NULL;
+static gchar     *password = NULL;
+static gchar     *resource = "lm-send-async";
+static gchar     *recipient = NULL;
+static gchar     *fingerprint = NULL;
+static gchar     *message = "test asynchronous message";
+
+static GOptionEntry entries[] = 
+{
+  { "server", 's', 0, G_OPTION_ARG_STRING, &server, 
+    "Server to connect to", NULL },
+  { "port", 'P', 0, G_OPTION_ARG_INT, &port, 
+    "Port to connect to [default=5222]", NULL },
+  { "username", 'u', 0, G_OPTION_ARG_STRING, &username, 
+    "Username to connect with (e.g. 'user' in user@server.org)", NULL },
+  { "password", 'p', 0, G_OPTION_ARG_STRING, &password, 
+    "Password to try", NULL },
+  { "resource", 'r', 0, G_OPTION_ARG_STRING, &resource, 
+    "Resource connect with [default=lm-send-async]", NULL },
+  { "recipient", 'R', 0, G_OPTION_ARG_STRING, &recipient, 
+    "Recipient to send the message to (e.g. user@server.org)", NULL },
+  { "fingerprint", 'f', 0, G_OPTION_ARG_STRING, &fingerprint, 
+    "SSL Fingerprint to use", NULL },
+  { "message", 'm', 0, G_OPTION_ARG_STRING, &message, 
+    "Message to send to recipient [default=test message]", NULL },
+  { NULL }
+};
 
 static void
-print_usage (const gchar *exec_name) 
+print_finger (const char   *fpr,
+	      unsigned int  size)
 {
-        g_print ("Usage: %s -s <server> -u <username> -p <password> -m <message> -t <recipient> [--port <port>] [-r <resource>]\n", exec_name);
+	gint i;
+	for (i = 0; i < size-1; i++) {
+		g_printerr ("%02X:", fpr[i]);
+	}
+	
+	g_printerr ("%02X", fpr[size-1]);
+}
+
+static LmSSLResponse
+ssl_cb (LmSSL       *ssl, 
+	LmSSLStatus  status, 
+	gpointer     ud)
+{
+	g_print ("LmSendAsync: SSL status:%d\n", status);
+
+	switch (status) {
+	case LM_SSL_STATUS_NO_CERT_FOUND:
+		g_printerr ("LmSendAsync: No certificate found!\n");
+		break;
+	case LM_SSL_STATUS_UNTRUSTED_CERT:
+		g_printerr ("LmSendAsync: Certificate is not trusted!\n"); 
+		break;
+	case LM_SSL_STATUS_CERT_EXPIRED:
+		g_printerr ("LmSendAsync: Certificate has expired!\n"); 
+		break;
+	case LM_SSL_STATUS_CERT_NOT_ACTIVATED:
+		g_printerr ("LmSendAsync: Certificate has not been activated!\n"); 
+		break;
+	case LM_SSL_STATUS_CERT_HOSTNAME_MISMATCH:
+		g_printerr ("LmSendAsync: Certificate hostname does not match expected hostname!\n"); 
+		break;
+	case LM_SSL_STATUS_CERT_FINGERPRINT_MISMATCH: {
+		const char *fpr = lm_ssl_get_fingerprint (ssl);
+		g_printerr ("LmSendAsync: Certificate fingerprint does not match expected fingerprint!\n"); 
+		g_printerr ("LmSendAsync: Remote fingerprint: ");
+		print_finger (fpr, 16);
+
+		g_printerr ("\n"
+			    "LmSendAsync: Expected fingerprint: ");
+		print_finger (expected_fingerprint, 16);
+		g_printerr ("\n");
+		break;
+	}
+	case LM_SSL_STATUS_GENERIC_ERROR:
+		g_printerr ("LmSendAsync: Generic SSL error!\n"); 
+		break;
+	}
+
+	return LM_SSL_RESPONSE_CONTINUE;
 }
 
 static void
 connection_auth_cb (LmConnection *connection, 
                     gboolean      success, 
-                    MessageData  *data)
+                    gpointer      user_data)
 {
-        LmMessage *m;
-        gboolean   result;
-        GError    *error = NULL;
+	if (success) {
+		GError    *error = NULL;
+		LmMessage *m;
 
-        if (!success) {
-                g_error ("Authentication failed");
-        }
-        
-        m = lm_message_new (data->recipient, LM_MESSAGE_TYPE_MESSAGE);
-        lm_message_node_add_child (m->node, "body", data->message);
-        
-        result = lm_connection_send (connection, m, &error);
-        lm_message_unref (m);
-        
-        if (!result) {
-                g_error ("lm_connection_send failed");
-        }
+		g_print ("LmSendAsync: Authenticated successfully\n");
+		
+		m = lm_message_new (recipient, LM_MESSAGE_TYPE_MESSAGE);
+		lm_message_node_add_child (m->node, "body", message);
+		
+		if (!lm_connection_send (connection, m, &error)) {
+			g_printerr ("LmSendAsync: Failed to send message:'%s'\n", 
+				 lm_message_node_to_string (m->node));
+		} else {
+			g_print ("LmSendAsync: Sent message:'%s'\n", 
+				 lm_message_node_to_string (m->node));
+			test_success = TRUE;
+		}
+		
+		lm_message_unref (m);
+	} else {
+		g_printerr ("LmSendAsync: Failed to authenticate\n");
+	}
 
-        lm_connection_close (connection, NULL);
-        
-        g_main_loop_quit (main_loop);
+	lm_connection_close (connection, NULL);
+	g_main_loop_quit (main_loop);
 }
 
 static void
-connection_open_result_cb (LmConnection *connection,
-                           gboolean      success,
-                           ConnectData  *data)
+connection_open_cb (LmConnection *connection,
+		    gboolean      success,
+		    gpointer      user_data)
 {
-        GError *error = NULL;
-        
-        if (!success) {
-                g_error ("Connection failed");
-        }
-
-        if (!lm_connection_authenticate (connection, data->username,
-                                         data->password, data->resource,
-                                         (LmResultFunction) connection_auth_cb,
-                                         data->msg_data,
-                                         g_free,
-                                         &error)) {
-                g_error ("lm_connection_authenticate failed");
-        }
+	if (success) {
+		if (!lm_connection_authenticate (connection, username, 
+						 password, resource,
+						 connection_auth_cb, 
+						 NULL, FALSE,  NULL)) {
+			g_printerr ("LmSendAsync: Failed to send authentication\n");
+			g_main_loop_quit (main_loop);
+			return;
+		}
+		
+		g_print ("LmSendAsync: Sent authentication message\n");
+	} else {
+		g_printerr ("LmSendAsync: Failed to connect\n");
+		g_main_loop_quit (main_loop);
+	}
 }
 
 int
 main (int argc, char **argv)
 {
-        LmConnection *connection;
-	GMainContext *context;
-        const gchar  *server = NULL;
-        const gchar  *resource = "jabber-send";
-        const gchar  *recipient = NULL;
-        const gchar  *message = NULL;
-        const gchar  *username = NULL;
-        const gchar  *password = NULL;
-        guint         port = LM_CONNECTION_DEFAULT_PORT;
-        MessageData  *msg_data;
-        ConnectData  *connect_data;
-        GError       *error = NULL;
-        gint          i;
+	GMainContext   *main_context;
+	GOptionContext *context;
+        LmConnection   *connection;
 
-        for (i = 1; i < argc - 1; ++i) {
-                gboolean arg = FALSE;
-                
-                if (strcmp ("-s", argv[i]) == 0) {
-                        server = argv[i+1];
-                        arg = TRUE;
-                }
-                else if (strcmp ("--port", argv[i]) == 0) {
-                        port = atoi (argv[i+1]);
-                        arg = TRUE;
-                }
-                else if (strcmp ("-m", argv[i]) == 0) {
-                        message = argv[i+1];
-                        arg = TRUE;
-                }
-                else if (strcmp ("-r", argv[i]) == 0) {
-                        resource = argv[i+1];
-                        arg = TRUE;
-                }
-                else if (strcmp ("-t", argv[i]) == 0) {
-                        recipient = argv[i+1];
-                        arg = TRUE;
-                }
-                else if (strcmp ("-u", argv[i]) == 0) {
-                        username = argv[i+1];
-                        arg = TRUE;
-                }
-                else if (strcmp ("-p", argv[i]) == 0) {
-                        password = argv[i+1];
-                        arg = TRUE;
-                }
+	context = g_option_context_new ("- test send message asynchronously");
+	g_option_context_add_main_entries (context, entries, NULL);
+	g_option_context_parse (context, &argc, &argv, NULL);
+	g_option_context_free (context);
+	
+	if (!server || !username || !password || !recipient) {
+		g_printerr ("For usage, try %s --help\n", argv[0]);
+		return EXIT_FAILURE;
+	}
 
-                if (arg) {
-                        ++i;
-                }
+	main_context = g_main_context_new ();
+        connection = lm_connection_new_with_context (server, main_context);
+	lm_connection_set_port (connection, port);
+
+	if (fingerprint) {
+		LmSSL *ssl;
+		char  *p;
+		int    i;
+		
+		if (port == LM_CONNECTION_DEFAULT_PORT) {
+			lm_connection_set_port (connection,
+						LM_CONNECTION_DEFAULT_PORT_SSL);
+		}
+
+		for (i = 0, p = fingerprint; *p && *(p+1); i++, p += 3) {
+			expected_fingerprint[i] = (unsigned char) g_ascii_strtoull (p, NULL, 16);
+		}
+	
+		ssl = lm_ssl_new (expected_fingerprint,
+				  (LmSSLFunction) ssl_cb,
+				  NULL, NULL);
+	
+		lm_connection_set_ssl (connection, ssl);
+		lm_ssl_unref (ssl);
+	}
+
+	if (!lm_connection_open (connection, 
+                                 (LmResultFunction) connection_open_cb,
+                                 NULL, NULL, NULL)) {
+                g_printerr ("LmSendAsync: Could not open a connection\n");
+		return EXIT_FAILURE;
         }
 
-        if (!server || !message || !recipient || !username || !password) {
-                print_usage (argv[0]);
-                return -1;
-        }
-        
-	context = g_main_context_new ();
-        connection = lm_connection_new_with_context (server, context);
-
-        msg_data = g_new0 (MessageData, 1);
-        msg_data->recipient = recipient;
-        msg_data->message = message;
-       
-        connect_data = g_new0 (ConnectData, 1);
-        connect_data->username = username;
-        connect_data->password = password;
-        connect_data->resource = resource;
-        connect_data->msg_data = msg_data;
-        
-        if (!lm_connection_open (connection, 
-                                 (LmResultFunction) connection_open_result_cb,
-                                 connect_data,
-                                 g_free,
-                                 &error)) {
-                g_error ("lm_connection_open failed");
-        }
-
-        main_loop = g_main_loop_new (context, FALSE);
+        main_loop = g_main_loop_new (main_context, FALSE);
         g_main_loop_run (main_loop);
 
-        return 0;
+	return (test_success ? EXIT_SUCCESS : EXIT_FAILURE);
 }

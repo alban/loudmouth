@@ -23,6 +23,9 @@ lm_connection_set_ssl (connection, ssl);
 
 </para>
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### STRUCT LmSSL ##### -->
 <para>
 This should not be accessed directly. Use the accessor functions as described below.

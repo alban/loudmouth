@@ -15,6 +15,9 @@ Represents a message that can be sent with lm_connection_send(), lm_connection_s
 
 </para>
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### STRUCT LmMessage ##### -->
 <para>
 Struct 

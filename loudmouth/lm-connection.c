@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- * Copyright (C) 2003-2005 Imendio AB
+ * Copyright (C) 2003-2006 Imendio AB
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License as
@@ -21,19 +21,14 @@
 #include <config.h>
 
 #include <string.h>
-#include <unistd.h>
+#include <sys/stat.h> 
 #include <sys/types.h>
 #include <fcntl.h>
 #include <errno.h>
-#ifndef __WIN32__
-  #include <netdb.h>
-  #include <sys/socket.h>
-  #include <netinet/in.h>
-  #include <sys/time.h>
-#else
-  #include <winsock2.h>
-#endif
 
+#include <glib.h>
+
+#include "lm-sock.h"
 #include "lm-debug.h"
 #include "lm-error.h"
 #include "lm-internals.h"
@@ -76,11 +71,14 @@ struct _LmConnection {
 	guint         io_watch_in;
 	guint         io_watch_err;
 	guint         io_watch_hup;
-	guint         fd;
+	LmSocket      fd;
 	guint         io_watch_connect;
 	
 	guint         open_id;
 	LmCallback   *open_cb;
+
+ 	gboolean      async_connect_waiting;
+	gboolean      blocking;
 
 	gboolean      cancel_open;
 	LmCallback   *close_cb;
@@ -309,12 +307,11 @@ connection_new_message_cb (LmParser     *parser,
 	g_queue_push_tail (connection->incoming_messages, m);
 }
 
-gboolean
+void
 _lm_connection_succeeded (LmConnectData *connect_data)
 {
 	LmConnection *connection;
 	LmMessage    *m;
-	GIOFlags      flags;
 	gchar        *server_from_jid;
 	gchar        *ch;
 
@@ -328,72 +325,86 @@ _lm_connection_succeeded (LmConnectData *connect_data)
 
 	/* Need some way to report error/success */
 	if (connection->cancel_open) {
-		return FALSE;
+		lm_verbose ("Cancelling connection...\n");
+		return;
 	}
 	
 	connection->fd = connect_data->fd;
 	connection->io_channel = connect_data->io_channel;
 
 	freeaddrinfo (connect_data->resolved_addrs);
-
-	/* don't need this anymore */
-	g_free(connect_data);
-
-	flags = g_io_channel_get_flags (connection->io_channel);
-
-	/* unset the nonblock flag */
-	flags &= ~G_IO_FLAG_NONBLOCK;
-	
-	/* unset the nonblocking stuff for some time, because GNUTLS doesn't 
-	 * like that */
-	g_io_channel_set_flags (connection->io_channel, flags, NULL);
+	g_free (connect_data);
 
 	if (connection->ssl) {
+		GError *error = NULL;
+
+		lm_verbose ("Setting up SSL...\n");
+	
+#ifdef HAVE_GNUTLS
+		/* GNU TLS requires the socket to be blocking */
+		_lm_sock_set_blocking (connection->fd, TRUE);
+#endif
+
 		if (!_lm_ssl_begin (connection->ssl, connection->fd,
 				    connection->server,
-				    NULL)) {
-			shutdown (connection->fd, SHUT_RDWR);
-			close (connection->fd);
-		
+				    &error)) {
+			lm_verbose ("Could not begin SSL\n");
+				    
+			if (error) {
+				g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET,
+				       "%s\n", error->message);
+				g_error_free (error);
+			}
+
+ 			_lm_sock_shutdown (connection->fd);
+ 			_lm_sock_close (connection->fd);
+
 			connection_do_close (connection);
-			return FALSE;
+
+			return;
 		}
+	
+#ifdef HAVE_GNUTLS
+		_lm_sock_set_blocking (connection->fd, FALSE); 
+#endif
 	}
-	
-	g_io_channel_set_close_on_unref (connection->io_channel, TRUE);
-	g_io_channel_set_encoding (connection->io_channel, NULL, NULL);
-	
-	g_io_channel_set_buffered (connection->io_channel, FALSE);
-	g_io_channel_set_flags (connection->io_channel,
-				flags & G_IO_FLAG_NONBLOCK, NULL);
-	
+
 	connection->io_watch_in = 
 		connection_add_watch (connection,
 				      connection->io_channel,
 				      G_IO_IN,
 				      (GIOFunc) connection_in_event,
 				      connection);
-	
-	connection->io_watch_err = 
-		connection_add_watch (connection,
-				      connection->io_channel, 
-				      G_IO_ERR,
-				      (GIOFunc) connection_error_event,
-						   connection);
-	connection->io_watch_hup = 
-		connection_add_watch (connection,
-				      connection->io_channel,
-				      G_IO_HUP,
-				      (GIOFunc) connection_hup_event,
-				      connection);
+
+	/* FIXME: if we add these, we don't get ANY
+	 * response from the server, this is to do with the way that
+	 * windows handles watches, see bug #331214.
+	 */
+#ifndef G_OS_WIN32
+		connection->io_watch_err =
+			connection_add_watch (connection,
+					      connection->io_channel,
+					      G_IO_ERR,
+					      (GIOFunc) connection_error_event,
+					      connection);
+		
+		connection->io_watch_hup =
+			connection_add_watch (connection,
+					      connection->io_channel,
+					      G_IO_HUP,
+					      (GIOFunc) connection_hup_event,
+					      connection);
+#endif
 
 	/* FIXME: Set up according to XMPP 1.0 specification */
 	/*        StartTLS and the like */
 	if (!connection_send (connection, 
 			      "<?xml version='1.0' encoding='UTF-8'?>", -1,
 			      NULL)) {
+		lm_verbose ("Failed to send xml version and encoding\n");
 		connection_do_close (connection);
-		return FALSE;
+
+		return;
 	}
 
 	if (connection->jid != NULL && (ch = strchr (connection->jid, '@')) != NULL) {
@@ -410,17 +421,13 @@ _lm_connection_succeeded (LmConnectData *connect_data)
 					NULL);
 	
 	lm_verbose ("Opening stream...");
-	
+
 	if (!lm_connection_send (connection, m, NULL)) {
-		lm_message_unref (m);
+		lm_verbose ("Failed to send stream information\n");
 		connection_do_close (connection);
-		return FALSE;
 	}
 		
 	lm_message_unref (m);
-
-	/* Success */
-	return FALSE;
 }
 
 void 
@@ -430,7 +437,7 @@ _lm_connection_failed_with_error (LmConnectData *connect_data, int error)
 	
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET,
 	       "Connection failed: %s (error %d)\n",
-	       strerror (error), error);
+	       _lm_sock_get_error_str (error), error);
 	
 	connection = connect_data->connection;
 	
@@ -444,6 +451,7 @@ _lm_connection_failed_with_error (LmConnectData *connect_data, int error)
 
 	if (connect_data->io_channel != NULL) {
 		g_io_channel_unref (connect_data->io_channel);
+		/* FIXME: need to check for last unref and close the socket */
 	}
 	
 	if (connect_data->current_addr == NULL) {
@@ -466,43 +474,106 @@ _lm_connection_failed_with_error (LmConnectData *connect_data, int error)
 void 
 _lm_connection_failed (LmConnectData *connect_data)
 {
-	_lm_connection_failed_with_error (connect_data,errno);
+	_lm_connection_failed_with_error (connect_data, 
+					  _lm_sock_get_last_error());
 }
 	
 static gboolean 
 connection_connect_cb (GIOChannel   *source, 
 		       GIOCondition  condition,
-		       gpointer      data) 
+		       LmConnectData *connect_data) 
 {
-	LmConnectData *connect_data;
-	int            error;
-	guint          len  = sizeof(error);
+	LmConnection    *connection;
+	struct addrinfo *addr;
+	int              err;
+	socklen_t        len;
+	LmSocket         fd; 
 
-	connect_data = (LmConnectData *) data;
+	connection = connect_data->connection;
+	addr = connect_data->current_addr;
+	fd = g_io_channel_unix_get_fd (source);
 	
 	if (condition == G_IO_ERR) {
-		/* get the real error from the socket */
-		getsockopt (connect_data->fd, SOL_SOCKET, SO_ERROR, 
-			    &error, &len);
-		_lm_connection_failed_with_error (connect_data, error);
-		return FALSE;
-	} else if (condition == G_IO_OUT) {
-		_lm_connection_succeeded (connect_data);
-	} else {
-		g_assert_not_reached ();
+		_lm_sock_get_error (fd, &err, &len);
+		if (!_lm_sock_is_blocking_error (err)) {
+			g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET,
+			       "Connection failed.\n");
+
+			_lm_connection_failed_with_error (connect_data, err);
+
+			connection->io_watch_connect = 0;
+			return FALSE;
+		}
 	}
 
-	return FALSE;
+	if (connection->async_connect_waiting) {
+		gint res;
+
+		fd = g_io_channel_unix_get_fd (source);
+
+		res = _lm_sock_connect (fd, addr->ai_addr, (int)addr->ai_addrlen);  
+		if (res < 0) {
+			err = _lm_sock_get_last_error ();
+			if (_lm_sock_is_blocking_success (err)) {
+				connection->async_connect_waiting = FALSE;
+
+				g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET,
+				       "Connection success.\n");
+				
+				_lm_connection_succeeded (connect_data);
+			}
+			
+			if (connection->async_connect_waiting && 
+			    !_lm_sock_is_blocking_error (err)) {
+				g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET,
+				       "Connection failed.\n");
+
+				_lm_sock_close (connect_data->fd);
+				_lm_connection_failed_with_error (connect_data, err);
+
+				connection->io_watch_connect = 0;
+				return FALSE;
+			}
+		} 
+	} else {		
+		/* for blocking sockets, G_IO_OUT means we are connected */
+		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET,
+		       "Connection success.\n");
+		
+		_lm_connection_succeeded (connect_data);
+	}
+
+ 	return TRUE; 
+}
+
+static const char *
+connection_condition_to_str (GIOCondition condition)
+{
+	static char buf[256];
+
+	buf[0] = '\0';
+
+	if(condition & G_IO_ERR)
+		strcat(buf, "G_IO_ERR ");
+	if(condition & G_IO_HUP)
+		strcat(buf, "G_IO_HUP ");
+	if(condition & G_IO_NVAL)
+		strcat(buf, "G_IO_NVAL ");
+	if(condition & G_IO_IN)
+		strcat(buf, "G_IO_IN ");
+	if(condition & G_IO_OUT)
+		strcat(buf, "G_IO_OUT ");
+
+	return buf;
 }
 
 static void
 connection_do_connect (LmConnectData *connect_data) 
 {
 	LmConnection    *connection;
-	int              fd;
-	int              res;
+	LmSocket         fd;
+	int              res, err;
 	int              port;
-	int              flags;
 	char             name[NI_MAXHOST];
 	char             portname[NI_MAXSERV];
 	struct addrinfo *addr;
@@ -518,37 +589,47 @@ connection_do_connect (LmConnectData *connect_data)
 	
 	((struct sockaddr_in *) addr->ai_addr)->sin_port = port;
 
-	getnameinfo (addr->ai_addr,
-		     addr->ai_addrlen,
-		     name,     sizeof (name),
-		     portname, sizeof (portname),
-		     NI_NUMERICHOST | NI_NUMERICSERV);
+	res = getnameinfo (addr->ai_addr,
+			   (socklen_t)addr->ai_addrlen,
+			   name,     sizeof (name),
+			   portname, sizeof (portname),
+			   NI_NUMERICHOST | NI_NUMERICSERV);
+	
+	if (res < 0) {
+		_lm_connection_failed (connect_data);
+		return;
+	}
 
-	g_log (LM_LOG_DOMAIN,LM_LOG_LEVEL_NET,
+	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET,
 	       "Trying %s port %s...\n", name, portname);
 	
-	fd = socket (addr->ai_family, 
-		     addr->ai_socktype, 
-		     addr->ai_protocol);
+	fd = _lm_sock_makesocket (addr->ai_family,
+				  addr->ai_socktype, 
+				  addr->ai_protocol);
 	
-	if (fd < 0) {
+	if (!_LM_SOCK_VALID (fd)) {
+		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
+		       "Failed making socket, error:%d...\n",
+		       _lm_sock_get_last_error ());
+
 		_lm_connection_failed (connect_data);
+
 		return;
 	}
 
-	flags = fcntl (fd, F_GETFL, 0);
-	fcntl (fd, F_SETFL, flags | O_NONBLOCK);
-	
-	res = connect (fd, addr->ai_addr, addr->ai_addrlen);
+	/* Even though it says _unix_new(), it is supported by glib on
+	 * win32 because glib does some cool stuff to find out if it
+	 * can treat it as a FD or a windows SOCKET.
+	 */
 	connect_data->fd = fd;
-	
-	if (res < 0 && errno != EINPROGRESS) {
-		close (fd);
-		_lm_connection_failed (connect_data);
-		return;
-	}
-	
 	connect_data->io_channel = g_io_channel_unix_new (fd);
+	
+	g_io_channel_set_encoding (connect_data->io_channel, NULL, NULL);
+	g_io_channel_set_buffered (connect_data->io_channel, FALSE);
+
+	_lm_sock_set_blocking (connect_data->fd, 
+			       connection->blocking);
+	
 	if (connection->proxy) {
 		connection->io_watch_connect =
 		connection_add_watch (connection,
@@ -565,7 +646,19 @@ connection_do_connect (LmConnectData *connect_data)
 				      connect_data);
 	}
 
-	return;
+	connection->async_connect_waiting = !connection->blocking;
+
+  	res = _lm_sock_connect (connect_data->fd, 
+				addr->ai_addr, (int)addr->ai_addrlen);  
+	if (res < 0) {
+		err = _lm_sock_get_last_error ();
+		if (!_lm_sock_is_blocking_error (err)) {
+			_lm_sock_close (connect_data->fd);
+			_lm_connection_failed_with_error (connect_data, err);
+
+			return;
+		}
+	}
 }
 
 static guint
@@ -595,7 +688,7 @@ static gboolean
 connection_send_keep_alive (LmConnection *connection)
 { 
 	if (!connection_send (connection, " ", -1, NULL)) {
-		lm_verbose ("Error while sending keep alive package");
+		lm_verbose ("Error while sending keep alive package!\n");
 	}
 
 	return TRUE;
@@ -653,9 +746,13 @@ connection_buffered_write_cb (GIOChannel   *source,
 	g_string_erase (out_buf, 0, (gsize) b_written);
 	if (out_buf->len == 0) {
 		lm_verbose ("Output buffer is empty, going back to normal output\n");
-		g_source_destroy (g_main_context_find_source_by_id (
-			connection->context, connection->io_watch_out));
-		connection->io_watch_out = 0;
+
+		if (connection->io_watch_out != 0) {
+			g_source_destroy (g_main_context_find_source_by_id (
+						  connection->context, connection->io_watch_out));
+			connection->io_watch_out = 0;
+		}
+
 		g_string_free (out_buf, TRUE);
 		connection->out_buf = NULL;
 		return FALSE;
@@ -707,7 +804,7 @@ connection_do_open (LmConnection *connection, GError **error)
 	if (lm_connection_is_open (connection)) {
 		g_set_error (error,
 			     LM_ERROR,
-			     LM_ERROR_CONNECTION_OPEN,
+			     LM_ERROR_CONNECTION_NOT_OPEN,
 			     "Connection is already open, call lm_connection_close() first");
 		return FALSE;
 	}
@@ -735,33 +832,47 @@ connection_do_open (LmConnection *connection, GError **error)
 	
 	connection->cancel_open = FALSE;
 	connection->state = LM_CONNECTION_STATE_OPENING;
+	connection->async_connect_waiting = FALSE;
 	
 	if (connection->proxy) {
+		int          err;
 		const gchar *proxy_server;
 
 		proxy_server = lm_proxy_get_server (connection->proxy);
-		/* connect through proxy */
-		g_log (LM_LOG_DOMAIN,LM_LOG_LEVEL_NET,
-		       "Going to connect to %s\n", proxy_server);
 
-		if (getaddrinfo (proxy_server, NULL, &req, &ans) != 0) {
+		/* Connect through proxy */
+		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET,
+		       "Going to connect to proxy %s\n", proxy_server);
+
+		err = getaddrinfo (proxy_server, NULL, &req, &ans);
+		if (err != 0) {
+			const char *str;
+
+			str = _lm_sock_addrinfo_get_error_str (err);
 			g_set_error (error,
 				     LM_ERROR,                 
 				     LM_ERROR_CONNECTION_FAILED,   
-				     "getaddrinfo() failed");
+				     str);
 			return FALSE;
 		}
-	} else { /* connect directly */
-		g_log (LM_LOG_DOMAIN,LM_LOG_LEVEL_NET,
+	} else { 
+		int err;
+
+		/* Connect directly */
+		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET,
 		       "Going to connect to %s\n", 
 		       connection->server);
 
-		if (getaddrinfo (connection->server,
-				 NULL, &req, &ans) != 0) {
+		err = getaddrinfo (connection->server, 
+				   NULL, &req, &ans);
+		if (err != 0) {
+			const char *str;
+
+			str = _lm_sock_addrinfo_get_error_str (err);
 			g_set_error (error,
 				     LM_ERROR,                 
 				     LM_ERROR_CONNECTION_FAILED,   
-				     "getaddrinfo() failed");
+				     str);
 			return FALSE;
 		}
 	}
@@ -789,12 +900,23 @@ connection_do_close (LmConnection *connection)
 	connection_stop_keep_alive (connection);
 
 	if (connection->io_channel) {
-		g_source_destroy (g_main_context_find_source_by_id (
-			connection->context, connection->io_watch_in));
-		g_source_destroy (g_main_context_find_source_by_id (
-			connection->context, connection->io_watch_err));
-		g_source_destroy (g_main_context_find_source_by_id (
-			connection->context, connection->io_watch_hup));
+		if (connection->io_watch_in != 0) {
+			g_source_destroy (g_main_context_find_source_by_id (
+						  connection->context, connection->io_watch_in));
+			connection->io_watch_in = 0;
+		}
+
+		if (connection->io_watch_err != 0) {
+			g_source_destroy (g_main_context_find_source_by_id (
+						  connection->context, connection->io_watch_err));
+			connection->io_watch_err = 0;
+		}
+
+		if (connection->io_watch_hup != 0) {
+			g_source_destroy (g_main_context_find_source_by_id (
+						  connection->context, connection->io_watch_hup));
+			connection->io_watch_hup = 0;
+		}
 
 		if (connection->io_watch_out != 0) {
 			g_source_destroy (g_main_context_find_source_by_id (
@@ -820,10 +942,12 @@ connection_do_close (LmConnection *connection)
 	if (!lm_connection_is_open (connection)) {
 		/* lm_connection_is_open is FALSE for state OPENING as well */
 		connection->state = LM_CONNECTION_STATE_CLOSED;
+		connection->async_connect_waiting = FALSE;
 		return;
 	}
 	
 	connection->state = LM_CONNECTION_STATE_CLOSED;
+	connection->async_connect_waiting = FALSE;
 	if (connection->ssl) {
 		_lm_ssl_close (connection->ssl);
 	}
@@ -911,7 +1035,7 @@ connection_in_event (GIOChannel   *source,
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
 	       "-----------------------------------\n");
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "'%s'\n", buf);
-	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
+ 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
 	       "-----------------------------------\n");
 
 	lm_verbose ("Read: %d chars\n", (int)bytes_read);
@@ -926,12 +1050,13 @@ connection_error_event (GIOChannel   *source,
 			GIOCondition  condition,
 			LmConnection *connection)
 {
+	lm_verbose ("Error event: %d->'%s'\n", 
+		    condition, connection_condition_to_str (condition));
+
 	if (!connection->io_channel) {
 		return FALSE;
 	}
 
-	lm_verbose ("Error event: %d\n", condition);
-	
 	connection_do_close (connection);
 	connection_signal_disconnect (connection, LM_DISCONNECT_REASON_ERROR);
 	
@@ -943,11 +1068,12 @@ connection_hup_event (GIOChannel   *source,
 		      GIOCondition  condition,
 		      LmConnection *connection)
 {
+	lm_verbose ("HUP event: %d->'%s'\n", 
+		    condition, connection_condition_to_str (condition));
+
 	if (!connection->io_channel) {
 		return FALSE;
 	}
-
-	lm_verbose ("HUP event\n");
 
 	connection_do_close (connection);
 	connection_signal_disconnect (connection, LM_DISCONNECT_REASON_HUP);
@@ -964,6 +1090,9 @@ connection_send (LmConnection  *connection,
 	gint b_written;
 	
 	if (connection->state < LM_CONNECTION_STATE_OPENING) {
+		g_log (LM_LOG_DOMAIN,LM_LOG_LEVEL_NET,
+		       "Connection is not open.\n");
+
 		g_set_error (error,
 			     LM_ERROR,
 			     LM_ERROR_CONNECTION_NOT_OPEN,
@@ -1297,7 +1426,8 @@ lm_connection_new (const gchar *server)
 	gint          i;
 	
 	lm_debug_init ();
-	
+	_lm_sock_library_init ();
+
 	connection = g_new0 (LmConnection, 1);
 
 	if (server) {
@@ -1383,6 +1513,7 @@ lm_connection_open (LmConnection      *connection,
 	
 	connection->open_cb = _lm_utils_new_callback (function, 
 						      user_data, notify);
+	connection->blocking = FALSE;
 
 	return connection_do_open (connection, error);
 }
@@ -1405,17 +1536,20 @@ lm_connection_open_and_block (LmConnection *connection, GError **error)
 	g_return_val_if_fail (connection != NULL, FALSE);
 
 	connection->open_cb = NULL;
+	connection->blocking = TRUE;
+
 	result = connection_do_open (connection, error);
 
 	if (result == FALSE) {
 		return FALSE;
 	}
-	
+		
 	while ((state = lm_connection_get_state (connection)) == LM_CONNECTION_STATE_OPENING) {
 		if (g_main_context_pending (connection->context)) {
 			g_main_context_iteration (connection->context, TRUE);
 		} else {
-			usleep (10);
+			/* Sleep for 1 millisecond */
+			g_usleep (1000);
 		}
 	}
 
@@ -2008,7 +2142,7 @@ lm_connection_send_with_reply_and_block (LmConnection  *connection,
 
 	while (!reply) {
 		const gchar *m_id;
-		gint         n;
+		guint        n;
 
 		g_main_context_iteration (connection->context, TRUE);
 	

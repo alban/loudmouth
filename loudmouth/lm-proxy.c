@@ -23,12 +23,17 @@
 
 #include <glib.h>
 #include <string.h>
+
+#ifndef G_OS_WIN32
+
 #include <unistd.h>
-#ifndef __WIN32__
-  #include <sys/socket.h>
-#else 
-  #include <winsock2.h>
-#endif
+#include <sys/socket.h>
+
+#else  /* G_OS_WIN32 */
+
+#include <winsock2.h>
+
+#endif /* G_OS_WIN32 */
 
 #include "lm-internals.h"
 #include "lm-proxy.h"
@@ -187,7 +192,7 @@ _lm_proxy_connect_cb (GIOChannel *source, GIOCondition condition, gpointer data)
 	LmConnectData *connect_data;
 	LmProxy       *proxy;
 	int            error;
-	guint          len = sizeof(error);
+	socklen_t      len;
 
 	connect_data = (LmConnectData *) data;
 	connection = connect_data->connection;
@@ -196,8 +201,7 @@ _lm_proxy_connect_cb (GIOChannel *source, GIOCondition condition, gpointer data)
 	g_return_val_if_fail (proxy != NULL, FALSE);
 
 	if (condition == G_IO_ERR) {
-		getsockopt (connect_data->fd, SOL_SOCKET, SO_ERROR,
-		            &error, &len);
+		_lm_sock_get_error (connect_data->fd, &error, &len);
 		_lm_connection_failed_with_error (connect_data, error);
 		return FALSE;
 	} else if (condition == G_IO_OUT) {

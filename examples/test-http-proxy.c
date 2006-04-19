@@ -24,7 +24,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <loudmouth/loudmouth.h>
-#ifdef __WIN32__
+#ifdef G_OS_WIN32
 #include <winsock2.h>
 #endif
  

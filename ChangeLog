@@ -1,3 +1,22 @@
+2006-04-19  Mikael Hallendal  <micke@imendio.com>
+
+	* Landing a patch by Martyn Russell for Win32.
+
+	* configure.ac: Updated for Win32 work
+	* examples/*: Updated and improved.
+	* loudmouth/Makefile.am:
+	* loudmouth/lm-connection.c:
+	- Abstracted out the low level socket handling to lm-sock.[ch] to make
+	  this file clean from OS dependant socket code.
+	* loudmouth/lm-internals.h:
+	* loudmouth/lm-parser.c:
+	* loudmouth/lm-proxy.c:
+	* loudmouth/lm-sha.c: 
+	* loudmouth/lm-utils.c:
+	- Win32 work
+	* loudmouth/lm-sock.[ch]: 
+	- Network abstraction layer.
+
 2006-04-18  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-ssl-openssl.c: (_lm_ssl_begin):

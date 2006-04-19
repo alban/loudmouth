@@ -24,6 +24,9 @@ lm_connection_set_proxy (connection, proxy);
 
 </para>
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### STRUCT LmProxy ##### -->
 <para>
 This should not be accessed directly. Use the accessor functions as described below.

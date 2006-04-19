@@ -14,6 +14,9 @@ A handler for incoming messages.
 
 </para>
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### USER_FUNCTION LmHandleMessageFunction ##### -->
 <para>
 The actual callback function in an #LmMessageHandler. This function is called when an incoming message arrives that haven't been handled by an handler with higher priority.

@@ -1,7 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- * Copyright (C) 2003 Imendio AB
- * Copyright (C) 2003 Mikael Hallendal <micke@imendio.com>
+ * Copyright (C) 2003-2006 Imendio AB
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License as
@@ -21,74 +20,90 @@
 
 #include <config.h>
 
-#include <glib.h>
 #include <string.h>
 #include <stdlib.h>
+
+#include <glib.h>
 #include <loudmouth/loudmouth.h>
-#ifdef __WIN32__
-#include <winsock2.h>
-#endif
 
-typedef struct {
-	gchar *name;
-	gchar *passwd;
-} UserInfo;
+static GMainLoop *main_loop = NULL;
+static gboolean   test_success = FALSE;
 
-static void 
-free_user_info (UserInfo *info)
+static gchar      expected_fingerprint[20];
+
+static gchar     *server = NULL;
+static gint       port = 5222;
+static gchar     *username = NULL;
+static gchar     *password = NULL;
+static gchar     *resource = "test-lm";
+static gchar     *fingerprint = NULL;
+
+static GOptionEntry entries[] = 
 {
-	g_free (info->name);
-	g_free (info->passwd);
-
-	g_free (info);
-}
-
-static char expected_fingerprint[20];
+  { "server", 's', 0, G_OPTION_ARG_STRING, &server, 
+    "Server to connect to", NULL },
+  { "port", 'P', 0, G_OPTION_ARG_INT, &port, 
+    "Port to connect to [default=5222]", NULL },
+  { "username", 'u', 0, G_OPTION_ARG_STRING, &username, 
+    "Username to connect with (e.g. 'user' in user@server.org)", NULL },
+  { "password", 'p', 0, G_OPTION_ARG_STRING, &password, 
+    "Password to try", NULL },
+  { "resource", 'r', 0, G_OPTION_ARG_STRING, &resource, 
+    "Resource connect with [default=test-lm]", NULL },
+  { "fingerprint", 'f', 0, G_OPTION_ARG_STRING, &fingerprint, 
+    "SSL Fingerprint to use", NULL },
+  { NULL }
+};
 
 static void
-print_finger (const char *fpr, unsigned int size)
+print_finger (const char   *fpr,
+	      unsigned int  size)
 {
 	gint i;
-	
 	for (i = 0; i < size-1; i++) {
-		g_print ("%02X:", fpr[i]);
+		g_printerr ("%02X:", fpr[i]);
 	}
 	
-	g_print ("%02X", fpr[size-1]);
+	g_printerr ("%02X", fpr[size-1]);
 }
 
 static LmSSLResponse
-ssl_cb (LmSSL *ssl, LmSSLStatus status, gpointer ud)
+ssl_cb (LmSSL       *ssl, 
+	LmSSLStatus  status, 
+	gpointer     ud)
 {
-	g_print ("SSL status: %d\n", status);
+	g_print ("TestLM: SSL status:%d\n", status);
+
 	switch (status) {
 	case LM_SSL_STATUS_NO_CERT_FOUND:
-		g_print ("No certificate found!\n");
+		g_printerr ("TestLM: No certificate found!\n");
 		break;
 	case LM_SSL_STATUS_UNTRUSTED_CERT:
-		g_print ("Certificate is not trusted!\n"); 
+		g_printerr ("TestLM: Certificate is not trusted!\n"); 
 		break;
 	case LM_SSL_STATUS_CERT_EXPIRED:
-		g_print ("Certificate has expired!\n"); 
+		g_printerr ("TestLM: Certificate has expired!\n"); 
 		break;
 	case LM_SSL_STATUS_CERT_NOT_ACTIVATED:
-		g_print ("Certificate has not been activated!\n"); 
+		g_printerr ("TestLM: Certificate has not been activated!\n"); 
 		break;
 	case LM_SSL_STATUS_CERT_HOSTNAME_MISMATCH:
-		g_print ("Certificate hostname does not match expected hostname!\n"); 
+		g_printerr ("TestLM: Certificate hostname does not match expected hostname!\n"); 
 		break;
 	case LM_SSL_STATUS_CERT_FINGERPRINT_MISMATCH: {
 		const char *fpr = lm_ssl_get_fingerprint (ssl);
-		g_print ("Certificate fingerprint does not match expected fingerprint!\n"); 
-		g_print ("Remote fingerprint: ");
+		g_printerr ("TestLM: Certificate fingerprint does not match expected fingerprint!\n"); 
+		g_printerr ("TestLM: Remote fingerprint: ");
 		print_finger (fpr, 16);
-		g_print ("\nExpected fingerprint: ");
+
+		g_printerr ("\n"
+			    "TestLM: Expected fingerprint: ");
 		print_finger (expected_fingerprint, 16);
-		g_print ("\n");
+		g_printerr ("\n");
 		break;
 	}
 	case LM_SSL_STATUS_GENERIC_ERROR:
-		g_print ("Generic SSL error!\n"); 
+		g_printerr ("TestLM: Generic SSL error!\n"); 
 		break;
 	}
 
@@ -96,31 +111,75 @@ ssl_cb (LmSSL *ssl, LmSSLStatus status, gpointer ud)
 }
 
 static void
-authentication_cb (LmConnection *connection, gboolean result, gpointer ud)
+connection_auth_cb (LmConnection *connection,
+		    gboolean      success, 
+		    gpointer      user_data)
 {
-	g_print ("Auth: %d\n", result);
-
-	if (result == TRUE) {
+	if (success) {
 		LmMessage *m;
 		
+		test_success = TRUE;
+		g_print ("TestLM: Authenticated successfully\n");
+
 		m = lm_message_new_with_sub_type (NULL,
 						  LM_MESSAGE_TYPE_PRESENCE,
 						  LM_MESSAGE_SUB_TYPE_AVAILABLE);
-		g_print (":: %s\n", lm_message_node_to_string (m->node));
-		
 		lm_connection_send (connection, m, NULL);
+		g_print ("TestLM: Sent presence message:'%s'\n", 
+			 lm_message_node_to_string (m->node));
+
 		lm_message_unref (m);
+	} else {
+		g_printerr ("TestLM: Failed to authenticate\n");
+		g_main_loop_quit (main_loop);
 	}
 }
 
 static void
-connection_open_cb (LmConnection *connection, gboolean result, UserInfo *info)
+connection_open_cb (LmConnection *connection, 
+		    gboolean      success,
+		    gpointer      user_data)
 {
-	g_print ("Connected callback\n");
-	lm_connection_authenticate (connection,
-				    info->name, info->passwd, "TestLM",
-				    authentication_cb, NULL,FALSE,  NULL);
-	g_print ("Sent auth message\n");
+	if (success) {
+		lm_connection_authenticate (connection, username, 
+					    password, resource,
+					    connection_auth_cb, 
+					    NULL, FALSE,  NULL);
+		
+		g_print ("TestLM: Sent authentication message\n");
+	} else {
+		g_printerr ("TestLM: Failed to connect\n");
+		g_main_loop_quit (main_loop);
+	}
+}
+
+static void
+connection_close_cb (LmConnection       *connection, 
+		     LmDisconnectReason  reason,
+		     gpointer            user_data)
+{
+	const char *str;
+	
+	switch (reason) {
+	case LM_DISCONNECT_REASON_OK:
+		str = "LM_DISCONNECT_REASON_OK";
+		break;
+	case LM_DISCONNECT_REASON_PING_TIME_OUT:
+		str = "LM_DISCONNECT_REASON_PING_TIME_OUT";
+		break;
+	case LM_DISCONNECT_REASON_HUP:
+		str = "LM_DISCONNECT_REASON_HUP";
+		break;
+	case LM_DISCONNECT_REASON_ERROR:
+		str = "LM_DISCONNECT_REASON_ERROR";
+		break;
+	case LM_DISCONNECT_REASON_UNKNOWN:
+	default:
+		str = "LM_DISCONNECT_REASON_UNKNOWN";
+		break;
+	}
+
+	g_print ("TestLM: Disconnected, reason:%d->'%s'\n", reason, str);
 }
 
 static LmHandlerResult
@@ -129,7 +188,7 @@ handle_messages (LmMessageHandler *handler,
 		 LmMessage        *m,
 		 gpointer          user_data)
 {
-	g_print ("Incoming message from: %s\n",
+	g_print ("TestLM: Incoming message from: %s\n",
 		 lm_message_node_get_attribute (m->node, "from"));
 
 	return LM_HANDLER_RESULT_REMOVE_MESSAGE;
@@ -138,56 +197,29 @@ handle_messages (LmMessageHandler *handler,
 int 
 main (int argc, char **argv)
 {
-	GMainLoop        *main_loop;
+	GOptionContext   *context;
 	LmConnection     *connection;
 	LmMessageHandler *handler;
 	gboolean          result;
-	UserInfo         *info;
-#ifdef __WIN32__
-	WORD wVersionRequested;
-	WSADATA wsaData;
-	int err;
-#endif
+	GError           *error = NULL;
 	
-	if (argc < 4) {
-		g_print ("Usage: test-lm <server> <username> <password>\n"
-			 "       test-lm <server> <username> <password> <fingerprint>\n");
-		return 1;
+	context = g_option_context_new ("- test Loudmouth");
+	g_option_context_add_main_entries (context, entries, NULL);
+	g_option_context_parse (context, &argc, &argv, NULL);
+	g_option_context_free (context);
+	
+	if (!server || !username || !password) {
+		g_printerr ("For usage, try %s --help\n", argv[0]);
+		return EXIT_FAILURE;
 	}
 
-/* Needed to build on Win32. */
-#ifdef __WIN32__
-	wVersionRequested = MAKEWORD( 2, 2 );
-
-	err = WSAStartup( wVersionRequested, &wsaData );
-	if ( err != 0 ) {
-		/* Tell the user that we could not find a usable */
-		/* WinSock DLL.                                  */
-		return;
+	if (fingerprint && !lm_ssl_is_supported ()) {
+		g_printerr ("TestLM: SSL is not supported in this build\n");
+		return EXIT_FAILURE;
 	}
 
-	/* Confirm that the WinSock DLL supports 2.2.*/
-	/* Note that if the DLL supports versions greater    */
-	/* than 2.2 in addition to 2.2, it will still return */
-	/* 2.2 in wVersion since that is the version we      */
-	/* requested.                                        */
-
-	if ( LOBYTE( wsaData.wVersion ) != 2 ||
-			HIBYTE( wsaData.wVersion ) != 2 ) {
-		/* Tell the user that we could not find a usable */
-		/* WinSock DLL.                                  */
-		WSACleanup( );
-		return;
-	}
-#endif
-
-        connection = lm_connection_new (argv[1]);
-
-	if (argc > 4 && !lm_ssl_is_supported ()) {
-		g_error ("No SSL support!");
-		exit (1);
-	}
-
+        connection = lm_connection_new (server);
+	lm_connection_set_port (connection, port);
 
 	handler = lm_message_handler_new (handle_messages, NULL, NULL);
 	lm_connection_register_message_handler (connection, handler, 
@@ -196,43 +228,45 @@ main (int argc, char **argv)
 	
 	lm_message_handler_unref (handler);
 	
-	info = g_new0 (UserInfo, 1);
-	info->name = g_strdup (argv[2]);
-	info->passwd = g_strdup (argv[3]);
-	
-	if (argc > 4) {
-		int    i;
-		char  *p;
+	lm_connection_set_disconnect_function (connection,
+					       connection_close_cb,
+					       NULL, NULL);
+
+	if (fingerprint) {
 		LmSSL *ssl;
+		char  *p;
+		int    i;
 		
-		lm_connection_set_port (connection,
-					LM_CONNECTION_DEFAULT_PORT_SSL);
-		
-		for (i = 0, p = argv[4]; *p && *(p+1); i++, p += 3)
+		if (port == LM_CONNECTION_DEFAULT_PORT) {
+			lm_connection_set_port (connection,
+						LM_CONNECTION_DEFAULT_PORT_SSL);
+		}
+
+		for (i = 0, p = fingerprint; *p && *(p+1); i++, p += 3) {
 			expected_fingerprint[i] = (unsigned char) g_ascii_strtoull (p, NULL, 16);
-		
+		}
+	
 		ssl = lm_ssl_new (expected_fingerprint,
 				  (LmSSLFunction) ssl_cb,
-				  info, 
-				  (GDestroyNotify) free_user_info);
-		
+				  NULL, NULL);
+	
 		lm_connection_set_ssl (connection, ssl);
-
 		lm_ssl_unref (ssl);
 	}
 
 	result = lm_connection_open (connection,
 				     (LmResultFunction) connection_open_cb,
-				     info, NULL, NULL);
+				     NULL, NULL, &error);
 
 	if (!result) {
-		g_print ("Opening connection failed: %d\n", result);
-	} else {
-		g_print ("Returned from the connection_open\n");
+		g_printerr ("TestLM: Opening connection failed, error:%d->'%s'\n", 
+			 error->code, error->message);
+		g_free (error);
+		return EXIT_FAILURE;
 	}
 	
 	main_loop = g_main_loop_new (NULL, FALSE);
 	g_main_loop_run (main_loop);
 
-	return 0;
+	return (test_success ? EXIT_SUCCESS : EXIT_FAILURE);
 }

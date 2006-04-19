@@ -6,10 +6,13 @@ config.h*
 config.log
 config.status
 config.cache
+config.guess
+config.sub
 configure
 libtool
 *.tar.gz
 loudmouth.spec
+ltmain.sh
 stamp-h*
 loudmouth-1.0.pc
 *.swp
