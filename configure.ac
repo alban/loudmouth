@@ -81,48 +81,6 @@ IDT_PATH_CHECK(0.9.2, have_check=yes, have_check=no)
 
 AM_CONDITIONAL(HAVE_CHECK, test x$have_check = xyes)
 
-dnl +--------------------+
-dnl | Check for gtk-doc. |-------------------------------
-dnl +--------------------+
-
-AC_ARG_WITH(html-dir, 
-            AS_HELP_STRING([--with-html-dir=PATH],
-			   [path to installed docs]))
-
-if test "x$with_html_dir" = "x" ; then
-  HTML_DIR='${datadir}/gtk-doc/html'
-else
-  HTML_DIR=$with_html_dir
-fi
-
-AC_SUBST(HTML_DIR)
-
-AC_CHECK_PROG(GTKDOC, gtkdoc-mkdb, true, false)
-
-gtk_doc_min_version=1.0
-AC_MSG_CHECKING([gtk-doc version >= $gtk_doc_min_version])
-if pkg-config --atleast-version=$gtk_doc_min_version gtk-doc; then
-  AC_MSG_RESULT(yes)
-  GTKDOC=true
-else
-  AC_MSG_RESULT(no)
-  GTKDOC=false
-fi
-
-dnl Let people disable the gtk-doc stuff.
-AC_ARG_ENABLE(gtk-doc,
-              AS_HELP_STRING([--enable-gtk-doc=@<:@no/yes/auto@:>@],
-                             [Use gtk-doc to build documentation [[default=auto]]]), ,
-              enable_gtk_doc=auto)
-
-if test x$enable_gtk_doc = xauto ; then
-  if test x$GTKDOC = xtrue ; then
-    enable_gtk_doc=yes
-  else
-    enable_gtk_doc=no
-  fi
-fi
-
 dnl Gtk doc
 GTK_DOC_CHECK(1.0)
 

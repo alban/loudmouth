@@ -10,3 +10,6 @@ EXTRA_DIST =			\
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = loudmouth-1.0.pc
 
+DISTCHECK_CONFIGURE_FLAGS =     \
+	--enable-gtk-doc
+

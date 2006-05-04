@@ -1,8 +1,15 @@
 2006-04-19  Mikael Hallendal  <micke@imendio.com>
 
+	* Release 1.1.1
+
+	* Makefile.am: Added DISTCHECK_CONFIGURE_FLAGS
+	* configure.ac: Removed old gtk-doc cruft, only use GTK_DOC_CHECK now.
+	* loudmouth/Makefile.am: Added EXTRA_DIST.
+
+2006-04-19  Mikael Hallendal  <micke@imendio.com>
+
 	* configure.ac:
 	- Move back to use the GTK_DOC_CHECK() macro.
-	
 	* docs/reference/Makefile.am:
 	- Updated to newer format from gtk-doc (old one failed distcheck with
 	  new auto*).
