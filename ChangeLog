@@ -1,3 +1,9 @@
+2006-05-27  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-ssl-gnutls.c: (ssl_verify_certificate):
+	- Fixed an error with an uninitialized value.
+	- Fixes LM-35.
+
 2006-05-26  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-connection.c: (connection_free),
