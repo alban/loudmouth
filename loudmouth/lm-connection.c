@@ -82,9 +82,9 @@ struct _LmConnection {
 	LmCallback   *open_cb;
 
 	gboolean      cancel_open;
-	LmCallback   *close_cb;
+	LmCallback   *close_cb;     /* unused */
 	LmCallback   *auth_cb;
-	LmCallback   *register_cb;
+	LmCallback   *register_cb;  /* unused */
 
 	LmCallback   *disconnect_cb;
 
@@ -224,6 +224,16 @@ connection_free (LmConnection *connection)
 		connection_do_close (connection);
 	}
 
+	if (connection->open_cb) {
+		_lm_utils_free_callback (connection->open_cb);
+	}
+	
+	if (connection->auth_cb) {
+		_lm_utils_free_callback (connection->auth_cb);
+	}
+
+	lm_connection_set_disconnect_function (connection, NULL, NULL, NULL);
+
 	while ((m = g_queue_pop_head (connection->incoming_messages)) != NULL) {
 		lm_message_unref (m);
 	}
@@ -253,9 +263,11 @@ connection_handle_message (LmConnection *connection, LmMessage *m)
 	const gchar      *id;
 	LmHandlerResult   result = LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 
+	lm_connection_ref (connection);
+
 	if (lm_message_get_type (m) == LM_MESSAGE_TYPE_STREAM) {
 		connection_stream_received (connection, m);
-		return;
+		goto out;
 	}
 	
 	id = lm_message_node_get_attribute (m->node, "id");
@@ -271,7 +283,7 @@ connection_handle_message (LmConnection *connection, LmMessage *m)
 	}
 	
 	if (result == LM_HANDLER_RESULT_REMOVE_MESSAGE) {
-		return;
+		goto out;
 	}
 
 	for (l = connection->handlers[lm_message_get_type (m)]; 
@@ -283,6 +295,9 @@ connection_handle_message (LmConnection *connection, LmMessage *m)
 							     connection,
 							     m);
 	}
+
+out:
+	lm_connection_unref (connection);
 	
 	return;
 }
@@ -447,11 +462,15 @@ _lm_connection_failed_with_error (LmConnectData *connect_data, int error)
 	
 	if (connect_data->current_addr == NULL) {
 		connection_do_close (connection);
-		if (connection->open_cb && connection->open_cb->func) {
-			LmCallback *cb = connection->open_cb;
+		if (connection->open_cb) {
+			LmCallback *cb;
+
+			cb = connection->open_cb;
+			connection->open_cb = NULL;
 			
 			(* ((LmResultFunction) cb->func)) (connection, FALSE,
 							   cb->user_data);
+			_lm_utils_free_callback (cb);
 		}
 		
 		freeaddrinfo (connect_data->resolved_addrs);
@@ -467,7 +486,7 @@ _lm_connection_failed (LmConnectData *connect_data)
 {
 	_lm_connection_failed_with_error (connect_data,errno);
 }
-	
+
 static gboolean 
 connection_connect_cb (GIOChannel   *source, 
 		       GIOCondition  condition,
@@ -1169,15 +1188,19 @@ connection_auth_reply (LmMessageHandler *handler,
 	
 	lm_verbose ("AUTH reply: %d\n", result);
 	
-	if (connection->auth_cb && connection->auth_cb->func) {
-		LmCallback *cb = connection->auth_cb;
+	if (connection->auth_cb) {
+	        LmCallback *cb;
 
-		(* ((LmResultFunction) cb->func)) (connection, 
-						   result, cb->user_data);
+		cb = connection->auth_cb;
+		connection->auth_cb = NULL;
+
+		if (cb->func) {
+	    		(* ((LmResultFunction) cb->func)) (connection, 
+						           result, cb->user_data);
+		}
+
+		_lm_utils_free_callback (cb);
 	}
-	
-	_lm_utils_free_callback (connection->auth_cb);
-	connection->auth_cb = NULL;
 	
 	return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
@@ -1203,15 +1226,19 @@ connection_stream_received (LmConnection *connection, LmMessage *m)
 
 	connection_start_keep_alive (connection);
 
-	if (connection->open_cb && connection->open_cb->func) {
-		LmCallback *cb = connection->open_cb;
+	if (connection->open_cb) {
+		LmCallback *cb;
+
+		cb = connection->open_cb;
+		connection->open_cb = NULL;
 		
-		(* ((LmResultFunction) cb->func)) (connection, result,
-						   cb->user_data);
+		if (cb->func) {
+		        (* ((LmResultFunction) cb->func)) (connection, result,
+			        			   cb->user_data);
+		}
+
+		_lm_utils_free_callback (connection->open_cb);
 	}
-	
-	_lm_utils_free_callback (connection->open_cb);
-	connection->open_cb = NULL;
 }
 
 static gint
@@ -2129,9 +2156,13 @@ lm_connection_set_disconnect_function (LmConnection         *connection,
 		_lm_utils_free_callback (connection->disconnect_cb);
 	}
 		
-	connection->disconnect_cb = _lm_utils_new_callback (function, 
-							    user_data,
-							    notify);
+	if (function) {
+		connection->disconnect_cb = _lm_utils_new_callback (function, 
+	    					                    user_data,
+							            notify);
+	} else {
+		connection->disconnect_cb = NULL;
+	}
 }
 
 /**

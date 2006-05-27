@@ -1,3 +1,12 @@
+2006-05-26  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-connection.c: (connection_free),
+	(connection_handle_message), (_lm_connection_failed_with_error),
+	(connection_auth_reply), (connection_stream_received),
+	(lm_connection_set_disconnect_function):
+	- Patch from Owen Taylor fixes two reentrancy problems.
+	- Fixes LM-37.
+
 2006-04-05  Mikael Hallendal  <micke@imendio.com>
 
 	* Speed release of 1.0.3
