@@ -128,6 +128,7 @@ ssl_verify_certificate (LmSSL *ssl, const gchar *server)
 
 		gnutls_x509_crt_deinit (cert);
 
+		digest_size = sizeof (ssl->fingerprint);
 		if (gnutls_fingerprint (GNUTLS_DIG_MD5, &cert_list[0],
 					     ssl->fingerprint,
 					     &digest_size) >= 0) {
