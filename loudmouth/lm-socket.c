@@ -42,24 +42,24 @@ sock_free (LmSock *sock)
 
 
 LmSock *   lm_sock_new               (LmSockFuncs  funcs,
- 									  const gchar *host,
-									  guint        port);
+				      const gchar *host,
+				      guint        port);
 void       lm_sock_open              (LmSock      *sock);									
 
 int        lm_sock_get_fd            (LmSock   *sock);
 gboolean   lm_sock_get_is_blocking   (LmSock   *sock);
 void       lm_sock_set_is_blocking   (LmSock   *sock,
-								      gboolean  is_block);
+				      gboolean  is_block);
 int        lm_sock_write             (LmSock   *sock,
-						              gsize     size,
-						 		      gchar    *buf,
-						 		      GError  **error);
+				      gsize     size,
+				      gchar    *buf,
+				      GError  **error);
 int        lm_sock_read              (LmSock   *sock,
-						 		      gsize     size,
-						 		      gchar    *buf,
-						 		      GError  **error);
+				      gsize     size,
+				      gchar    *buf,
+				      GError  **error);
 gboolean   lm_sock_close             (LmSock   *sock,
-								      GError  **error);
+				      GError  **error);
 LmSock *
 lm_sock_ref (LmSock *sock)
 {
