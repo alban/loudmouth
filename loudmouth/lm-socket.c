@@ -36,9 +36,9 @@ struct _LmSocket {
 	
 	LmSocketState state;
 
-	gboolean is_blocking;
+	gboolean      is_blocking;
 	
-	gint ref;
+	gint          ref;
 };
 
 static LmSocket *  socket_create (void);
@@ -142,6 +142,11 @@ lm_socket_read (LmSocket   *socket,
 gboolean
 lm_socket_close (LmSocket *socket, GError **error)
 {
+#ifndef G_OS_WIN32
+	close (socket->sock);
+#else /* G_OS_WIN32 */
+	closesocket (socket->sock);
+#endif /* G_OS_WIN32 */
 }
 
 LmSocket *
