@@ -23,41 +23,41 @@
 #ifndef __LM_SOCKET_H__
 #define __LM_SOCKET_H__
 
-typedef struct _LmSock LmSock;
+typedef struct _LmSocket LmSocket;
 
 typedef struct {
 	/* ConnectCB */
 	/* InCB */
 	/* HupCB */
-} LmSockFuncs;
+} LmSocketFuncs;
 
 typedef enum {
-	LM_SOCK_STATE_CLOSED,
-	LM_SOCK_STATE_DNS_LOOKUP,
-	LM_SOCK_STATE_OPENING,
-	LM_SOCK_STATE_OPEN
-} LmSockState;
+	LM_SOCKET_STATE_CLOSED,
+	LM_SOCKET_STATE_DNS_LOOKUP,
+	LM_SOCKET_STATE_OPENING,
+	LM_SOCKET_STATE_OPEN
+} LmSocketState;
 
-LmSock *   lm_sock_new               (LmSockFuncs  funcs,
-				      const gchar *host,
-				      guint        port);
-void       lm_sock_open              (LmSock      *sock);									
-
-int        lm_sock_get_fd            (LmSock   *sock);
-gboolean   lm_sock_get_is_blocking   (LmSock   *sock);
-void       lm_sock_set_is_blocking   (LmSock   *sock,
-				      gboolean  is_block);
-int        lm_sock_write             (LmSock   *sock,
-				      gsize     size,
-				      gchar    *buf,
-				      GError  **error);
-int        lm_sock_read              (LmSock   *sock,
-				      gsize     size,
-				      gchar    *buf,
-				      GError  **error);
-gboolean   lm_sock_close             (LmSock   *sock,
-				      GError  **error);
-LmSock *   lm_sock_ref               (LmSock   *sock);
-void       lm_sock_unref             (LmSock   *sock);
+LmSocket * lm_socket_new               (LmSocketFuncs     funcs,
+					const gchar      *host,
+					guint             port);
+void       lm_socket_open              (LmSocket         *socket);									
+int        lm_socket_get_fd            (LmSocket         *socket);
+gboolean   lm_socket_get_is_blocking   (LmSocket         *socket);
+void       lm_socket_set_is_blocking   (LmSocket         *socket,
+					gboolean          is_block);
+int        lm_socket_write             (LmSocket         *socket,
+					gsize             size,
+					gchar            *buf,
+					GError          **error);
+int        lm_socket_read              (LmSocket         *socket,
+					gsize             size,
+					gchar            *buf,
+					GError          **error);
+gboolean   lm_socket_close             (LmSocket         *socket,
+					GError          **error);
+LmSock *   lm_socket_ref               (LmSocket         *socket);
+void       lm_socket_unref             (LmSocket         *socket);
 
 #endif /* __LM_SOCKET_H__ */
+

@@ -1,3 +1,14 @@
+2006-06-03  Mikael Hallendal,,,  <micke@imendio.com>
+
+	reviewed by: <delete if not using a buddy>
+
+	* loudmouth/lm-socket.c: (socket_create), (socket_free),
+	(lm_socket_new), (lm_socket_open), (lm_socket_get_fd),
+	(lm_socket_get_is_blocking), (lm_socket_set_is_blocking),
+	(lm_socket_write), (lm_socket_read), (lm_socket_close),
+	(lm_socket_ref), (lm_socket_unref):
+	* loudmouth/lm-socket.h:
+
 2006-05-27  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-ssl-gnutls.c: (ssl_verify_certificate):
