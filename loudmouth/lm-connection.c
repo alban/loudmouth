@@ -205,6 +205,10 @@ connection_free (LmConnection *connection)
 	g_free (connection->server);
 	g_free (connection->jid);
 
+	if (connection->parser) {
+		lm_parser_free (connection->parser);
+	}
+
 	/* Unref handlers */
 	for (i = 0; i < LM_MESSAGE_TYPE_UNKNOWN; ++i) {
 		GSList *l;

@@ -264,8 +264,11 @@ lm_parser_free (LmParser *parser)
 	if (parser->notify) {
 		(* parser->notify) (parser->user_data);
 	}
-	
+
+	if (parser->context) {
+		g_markup_parse_context_free (parser->context);
+	}
+	g_free (parser->m_parser);
 	g_free (parser);
-	g_print ("Free parser\n");
 }
 

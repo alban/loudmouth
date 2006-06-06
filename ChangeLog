@@ -1,3 +1,11 @@
+2006-06-06  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-connection.c: (connection_free):
+	- Call lm_parser_free to actually free it.
+	* loudmouth/lm-parser.c: (lm_parser_free):
+	- Free up memory used by the parser.
+	- Fixes LM-39
+
 2006-05-27  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-ssl.c: (ssl_verify_certificate):
