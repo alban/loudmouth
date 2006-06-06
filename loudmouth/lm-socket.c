@@ -29,16 +29,19 @@ typedef SOCKET LmSock;
 /* FIXME: Integrate with the SSL stuff */
 
 struct _LmSocket {
-	LmSock sock;
+	LmSock          sock;
+	GIOChannel     *channel;
 	/* FIXME: Add the rest */
-	
-	LmSocketFuncs funcs;
-	
-	LmSocketState state;
 
-	gboolean      is_blocking;
+	LmSSL          *ssl;
 	
-	gint          ref;
+	LmSocketFuncs   funcs;
+	
+	LmSocketState   state;
+
+	gboolean        is_blocking;
+	
+	gint            ref;
 };
 
 static LmSocket *  socket_create (void);
@@ -52,6 +55,8 @@ socket_create (void)
 	socket = g_new0 (LmSocket, 1);
 	socket->ref_count = 1;
 	socket->is_blocking = FALSE;
+	socket->state = LM_SOCKET_STATE_CLOSED;
+	socket->ssl = NULL;
 	
 	return socket;
 }
@@ -60,6 +65,11 @@ static void
 socket_free (LmSocket *socket)
 {
 	/* FIXME: Free up the rest of the memory */
+
+	if (socket->ssl) {
+		_lm_ssl_unref (socket->ssl);
+	}
+
 	g_free (socket->host);
 
 	g_free (socket);
@@ -75,6 +85,7 @@ lm_socket_new (LmSocketFuncs funcs, const gchar *host, guint port)
 	socket->funcs = funcs;
 	socket->host = g_strdup (host);
 	socket->port = port;
+	socket->is_blocking = FALSE;
 
 	return socket;
 }
@@ -82,6 +93,9 @@ lm_socket_new (LmSocketFuncs funcs, const gchar *host, guint port)
 void
 lm_socket_open (LmSocket *socket)
 {
+	g_return_if_fail (socket != NULL);
+
+	/* Fork and DNS Lookup */
 }
 
 int
@@ -129,6 +143,31 @@ lm_socket_write (LmSocket   *socket,
 		 gchar      *buf,
 		 GError    **error)
 {
+	gint b_written;
+	
+	g_return_val_if_fail (socket != NULL, -1);
+
+	if (socket->ssl) {
+		b_written = _lm_ssl_send (socket->ssl, buf, len);
+	} else {
+		GIOStatus io_status = G_IO_STATUS_AGAIN;
+		gsize     bytes_written = 0;
+
+		while (io_status == G_IO_STATUS_AGAIN) {
+			io_status = g_io_channel_write_chars (socket->channel,
+							      buf, size,
+							      &bytes_written,
+							      NULL);
+		}
+
+		b_written = bytes_written;
+
+		if (io_status != G_IO_STATUS_NORMAL) {
+			b_written = -1;
+		}
+	}
+
+	return b_written;
 }
 
 int
@@ -137,6 +176,30 @@ lm_socket_read (LmSocket   *socket,
 		gchar      *buf,
 		GError    **error)
 {
+	gsize     bytes_read = 0;
+	GIOStatus status =  G_IO_STATUS_AGAIN;
+
+	g_return_val_if_fail (socket != NULL, -1);
+
+	while (status == G_IO_STATUS_AGAIN) {
+		if (socket->ssl) {
+			status = _lm_ssl_read (socket->ssl, 
+					       buf, size, &bytes_read);
+		} else {
+			status = g_io_channel_read_chars (socket->channel, 
+							  buf, size, 
+							  &bytes_read,
+							  NULL);
+		}
+	}
+
+	if (status != G_IO_STATUS_NORMAL || bytes_read < 0) {
+		/* FIXME: Set error */
+
+		return -1;
+	}
+
+	return bytes_read;
 }
 
 gboolean
@@ -153,6 +216,7 @@ LmSocket *
 lm_socket_ref (LmSocket *socket)
 {
 	g_return_val_if_fail (socket != NULL, NULL);
+
 	socket->ref++;
 	
 	return socket;
