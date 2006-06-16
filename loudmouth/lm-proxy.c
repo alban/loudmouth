@@ -37,6 +37,7 @@
 
 #include "lm-internals.h"
 #include "lm-proxy.h"
+#include "lm-utils.h"
 
 struct _LmProxy {
 	LmProxyType  type;
@@ -337,7 +338,7 @@ lm_proxy_set_server (LmProxy *proxy, const gchar *server)
 	g_return_if_fail (server != NULL);
 	
 	g_free (proxy->server);
-	proxy->server = g_strdup (server);
+	proxy->server = _lm_utils_hostname_to_punycode (server);
 }
 
 /**

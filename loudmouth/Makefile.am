@@ -4,6 +4,7 @@ AM_CPPFLAGS = 				\
 	-I.				\
 	-I$(top_srcdir)			\
 	$(LOUDMOUTH_CFLAGS)		\
+	$(LIBIDN_CFLAGS)		\
 	-DLM_COMPILATION		\
 	-DRUNTIME_ENDIAN                \
 	$(NULL)
@@ -57,7 +58,8 @@ libloudmouthinclude_HEADERS =		\
 	$(NULL)
 
 libloudmouth_1_la_LIBADD = 		\
-	$(LOUDMOUTH_LIBS)
+	$(LOUDMOUTH_LIBS)		\
+	$(LIBIDN_LIBS)
 
 libloudmouthincludedir = $(includedir)/loudmouth-1.0/loudmouth
 

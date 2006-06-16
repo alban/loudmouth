@@ -65,6 +65,7 @@ void             _lm_utils_free_callback            (LmCallback       *cb);
 
 gchar *          _lm_utils_generate_id              (void);
 gchar *          _lm_utils_base64_encode            (const gchar      *str);
+gchar *          _lm_utils_hostname_to_punycode     (const gchar      *hostname);
 const gchar *    _lm_message_type_to_string         (LmMessageType     type);
 const gchar *    _lm_message_sub_type_to_string     (LmMessageSubType  type);
 LmMessage *      _lm_message_new_from_node          (LmMessageNode    *node);

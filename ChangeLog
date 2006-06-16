@@ -1,3 +1,19 @@
+2006-06-16  Mikael Hallendal  <micke@imendio.com>
+
+	* configure.ac:
+	* loudmouth-1.0.pc.in:
+	* loudmouth/Makefile.am:
+	- Add checks for libidn.
+	* loudmouth/lm-connection.c: (lm_connection_new),
+	(lm_connection_set_server):
+	* loudmouth/lm-proxy.c: (lm_proxy_set_server):
+	- Use the new function _lm_utils_hostname_to_punycode.
+	* loudmouth/lm-internals.h:
+	* loudmouth/lm-utils.c: (_lm_utils_hostname_to_punycode):
+	- Added function to support internationalised host names.
+	- Patch from Frederic Peters.
+	- Fixes LM-42.
+
 2006-06-06  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-connection.c: (connection_free):

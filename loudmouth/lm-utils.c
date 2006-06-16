@@ -21,12 +21,19 @@
 #include <config.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 
 #include <glib.h>
 
 #ifndef G_OS_WIN32
 #include <unistd.h>
+#endif
+
+#ifdef HAVE_IDN
+#include <stringprep.h>
+#include <punycode.h>
+#include <idna.h>
 #endif
 
 #include "lm-internals.h"
@@ -131,7 +138,35 @@ _lm_utils_base64_encode (const gchar *s)
 	return str;
 }
 
-struct tm *
+gchar*
+_lm_utils_hostname_to_punycode (const gchar *hostname)
+{
+#ifdef HAVE_IDN
+	char *s;
+	uint32_t *q;
+	int rc;
+	gchar *result;
+
+	q = stringprep_utf8_to_ucs4 (hostname, -1, NULL);
+	if (q == NULL) {
+		return g_strdup (hostname);
+	}
+
+	rc = idna_to_ascii_4z (q, &s, IDNA_ALLOW_UNASSIGNED);
+	free(q);
+	if (rc != IDNA_SUCCESS) {
+		return g_strdup (hostname);
+	}
+
+	/* insures result is allocated through glib */
+	result = g_strdup(s);
+	free(s);
+
+	return result;
+#else
+	return g_strdup(hostname);
+#endif
+}struct tm *
 lm_utils_get_localtime (const gchar *stamp)
 {
 	struct tm tm;
@@ -161,4 +196,5 @@ lm_utils_get_localtime (const gchar *stamp)
 
 	return localtime (&t);
 }
+
 

@@ -36,6 +36,7 @@
 #include "lm-parser.h"
 #include "lm-sha.h"
 #include "lm-connection.h"
+#include "lm-utils.h"
 
 #define IN_BUFFER_SIZE 1024
 
@@ -1459,7 +1460,7 @@ lm_connection_new (const gchar *server)
 	connection = g_new0 (LmConnection, 1);
 
 	if (server) {
-		connection->server = g_strdup (server);
+		connection->server = _lm_utils_hostname_to_punycode (server);
 	} else {
 		connection->server = NULL;
 	}
@@ -1895,7 +1896,7 @@ lm_connection_set_server (LmConnection *connection, const gchar *server)
 	}
 	
 	g_free (connection->server);
-	connection->server = g_strdup (server);
+	connection->server = _lm_utils_hostname_to_punycode (server);
 }
 
 /**
