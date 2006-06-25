@@ -1490,9 +1490,11 @@ gboolean
 lm_connection_close (LmConnection      *connection, 
 		     GError           **error)
 {
+	gboolean no_errors = TRUE;
+
 	g_return_val_if_fail (connection != NULL, FALSE);
-	
-	if (!lm_connection_is_open (connection)) {
+
+	if (connection->state == LM_CONNECTION_STATE_CLOSED) {
 		g_set_error (error,
 			     LM_ERROR,
 			     LM_ERROR_CONNECTION_NOT_OPEN,
@@ -1503,16 +1505,18 @@ lm_connection_close (LmConnection      *connection,
 	lm_verbose ("Disconnecting from: %s:%d\n", 
 		    connection->server, connection->port);
 	
-	if (!connection_send (connection, "</stream:stream>", -1, error)) {
-		return FALSE;
+	if (lm_connection_is_open (connection)) {
+		if (!connection_send (connection, "</stream:stream>", -1, error)) {
+			no_errors = FALSE;
+		}
+		
+		g_io_channel_flush (connection->io_channel, NULL);
 	}
-	
- 	g_io_channel_flush (connection->io_channel, NULL);
 	
 	connection_do_close (connection);
 	connection_signal_disconnect (connection, LM_DISCONNECT_REASON_OK);
 	
-	return TRUE;
+	return no_errors;
 }
 
 /**
