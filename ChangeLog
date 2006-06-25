@@ -1,3 +1,11 @@
+2006-06-25  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-connection.c: (lm_connection_close):
+	- Patch from Martyn Russel
+	- Make sure that disconnect is signalled if the connection is closed
+	  during opening phase.
+	- Fixes LM-43
+
 2006-06-16  Mikael Hallendal  <micke@imendio.com>
 
 	* configure.ac:
