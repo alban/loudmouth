@@ -1,3 +1,12 @@
+Changes in 1.1.2:
+-----------------
+* Support for internationalised domain names, LM-42
+* Fixed issue where no disconnect signal was emitted when connection closed 
+  during opening, LM-43
+* Plugged a memory leak in LmConnection, LM-39
+* Fixed warnings due to uninitialized value, LM-35
+* Fixed a reentrancy-related issue with LmConnection, LM-37
+
 Changes in 1.0.3:
 -----------------
 * Quick build fix release when building without SSL, LM-25.

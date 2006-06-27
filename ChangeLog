@@ -1,3 +1,12 @@
+2006-06-27  Mikael Hallendal  <micke@imendio.com>
+
+	* Release 1.1.2
+
+	* configure.ac: 
+	- Bumped to 1.1.2
+	* NEWS:
+	- Added news about 1.1.2
+
 2006-06-25  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-connection.c: (lm_connection_close):
