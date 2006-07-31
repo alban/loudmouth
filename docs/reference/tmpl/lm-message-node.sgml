@@ -97,8 +97,6 @@ A struct representing a node in a message.
 @node: 
 @child_name: 
 @Returns: 
-<!-- # Unused Parameters # -->
-@message_node: 
 
 
 <!-- ##### FUNCTION lm_message_node_find_child ##### -->
@@ -109,8 +107,6 @@ A struct representing a node in a message.
 @node: 
 @child_name: 
 @Returns: 
-<!-- # Unused Parameters # -->
-@message_node: 
 
 
 <!-- ##### FUNCTION lm_message_node_get_raw_mode ##### -->

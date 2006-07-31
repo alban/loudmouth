@@ -225,7 +225,7 @@ _lm_ssl_read (LmSSL *ssl, gchar *buf, gint len, gsize *bytes_read)
 	if (b_read == GNUTLS_E_AGAIN) {
 		status = G_IO_STATUS_AGAIN;
 	}
-	else if (b_read > len) {
+	else if (b_read == 0) {
 		status = G_IO_STATUS_EOF;
 	}
 	else if (b_read < 0) {

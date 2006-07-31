@@ -123,14 +123,20 @@ socket_channel_event (GIOChannel   *source,
 		      GIOCondition  condition,
 		      LmSocket     *socket)
 {
-	if (condition & G_IO_IN)  {}
-	if (condition & G_IO_OUT) {}
-	if (condition & G_IO_ERR) {}
-	if (condition & G_IO_HUP) {}
+	if (condition & G_IO_IN)  {
+		socket_signal_read_available ();
+	}
+	if (condition & G_IO_OUT) {
+		socket_attempt_write ();
+	}
+	if (condition & G_IO_ERR ||
+	    condition & G_IO_HUP) {
+		socket_disconnected ();
+	}
 }
 
 static void
-eocket_dns_lookup (LmSocket          *socket,
+socket_dns_lookup (LmSocket          *socket,
 		   const gchar       *host,
 		   SocketDNSCallback  callback);
 {
@@ -157,7 +163,6 @@ eocket_dns_lookup (LmSocket          *socket,
 	data->current_addr   = ans;
 
 	data->callback (data->socket, data, TRUE);
-
 }
 
 static SocketDNSData *
@@ -197,11 +202,80 @@ socket_start_connect (LmSocket      *socket,
 		      SocketDNSData *data,
 		      gboolean       success)
 {
+	struct addrinfo *addr;
+	int              port;
+	char             name[NI_MAXHOST];
+	char             portname[NI_MAXSERV];
+	gint             fd;
+
 	if (!success) {
 		socket_dns_data_free (data);
 		/* FIXME: Report error */
+		return;
 	}
 
+	addr = data->current_addr;
+
+	if (socket->proxy) {
+		port = htons (lm_proxy_get_port (socket->proxy));
+	} else {
+		port = htons (socket->port);
+	}
+
+	((struct sockaddr_in *) addr->ai_addr)->sin_port = port;
+
+	res = getnameinfo (addr->ai_addr,
+			   (socklen_t) addr->ai_addrlen,
+			   name, sizeof (name),
+			   portname, sizeof (portname),
+			   NI_NUMERICHOST | NI_NUMERICSERV);
+
+	if (res < 0) {
+		/* FIXME: Report failure */
+		return;
+	}
+
+	fd = _lm_sock_makesocket (addr->ai_family,
+				  addr->ai_socktype,
+				  addr->ai_protocol);
+
+	if (!_LM_SOCK_VALID (fd)) {
+		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
+		       "Failed making socket, error:%d...\n",
+		       _lm_sock_get_last_error ());
+
+		/* FIXME: Report failure */
+		return;
+	}
+
+	/* Even though it says _unix_new(), it is supported by glib on
+	 * win32 because glib does some cool stuff to find out if it
+	 * can treat it as a FD or a windows SOCKET.
+	 */
+	socket->fd = fd;
+	socket->io_channel = g_io_channel_unix_new (fd);
+
+	g_io_channel_set_encoding (connect_data->io_channel, NULL, NULL);
+	g_io_channel_set_buffered (connect_data->io_channel, FALSE);
+
+	_lm_sock_set_blocking (socket->fd, FALSE);
+
+	if (socket->proxy) {
+		socket->io_watch_connect =
+			socket_add_watch (socket,
+					  socket->io_channel,
+					  G_IO_IN|G_IO_OUT|G_IO_ERR|G_IO_HUP,
+					  (GIOFunc) _lm_proxy_connect_cb, 
+					  socket);
+	} else {
+		socket->io_watch_connect =
+			socket_add_watch (socket,
+					  socket->io_channel,
+					  G_IO_IN|G_IO_OUT|G_IO_ERR|G_IO_HUP, 
+					  (GIOFunc) socket_connect_cb,
+					  socket);
+	}
+	
 	/* FIXME: Continue and connect */
 }
 
