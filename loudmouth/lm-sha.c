@@ -67,9 +67,9 @@ typedef struct _SHA1Context SHA1Context;
 extern "C" {
 #endif
 
-void SHA1Init (SHA1Context *sc);
-void SHA1Update (SHA1Context *sc, const void *udata, guint32 len);
-void SHA1Final (SHA1Context *sc, guint8 hash[SHA1_HASH_SIZE]);
+static void SHA1Init (SHA1Context *sc);
+static void SHA1Update (SHA1Context *sc, const void *udata, guint32 len);
+static void SHA1Final (SHA1Context *sc, guint8 hash[SHA1_HASH_SIZE]);
 
 #ifdef __cplusplus
 }
@@ -182,7 +182,7 @@ static const guint8 padding[64] = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-void
+static void
 SHA1Init (SHA1Context *sc)
 {
 #ifdef RUNTIME_ENDIAN
@@ -490,7 +490,7 @@ SHA1Guts (SHA1Context *sc, const guint32 *cbuf)
   sc->hash[4] += e;
 }
 
-void
+static void
 SHA1Update (SHA1Context *sc, const void *udata, guint32 len)
 {
   guint32 bufferBytesLeft;
@@ -566,7 +566,7 @@ SHA1Update (SHA1Context *sc, const void *udata, guint32 len)
     burnStack (sizeof (guint32[86]) + sizeof (guint32 *[5]) + sizeof (int));
 }
 
-void
+static void
 SHA1Final (SHA1Context *sc, guint8 hash[SHA1_HASH_SIZE])
 {
   guint32 bytesToPad;

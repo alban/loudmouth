@@ -1,3 +1,14 @@
+2006-08-03  Richard Hult  <richard@imendio.com>
+
+	* loudmouth/lm-sha.c: Make the sha functions static so they are
+	not exposed to apps/libraries using loudmout.
+
+2006-08-01  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-ssl-gnutls.c: (_lm_ssl_read):
+	- EOF on 0 bytes read.
+	- Fixes LM-45.
+
 2006-06-27  Mikael Hallendal  <micke@imendio.com>
 
 	* Release 1.0.4
