@@ -1,7 +1,15 @@
+2006-08-04  Mikael Hallendal  <micke@imendio.com>
+
+	* acinclude.m4: 
+	- Fix a auto* warning.
+	- Fixes LM-46.
+
 2006-08-03  Richard Hult  <richard@imendio.com>
 
-	* loudmouth/lm-sha.c: Make the sha functions static so they are
-	not exposed to apps/libraries using loudmout.
+	* loudmouth/lm-sha.c: 
+	- Make the sha functions static so they are not exposed to 
+	  apps/libraries using loudmout.
+	- Fixes LM-47.
 
 2006-08-01  Mikael Hallendal  <micke@imendio.com>
 
