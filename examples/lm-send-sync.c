@@ -63,6 +63,21 @@ static GOptionEntry entries[] =
   { NULL }
 };
 
+static gchar *
+get_part_name (const gchar *username)
+{
+	const gchar *ch;
+
+	g_return_val_if_fail (username != NULL, NULL);
+
+	ch = strchr (username, '@');
+	if (!ch) {
+		return NULL;
+	}
+
+	return g_strndup (username, ch - username);
+}
+
 static void
 print_finger (const char   *fpr,
 	      unsigned int  size)
@@ -125,6 +140,7 @@ main (int argc, char **argv)
 	GError         *error = NULL;
         LmConnection   *connection;
 	LmMessage      *m;
+	gchar          *user;
 
 	context = g_option_context_new ("- test send message synchronously");
 	g_option_context_add_main_entries (context, entries, NULL);
@@ -136,8 +152,14 @@ main (int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
+	if (username && strchr (username, '@') == NULL) {
+		g_printerr ("LmSendSync: Username must have an '@' included\n");
+		return EXIT_FAILURE;
+	}
+
         connection = lm_connection_new (server);
 	lm_connection_set_port (connection, port);
+	lm_connection_set_jid (connection, username);
 
 	if (fingerprint) {
 		LmSSL *ssl;
@@ -166,12 +188,15 @@ main (int argc, char **argv)
 		return EXIT_FAILURE;
         }
 
+	user = get_part_name (username);
 	if (!lm_connection_authenticate_and_block (connection,
-						   username, password, resource,
+						   user, password, resource,
 						   &error)) {
+		g_free (user);
 		g_printerr ("LmSendSync: Failed to authenticate: %s\n", error->message);
 		return EXIT_FAILURE;
 	}
+	g_free (user);
 	
 	m = lm_message_new (recipient, LM_MESSAGE_TYPE_MESSAGE);
 	lm_message_node_add_child (m->node, "body", message);

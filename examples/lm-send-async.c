@@ -66,6 +66,21 @@ static GOptionEntry entries[] =
   { NULL }
 };
 
+static gchar *
+get_part_name (const gchar *username)
+{
+	const gchar *ch;
+
+	g_return_val_if_fail (username != NULL, NULL);
+
+	ch = strchr (username, '@');
+	if (!ch) {
+		return NULL;
+	}
+
+	return g_strndup (username, ch - username);
+}
+
 static void
 print_finger (const char   *fpr,
 	      unsigned int  size)
@@ -159,15 +174,21 @@ connection_open_cb (LmConnection *connection,
 		    gpointer      user_data)
 {
 	if (success) {
-		if (!lm_connection_authenticate (connection, username, 
+		gchar *user;
+
+		user = get_part_name (username);
+		if (!lm_connection_authenticate (connection, user, 
 						 password, resource,
 						 connection_auth_cb, 
 						 NULL, FALSE,  NULL)) {
+			g_free (user);
 			g_printerr ("LmSendAsync: Failed to send authentication\n");
 			g_main_loop_quit (main_loop);
 			return;
 		}
-		
+
+		g_free (user);
+
 		g_print ("LmSendAsync: Sent authentication message\n");
 	} else {
 		g_printerr ("LmSendAsync: Failed to connect\n");
@@ -192,9 +213,15 @@ main (int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
+	if (username && strchr (username, '@') == NULL) {
+		g_printerr ("LmSendAsync: Username must have an '@' included\n");
+		return EXIT_FAILURE;
+	}
+
 	main_context = g_main_context_new ();
         connection = lm_connection_new_with_context (server, main_context);
 	lm_connection_set_port (connection, port);
+	lm_connection_set_jid (connection, username);
 
 	if (fingerprint) {
 		LmSSL *ssl;

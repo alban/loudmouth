@@ -55,6 +55,21 @@ static GOptionEntry entries[] =
   { NULL }
 };
 
+static gchar *
+get_part_name (const gchar *username)
+{
+	const gchar *ch;
+
+	g_return_val_if_fail (username != NULL, NULL);
+
+	ch = strchr (username, '@');
+	if (!ch) {
+		return NULL;
+	}
+
+	return g_strndup (username, ch - username);
+}
+
 static void
 print_finger (const char   *fpr,
 	      unsigned int  size)
@@ -141,10 +156,14 @@ connection_open_cb (LmConnection *connection,
 		    gpointer      user_data)
 {
 	if (success) {
-		lm_connection_authenticate (connection, username, 
+		gchar *user;
+
+		user = get_part_name (username);
+		lm_connection_authenticate (connection, user, 
 					    password, resource,
 					    connection_auth_cb, 
 					    NULL, FALSE,  NULL);
+		g_free (user);
 		
 		g_print ("TestLM: Sent authentication message\n");
 	} else {
@@ -218,8 +237,14 @@ main (int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
+	if (username && strchr (username, '@') == NULL) {
+		g_printerr ("TestLM: Username must have an '@' included\n");
+		return EXIT_FAILURE;
+	}
+
         connection = lm_connection_new (server);
 	lm_connection_set_port (connection, port);
+	lm_connection_set_jid (connection, username);
 
 	handler = lm_message_handler_new (handle_messages, NULL, NULL);
 	lm_connection_register_message_handler (connection, handler, 

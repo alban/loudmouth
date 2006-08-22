@@ -1,3 +1,12 @@
+2006-08-23  Martyn Russell  <martyn@imendio.com>
+
+	* examples/lm-send-async.c:
+	* examples/lm-send-sync.c: 
+	* examples/test-lm.c: Make use of lm_connection_set_jid() and make
+	sure we only use the part before the '@' for the username when
+	authenticating, this means that these test clients will now work
+	with GoogleTalk.
+
 2006-08-22  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-message-node.c: (lm_message_node_to_string):
