@@ -428,6 +428,8 @@ lm_message_node_to_string (LmMessageNode *node)
 	gchar         *str;
 	GSList        *l;
 	LmMessageNode *child;
+
+	g_return_val_if_fail (node != NULL, NULL);
 	
 	if (node->name == NULL) {
 		return g_strdup ("");
