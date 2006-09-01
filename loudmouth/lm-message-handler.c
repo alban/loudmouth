@@ -71,6 +71,8 @@ lm_message_handler_new (LmHandleMessageFunction function,
                         GDestroyNotify          notify)
 {
         LmMessageHandler *handler;
+
+	g_return_val_if_fail (function != NULL, NULL);
         
         handler = g_new0 (LmMessageHandler, 1);
         
@@ -110,6 +112,8 @@ lm_message_handler_invalidate (LmMessageHandler *handler)
 gboolean
 lm_message_handler_is_valid (LmMessageHandler *handler)
 {
+	g_return_val_if_fail (handler != NULL, FALSE);
+
 	return handler->valid;
 }
 

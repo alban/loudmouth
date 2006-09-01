@@ -1,3 +1,17 @@
+2006-09-01  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-connection.c: (lm_connection_new_with_context),
+	(lm_connection_send_raw):
+	* loudmouth/lm-message-handler.c: (lm_message_handler_new),
+	(lm_message_handler_is_valid):
+	* loudmouth/lm-message-node.c: (lm_message_node_add_child),
+	(lm_message_node_set_attribute), (lm_message_node_get_attribute),
+	(lm_message_node_get_child), (lm_message_node_find_child):
+	* loudmouth/lm-parser.c:
+	* loudmouth/lm-utils.c: (_lm_utils_hostname_to_punycode),
+	(lm_utils_get_localtime):
+	- Patch from Martyn to add argument checks all around.
+
 2006-08-23  Martyn Russell  <martyn@imendio.com>
 
 	* examples/lm-send-async.c:

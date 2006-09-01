@@ -21,6 +21,8 @@
 #include <config.h>
 #include <string.h>
 
+#include <glib.h>
+
 #include "lm-debug.h"
 #include "lm-internals.h"
 #include "lm-message-node.h"

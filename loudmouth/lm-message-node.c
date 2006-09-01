@@ -177,6 +177,9 @@ lm_message_node_add_child (LmMessageNode *node,
 {
 	LmMessageNode *child;
 	
+        g_return_val_if_fail (node != NULL, NULL);
+        g_return_val_if_fail (name != NULL, NULL);
+
 	child = _lm_message_node_new (name);
 
 	lm_message_node_set_value (child, value);
@@ -234,6 +237,10 @@ lm_message_node_set_attribute (LmMessageNode *node,
 	gboolean  found = FALSE; 
 	GSList   *l;
 
+        g_return_if_fail (node != NULL);
+        g_return_if_fail (name != NULL);
+        g_return_if_fail (value != NULL);
+
 	for (l = node->attributes; l; l = l->next) {
 		KeyValuePair *kvp = (KeyValuePair *) l->data;
                 
@@ -272,6 +279,7 @@ lm_message_node_get_attribute (LmMessageNode *node, const gchar *name)
         const gchar *ret_val = NULL;
 
         g_return_val_if_fail (node != NULL, NULL);
+        g_return_val_if_fail (name != NULL, NULL);
 
         for (l = node->attributes; l; l = l->next) {
                 KeyValuePair *kvp = (KeyValuePair *) l->data;
@@ -298,7 +306,10 @@ LmMessageNode *
 lm_message_node_get_child (LmMessageNode *node, const gchar *child_name)
 {
 	LmMessageNode *l;
-	
+
+        g_return_val_if_fail (node != NULL, NULL);
+        g_return_val_if_fail (child_name != NULL, NULL);
+
 	for (l = node->children; l; l = l->next) {
 		if (strcmp (l->name, child_name) == 0) {
 			return l;
@@ -324,6 +335,9 @@ lm_message_node_find_child (LmMessageNode *node,
 {
         LmMessageNode *l;
         LmMessageNode *ret_val = NULL;
+
+        g_return_val_if_fail (node != NULL, NULL);
+        g_return_val_if_fail (child_name != NULL, NULL);
 
         for (l = node->children; l; l = l->next) {
                 if (strcmp (l->name, child_name) == 0) {

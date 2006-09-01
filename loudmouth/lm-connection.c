@@ -1514,7 +1514,9 @@ lm_connection_new_with_context (const gchar *server, GMainContext *context)
 	connection = lm_connection_new (server);
 	connection->context = context;
 
-        g_main_context_ref (connection->context);
+	if (context) {
+        	g_main_context_ref (connection->context);
+	}
 
 	return connection;
 }
@@ -2323,6 +2325,7 @@ lm_connection_send_raw (LmConnection  *connection,
 			GError       **error)
 {
 	g_return_val_if_fail (connection != NULL, FALSE);
+	g_return_val_if_fail (str != NULL, FALSE);
 
 	return connection_send (connection, str, -1, error);
 }

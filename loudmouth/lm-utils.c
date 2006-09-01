@@ -166,13 +166,17 @@ _lm_utils_hostname_to_punycode (const gchar *hostname)
 #else
 	return g_strdup(hostname);
 #endif
-}struct tm *
+}
+
+struct tm *
 lm_utils_get_localtime (const gchar *stamp)
 {
 	struct tm tm;
 	time_t    t;
 	gint      year, month;
 	
+	g_return_val_if_fail (stamp != NULL, NULL);
+
 	/* 20021209T23:51:30 */
 
 	sscanf (stamp, "%4d%2d%2dT%2d:%2d:%2d", 
