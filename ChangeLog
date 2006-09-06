@@ -1,3 +1,8 @@
+2006-09-06  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-ssl-openssl.c: (ssl_verify_certificate):
+	- Implemented.
+
 2006-09-01  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-connection.c: (lm_connection_new_with_context),
