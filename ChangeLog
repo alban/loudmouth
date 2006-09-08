@@ -1,3 +1,9 @@
+2006-09-08  Mikael Hallendal  <micke@imendio.com>
+
+	* tests/Makefile.am:
+	* tests/test-parser.c:
+	- Added, base for parser unit tests.
+
 2006-09-06  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-ssl-openssl.c: (ssl_verify_certificate):

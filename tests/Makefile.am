@@ -1,9 +1,13 @@
 TESTS =                                       \
-	test-objects
+	test-objects                          \
+	test-parser
 
 test_objects_SOURCES =                        \
 	test-objects.c                        \
 	test-objects.h
+
+test_parser_SOURCES =                         \
+	test-parser.c
 
 if HAVE_CHECK
 noinst_PROGRAMS = $(TESTS)
