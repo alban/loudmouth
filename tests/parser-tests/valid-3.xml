@@ -1,0 +1,14 @@
+<stream:stream
+  from='example.com'
+  id='someid'
+  xmlns='jabber:client'
+  xmlns:stream='http://etherx.jabber.org/streams'
+  version='1.0'>
+
+  <message from='romeo@example.net'
+           to='juliet@example.com'
+           xml:lang='en'>
+    <body>the printout is: name:'.00BD2.A52?&#1;&#16;&#16;&#16;&#16;&#16;&#16;&#16;&#16;&#16;&#16;&#16;&#2;&#2;&#2;&#2;&#2;&#2;&#2;&#2;&#2;&#2;'</body>
+  </message>
+</stream:stream>
+

@@ -1,3 +1,5 @@
+SUBDIRS = parser-tests
+
 TESTS =                                       \
 	test-objects                          \
 	test-parser
@@ -18,11 +20,12 @@ AM_CPPFLAGS =                                 \
 	-I$(top_srcdir)                       \
 	-DLM_COMPILATION                      \
 	-DRUNTIME_ENDIAN                      \
-	$(LM_CFLAGS)                          \
+	$(LOUDMOUTH_CFLAGS)                   \
+	-DPARSER_TEST_DIR="\"$(top_srcdir)/tests/parser-tests\""  \
 	@CHECK_CFLAGS@
 
 LIBS =                                        \
-	$(LM_LIBS)                            \
+	$(LOUDMOUTH_LIBS)                     \
 	@CHECK_LIBS@                          \
 	$(top_builddir)/loudmouth/libloudmouth-1.la
 

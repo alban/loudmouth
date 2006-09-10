@@ -1,12 +1,14 @@
 NULL=
 
-AM_CPPFLAGS = 				\
-	-I.				\
-	-I$(top_srcdir)			\
-	$(LOUDMOUTH_CFLAGS)		\
-	$(LIBIDN_CFLAGS)		\
-	-DLM_COMPILATION		\
-	-DRUNTIME_ENDIAN                \
+TEST_DIR=$(top_srcdir)/
+
+AM_CPPFLAGS = 				    \
+	-I.				    \
+	-I$(top_srcdir)			    \
+	$(LOUDMOUTH_CFLAGS)		    \
+	$(LIBIDN_CFLAGS)		    \
+	-DLM_COMPILATION	  	    \
+	-DRUNTIME_ENDIAN                    \
 	$(NULL)
 
 lib_LTLIBRARIES = libloudmouth-1.la

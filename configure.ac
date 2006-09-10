@@ -214,36 +214,6 @@ fi
 AC_SUBST(LOUDMOUTH_CFLAGS)
 AC_SUBST(LOUDMOUTH_LIBS)
 
-
-dnl +--------------------------------------+
-dnl | Check if we shoudl build C# bindings |-------------------
-dnl +--------------------------------------+
-
-dnl  --------------
-dnl | mono setup |--------------------------------------------
-dnl  --------------
-dnl AC_ARG_ENABLE(mono, [  --enable-mono        build mono bindings [default=auto]], enable_mono="$enableval", enable_mono=auto)
-                                                                                
-dnl if test "x$enable_mono" != "xno"; then
-dnl     PKG_CHECK_MODULES(,gtk-sharp,have_mono=yes,have_mono=no)
-
-dnl     if test "x$have_mono" = "xyes"; then
-dnl         AC_PATH_PROG(MCS, mcs, no)
-dnl         AC_PATH_PROG(MONO, mono, no)
-dnl     fi
-dnl else
-dnl      have_mono=no
-dnl fi
-                                                                                
-dnl if test "x$enable_mono" = "xyes"; then
-dnl    AC_MSG_CHECKING(for mono environment)
-dnl    if test "x$have_mono" = "xno"; then
-dnl        AC_MSG_ERROR([not found])
-dnl    fi
-dnl fi
-                                                                                
-dnl AM_CONDITIONAL(HAVE_MONO, test x$have_mono = xyes)
-
 AC_OUTPUT([
 Makefile
 docs/Makefile
@@ -251,6 +221,7 @@ docs/reference/Makefile
 loudmouth/Makefile
 examples/Makefile
 tests/Makefile
+tests/parser-tests/Makefile
 loudmouth-1.0.pc
 loudmouth.spec])
 

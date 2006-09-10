@@ -1,3 +1,12 @@
+2006-09-10  Mikael Hallendal  <micke@imendio.com>
+
+	* configure.ac:
+	* loudmouth/Makefile.am:
+	* tests/Makefile.am:
+	* tests/parser-tests/*:
+	* tests/test-parser.c: 
+	- Some more work on unit tests for the parser.
+
 2006-09-08  Mikael Hallendal  <micke@imendio.com>
 
 	* tests/Makefile.am:

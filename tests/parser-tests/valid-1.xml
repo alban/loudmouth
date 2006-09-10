@@ -1,0 +1,14 @@
+<stream:stream
+  from='example.com'
+  id='someid'
+  xmlns='jabber:client'
+  xmlns:stream='http://etherx.jabber.org/streams'
+  version='1.0'>
+
+  <message from='romeo@example.net'
+           to='juliet@example.com'
+           xml:lang='en'>
+    <body>Neither, fair saint, if either thee dislike.</body>
+  </message>
+</stream:stream>
+

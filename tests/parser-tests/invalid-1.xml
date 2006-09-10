@@ -1,0 +1,9 @@
+<stream:stream from='example.com'
+               id='someid'
+               xmlns='jabber:client'
+               xmlns:stream='http://etherx.jabber.org/streams'
+               version='1.0'>
+  <message xml:lang='en'>
+    <body>Bad XML, no closing body tag!
+  </message>
+</stream:stream>
