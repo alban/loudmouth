@@ -1,3 +1,9 @@
+Changes in 1.0.5:
+-----------------
+* Infinite reading of 0 bytes when disconnected using gnutls, LM-45
+* Loudmouth exports some internal SHA* functions, LM-47
+* Fix auto* warning, LM-46
+
 Changes in 1.0.4:
 -----------------
 * Fixed issue where no disconnect signal was emitted when connection closed 

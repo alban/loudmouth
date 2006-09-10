@@ -1,3 +1,9 @@
+2006-09-11  Mikael Hallendal  <micke@imendio.com>
+
+	* configure.in:
+	* NEWS:
+	- Updated for 1.0.5
+
 2006-08-04  Mikael Hallendal  <micke@imendio.com>
 
 	* acinclude.m4: 
