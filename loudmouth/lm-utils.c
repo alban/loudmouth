@@ -70,9 +70,12 @@ _lm_utils_free_callback (LmCallback *cb)
 gchar *
 _lm_utils_generate_id (void)
 {
-	static gint  number = 0;
+	static guint last_id = 0;
+	gint         random;
 
-	return g_strdup_printf ("msg_%d", ++number);
+	random = g_random_int ();
+	
+	return g_strdup_printf ("%o%o", last_id++ ^ random, random);
 }
 
 gchar * 
