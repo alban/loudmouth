@@ -70,12 +70,14 @@ _lm_utils_free_callback (LmCallback *cb)
 gchar *
 _lm_utils_generate_id (void)
 {
-	static guint last_id = 0;
-	gint         random;
+	static guint  last_id = 0;
+	GTimeVal      tv;
+	glong         val;
 
-	random = g_random_int ();
-	
-	return g_strdup_printf ("%o%o", last_id++ ^ random, random);
+	g_get_current_time (&tv);
+	val = (tv.tv_sec & tv.tv_usec) + last_id++;
+		
+	return g_strdup_printf ("%ld%ld", val, tv.tv_usec);
 }
 
 gchar * 
