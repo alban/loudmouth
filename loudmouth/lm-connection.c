@@ -246,6 +246,10 @@ connection_free (LmConnection *connection)
 		lm_ssl_unref (connection->ssl);
 	}
 
+	if (connection->proxy) {
+		lm_proxy_unref (connection->proxy);
+	}
+
 	g_queue_free (connection->incoming_messages);
         
         if (connection->context) {

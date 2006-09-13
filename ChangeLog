@@ -1,3 +1,9 @@
+2006-09-13  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-connection.c: (connection_free):
+	- Unref the proxy if set, plugs a leak.
+	- Fixes LM-51.
+
 2006-09-11  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-utils.c: (_lm_utils_generate_id):
