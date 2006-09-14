@@ -86,6 +86,7 @@ lm_message_unref
 
 <SECTION>
 <FILE>lm-utils</FILE>
+lm_utils_get_localtime
 </SECTION>
 
 <SECTION>
