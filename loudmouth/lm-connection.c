@@ -341,8 +341,13 @@ _lm_connection_succeeded (LmConnectData *connect_data)
 	connection = connect_data->connection;
 	
 	if (connection->io_watch_connect != 0) {
-		g_source_destroy (g_main_context_find_source_by_id(connection->context,
-								   connection->io_watch_connect));
+		GSource *source;
+
+		source = g_main_context_find_source_by_id (connection->context,
+							   connection->io_watch_connect);
+		if (source) {
+			g_source_destroy (source);
+		}
 		connection->io_watch_connect = 0;
 	}
 
@@ -467,8 +472,14 @@ _lm_connection_failed_with_error (LmConnectData *connect_data, int error)
 	connect_data->current_addr = connect_data->current_addr->ai_next;
 	
 	if (connection->io_watch_connect != 0) {
-		g_source_destroy (g_main_context_find_source_by_id(connection->context,
-								   connection->io_watch_connect));
+		GSource *source;
+
+		source = g_main_context_find_source_by_id (connection->context,
+							   connection->io_watch_connect);
+		if (source) {
+			g_source_destroy (source);
+		}
+
 		connection->io_watch_connect = 0;
 	}
 
@@ -775,8 +786,14 @@ connection_buffered_write_cb (GIOChannel   *source,
 		lm_verbose ("Output buffer is empty, going back to normal output\n");
 
 		if (connection->io_watch_out != 0) {
-			g_source_destroy (g_main_context_find_source_by_id (
-						  connection->context, connection->io_watch_out));
+			GSource *source;
+
+			source = g_main_context_find_source_by_id (connection->context, 
+								   connection->io_watch_out);
+			if (source) {
+				g_source_destroy (source);
+			}
+
 			connection->io_watch_out = 0;
 		}
 
@@ -924,36 +941,62 @@ connection_do_open (LmConnection *connection, GError **error)
 static void
 connection_do_close (LmConnection *connection)
 {
+	GSource *source;
+
 	connection_stop_keep_alive (connection);
 
 	if (connection->io_channel) {
 		if (connection->io_watch_in != 0) {
-			g_source_destroy (g_main_context_find_source_by_id (
-						  connection->context, connection->io_watch_in));
+			source = g_main_context_find_source_by_id (connection->context,
+								   connection->io_watch_in);
+			if (source) {
+				g_source_destroy (source);
+			}
+			
 			connection->io_watch_in = 0;
 		}
 
 		if (connection->io_watch_err != 0) {
-			g_source_destroy (g_main_context_find_source_by_id (
-						  connection->context, connection->io_watch_err));
+			source = g_main_context_find_source_by_id (connection->context, 
+								   connection->io_watch_err);
+			if (source) {
+				g_source_destroy (source);
+			}
+
 			connection->io_watch_err = 0;
 		}
 
 		if (connection->io_watch_hup != 0) {
-			g_source_destroy (g_main_context_find_source_by_id (
-						  connection->context, connection->io_watch_hup));
+			source = g_main_context_find_source_by_id (connection->context, 
+								   connection->io_watch_hup);
+
+			if (source) {
+				g_source_destroy (source);
+			}
+			
 			connection->io_watch_hup = 0;
 		}
 
 		if (connection->io_watch_out != 0) {
-			g_source_destroy (g_main_context_find_source_by_id (
-				connection->context, connection->io_watch_out));
+			source = g_main_context_find_source_by_id (connection->context, 
+								   connection->io_watch_out);
+
+			if (source) {
+				g_source_destroy (source);
+			}
+
 			connection->io_watch_out = 0;
 		}
 
 		if (connection->io_watch_connect != 0) {
-			g_source_destroy (g_main_context_find_source_by_id(connection->context,
-									   connection->io_watch_connect));
+			
+			source = g_main_context_find_source_by_id (connection->context,
+								   connection->io_watch_connect);
+
+			if (source) {
+				g_source_destroy (source);
+			}
+			
 			connection->io_watch_connect = 0;
 		}
 

@@ -1,5 +1,13 @@
 2006-09-21  Mikael Hallendal  <micke@imendio.com>
 
+	* loudmouth/lm-connection.c: (_lm_connection_succeeded),
+	(_lm_connection_failed_with_error), (connection_buffered_write_cb),
+	(connection_do_close):
+	- Check that we find a resource before trying to destroy it.
+	- Fixes warning described in LM-50.
+
+2006-09-21  Mikael Hallendal  <micke@imendio.com>
+
 	* loudmouth/lm-connection.c: (connection_connect_cb):
 	* loudmouth/lm-proxy.c: (_lm_proxy_connect_cb):
 	- Initiatilize len, patch from Richard Hult.
