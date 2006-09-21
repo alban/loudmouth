@@ -1,3 +1,17 @@
+2006-09-21  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-connection.c: (connection_connect_cb):
+	* loudmouth/lm-proxy.c: (_lm_proxy_connect_cb):
+	- Initiatilize len, patch from Richard Hult.
+	- Fixes LM-58.
+
+2006-09-19  Richard Hult  <richard@imendio.com>
+
+	* loudmouth/lm-connection.c (connection_connect_cb): 
+	* loudmouth/lm-proxy.c (_lm_proxy_connect_cb): Initialize len,
+	fixes some random bugs on connection errors, where the error code
+	returned is random numbers.
+
 2006-09-13  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-connection.c: (connection_free):
