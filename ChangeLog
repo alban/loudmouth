@@ -1,5 +1,11 @@
 2006-09-21  Mikael Hallendal  <micke@imendio.com>
 
+	* NEWS:
+	* configure.ac:
+	- Updated for 1.1.4
+
+2006-09-21  Mikael Hallendal  <micke@imendio.com>
+
 	* loudmouth/lm-connection.c: (_lm_connection_succeeded),
 	(_lm_connection_failed_with_error), (connection_buffered_write_cb),
 	(connection_do_close):

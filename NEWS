@@ -1,3 +1,10 @@
+Changes in 1.1.4:
+-----------------
+* Generate better message IDs, LM-56
+* Fixed a leaking proxy object, LM-51
+* Fixed random bugs on connection errors, LM-58
+* Removed a warning when using proxy, LM-50.
+
 Changes in 1.1.3:
 -----------------
 * Infinite reading of 0 bytes when disconnected using gnutls, LM-45
