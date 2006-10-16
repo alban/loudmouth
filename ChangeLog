@@ -1,3 +1,8 @@
+2006-10-17  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-message-node.c: (lm_message_node_to_string):
+	- Small fixup of the previous LM-48 fix.
+
 2006-10-16  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-connection.c: (_lm_connection_succeeded),

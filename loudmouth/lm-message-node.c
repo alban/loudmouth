@@ -458,10 +458,12 @@ lm_message_node_to_string (LmMessageNode *node)
 			gchar *escaped;
 
 			escaped = g_markup_escape_text (kvp->value, -1);
-			g_string_append_printf (ret, " %s=\"%s\"", escaped, tmp);
+			g_string_append_printf (ret, " %s=\"%s\"", 
+						kvp->key, escaped);
 			g_free (escaped);
 		} else {
-			g_string_append_printf (ret, " %s=\"%s\"", kvp->value, tmp);
+			g_string_append_printf (ret, " %s=\"%s\"", 
+						kvp->key, kvp->value);
 		}
 		
 	}
