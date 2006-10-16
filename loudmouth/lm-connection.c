@@ -98,6 +98,8 @@ struct _LmConnection {
 	guint         io_watch_out;
 	GString      *out_buf;
 
+	LmConnectData *connect_data;
+
 	gint          ref_count;
 };
 
@@ -361,6 +363,7 @@ _lm_connection_succeeded (LmConnectData *connect_data)
 	connection->io_channel = connect_data->io_channel;
 
 	freeaddrinfo (connect_data->resolved_addrs);
+	connection->connect_data = NULL;
 	g_free (connect_data);
 
 	if (connection->ssl) {
@@ -501,6 +504,7 @@ _lm_connection_failed_with_error (LmConnectData *connect_data, int error)
 		}
 		
 		freeaddrinfo (connect_data->resolved_addrs);
+		connection->connect_data = NULL;
 		g_free (connect_data);
 	} else {
 		/* try to connect to the next host */
@@ -934,6 +938,8 @@ connection_do_open (LmConnection *connection, GError **error)
 	data->io_channel     = NULL;
 	data->fd             = -1;
 
+	connection->connect_data = data;
+
 	connection_do_connect (data);
 	return TRUE;
 }
@@ -941,9 +947,29 @@ connection_do_open (LmConnection *connection, GError **error)
 static void
 connection_do_close (LmConnection *connection)
 {
-	GSource *source;
+	GSource       *source;
+	LmConnectData *data;
 
 	connection_stop_keep_alive (connection);
+
+	if (connection->io_watch_connect != 0) {
+
+		source = g_main_context_find_source_by_id (connection->context,
+							   connection->io_watch_connect);
+
+		if (source) {
+			g_source_destroy (source);
+		}
+
+		connection->io_watch_connect = 0;
+	}
+	
+	data = connection->connect_data;
+	if (data) {
+		freeaddrinfo (data->resolved_addrs);
+		connection->connect_data = NULL;
+		g_free (data);
+	}
 
 	if (connection->io_channel) {
 		if (connection->io_watch_in != 0) {
@@ -988,17 +1014,6 @@ connection_do_close (LmConnection *connection)
 			connection->io_watch_out = 0;
 		}
 
-		if (connection->io_watch_connect != 0) {
-			
-			source = g_main_context_find_source_by_id (connection->context,
-								   connection->io_watch_connect);
-
-			if (source) {
-				g_source_destroy (source);
-			}
-			
-			connection->io_watch_connect = 0;
-		}
 
 		g_io_channel_unref (connection->io_channel);
 		connection->io_channel = NULL;
@@ -1524,6 +1539,7 @@ lm_connection_new (const gchar *server)
 	connection->keep_alive_id     = 0;
 	connection->keep_alive_rate   = 0;
 	connection->out_buf           = NULL;
+	connection->connect_data      = NULL;
 	
 	connection->id_handlers = g_hash_table_new_full (g_str_hash, 
 							 g_str_equal,

@@ -1,3 +1,17 @@
+2006-10-16  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-connection.c: (_lm_connection_succeeded),
+	(_lm_connection_failed_with_error), (connection_do_open),
+	(connection_do_close), (lm_connection_new):
+	- Keep a reference to LmConnectData and remove the source if connect
+	  is cancelled before the connection is open.
+	- Fixes LM-59.
+	* loudmouth/lm-message-node.c: (lm_message_node_to_string):
+	- Use GString to build message node XML.
+	- Escape the attribute values unless raw-mode is specified.
+	- Fixes LM-48.
+	- Patch from Dafydd Harries.
+
 2006-09-21  Mikael Hallendal  <micke@imendio.com>
 
 	* NEWS:

@@ -438,8 +438,7 @@ lm_message_node_unref (LmMessageNode *node)
 gchar *
 lm_message_node_to_string (LmMessageNode *node)
 {
-	gchar         *ret_val;
-	gchar         *str;
+	GString       *ret;
 	GSList        *l;
 	LmMessageNode *child;
 
@@ -449,46 +448,46 @@ lm_message_node_to_string (LmMessageNode *node)
 		return g_strdup ("");
 	}
 	
-	str = g_strdup_printf ("<%s", node->name);
+	ret = g_string_new ("<");
+	g_string_append (ret, node->name);
 	
 	for (l = node->attributes; l; l = l->next) {
 		KeyValuePair *kvp = (KeyValuePair *) l->data;
+
+		if (node->raw_mode == FALSE) {
+			gchar *escaped;
+
+			escaped = g_markup_escape_text (kvp->value, -1);
+			g_string_append_printf (ret, " %s=\"%s\"", escaped, tmp);
+			g_free (escaped);
+		} else {
+			g_string_append_printf (ret, " %s=\"%s\"", kvp->value, tmp);
+		}
 		
-		ret_val = g_strdup_printf ("%s %s=\"%s\"", 
-					   str, kvp->key, kvp->value);
-		g_free (str);
-		str = ret_val;
 	}
 	
-	ret_val = g_strconcat (str, ">", NULL);
-	g_free (str);
+	g_string_append_c (ret, '>');
 	
 	if (node->value) {
 		gchar *tmp;
 
-		str = ret_val;
-
 		if (node->raw_mode == FALSE) {
 			tmp = g_markup_escape_text (node->value, -1);
-			ret_val = g_strconcat (str, tmp, NULL);
+			g_string_append (ret,  tmp);
 			g_free (tmp);
 		} else {
-			ret_val = g_strconcat (str, node->value, NULL);
+			g_string_append (ret, node->value);
 		}
-		g_free (str);
 	} 
 
 	for (child = node->children; child; child = child->next) {
 		gchar *child_str = lm_message_node_to_string (child);
-		str = ret_val;
-		ret_val = g_strconcat (str, "  ", child_str, NULL);
-		g_free (str);
+		g_string_append_c (ret, ' ');
+		g_string_append (ret, child_str);
 		g_free (child_str);
 	}
 
-	str = ret_val;
-	ret_val = g_strdup_printf ("%s</%s>\n", str, node->name);
-	g_free (str);
+	g_string_append_printf (ret, "</%s>\n", node->name);
 	
-	return ret_val;
+	return g_string_free (ret, FALSE);
 }
