@@ -1,3 +1,11 @@
+2006-10-22  Richard Hult  <richard@imendio.com>
+
+	* loudmouth/lm-connection.c (connection_do_close)
+	(lm_connection_send_with_reply_and_block): 
+	- Check that we have the source before removing it and set the pointer 
+	  to NULL.
+	- Fixes LM-60.
+
 2006-10-17  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-message-node.c: (lm_message_node_to_string):

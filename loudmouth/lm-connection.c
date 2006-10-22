@@ -1020,9 +1020,12 @@ connection_do_close (LmConnection *connection)
 
 		connection->fd = -1;
 	}
-	
-	g_source_destroy (connection->incoming_source);
-	g_source_unref (connection->incoming_source);
+
+	if (connection->incoming_source) {
+		g_source_destroy (connection->incoming_source);
+		g_source_unref (connection->incoming_source);
+		connection->incoming_source = NULL;
+	}
 
 	if (!lm_connection_is_open (connection)) {
 		/* lm_connection_is_open is FALSE for state OPENING as well */
@@ -2233,8 +2236,9 @@ lm_connection_send_with_reply_and_block (LmConnection  *connection,
 		lm_message_node_set_attributes (message->node, "id", id, NULL);
 	}
 
- 	g_source_remove (g_source_get_id (connection->incoming_source));
+	g_source_remove (g_source_get_id (connection->incoming_source));
 	g_source_unref (connection->incoming_source);
+	connection->incoming_source = NULL;
 
 	lm_connection_send (connection, message, error);
 
