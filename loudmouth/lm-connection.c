@@ -1844,6 +1844,8 @@ lm_connection_authenticate_and_block (LmConnection  *connection,
 	lm_message_unref (result);
 
 	result = lm_connection_send_with_reply_and_block (connection, m, error);
+	lm_message_unref (m);
+
 	if (!result) {
 		connection->state = LM_CONNECTION_STATE_OPEN;
 		return FALSE;
