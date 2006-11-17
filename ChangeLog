@@ -1,3 +1,11 @@
+2006-11-17  Mikael Hallendal  <micke@imendio.com>
+
+	* loudmouth/lm-connection.h:
+	- Removed a typo slash, reported by Dafydd Harries.
+	* loudmouth/lm-parser.c: (parser_error_cb), (lm_parser_parse):
+	- Don't free the parser in the parser callback.
+	- Patch from Sjoerd Simons.
+
 2006-11-14  Mikael Hallendal  <micke@imendio.com>
 
 	* loudmouth/lm-connection.c:

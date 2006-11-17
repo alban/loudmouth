@@ -197,14 +197,10 @@ parser_error_cb (GMarkupParseContext *context,
 		 GError              *error,
 		 gpointer             user_data)
 {
-	LmParser     *parser;
-	
 	g_return_if_fail (user_data != NULL);
+	g_return_if_fail (error != NULL);
 	
-	parser = LM_PARSER (user_data);
-
-	g_markup_parse_context_free (parser->context);
-	parser->context = NULL;
+	g_warning ("Parsing failed: %s\n", error->message);
 }
 
 LmParser *
@@ -256,7 +252,8 @@ lm_parser_parse (LmParser *parser, const gchar *string)
         if (g_markup_parse_context_parse (parser->context, string, 
                                           (gssize)strlen (string), NULL)) {
         } else {
-                g_warning ("Parsing failed\n");
+		g_markup_parse_context_free (parser->context);
+		parser->context = NULL;
         }
 }
 

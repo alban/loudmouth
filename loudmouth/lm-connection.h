@@ -22,7 +22,7 @@
 #define __LM_CONNECTION_H__
 
 #if !defined (LM_INSIDE_LOUDMOUTH_H) && !defined (LM_COMPILATION)
-#error "Only <loudmouth/loudmouth.h> can be included directly, this file may di\sappear or change contents."
+#error "Only <loudmouth/loudmouth.h> can be included directly, this file may disappear or change contents."
 #endif
 
 #include <loudmouth/lm-message.h>
