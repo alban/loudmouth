@@ -1,3 +1,11 @@
+Changes in 1.1.5:
+-----------------
+* Fixed leak when closing a connection, LM-59
+* Escape the resource string (fixes problems with iChat contacts), LM-48
+* Stale incoming source destroyed/unreffed, LM-60
+* Fixed a leak in the synchronous layer, LM-66
+* Fixed a couple of warning when building on 64 bit alpha, LM-41.
+
 Changes in 1.1.4:
 -----------------
 * Generate better message IDs, LM-56
