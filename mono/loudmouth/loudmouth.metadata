@@ -1,7 +1,0 @@
-<?xml version="1.0"?>
-<metadata>
-  <attr path="//namespace" name="name">Loudmouth</attr>
-  <!-- We should really use ends-with here -->
-  <attr path="//struct[contains(@cname,'Priv')]" name="hidden">1</attr>
-</metadata>
-
