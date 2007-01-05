@@ -1,3 +1,7 @@
+2007-01-05  Mikael Hallendal  <micke@imendio.com>
+
+	* mono/*: Removed, unfinished, outdated and doesn't build.
+
 2006-12-23  Mikael Hallendal  <micke@imendio.com>
 
 	* Release 1.1.5
