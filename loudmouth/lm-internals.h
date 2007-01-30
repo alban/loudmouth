@@ -31,11 +31,12 @@
 #include "lm-message-handler.h"
 #include "lm-message-node.h"
 #include "lm-sock.h"
+#include "lm-socket.h"
 
 #ifndef G_OS_WIN32
-typedef int LmSocket;
+typedef int LmSocketT;
 #else  /* G_OS_WIN32 */
-typedef SOCKET LmSocket;
+typedef SOCKET LmSocketT;
 #endif /* G_OS_WIN32 */
 
 typedef struct {
@@ -45,19 +46,33 @@ typedef struct {
 } LmCallback;
 
 typedef struct {
-	LmConnection    *connection;
+	LmConnection *connection;
+	LmSocket *socket;
 
 	/* struct to save resolved address */
 	struct addrinfo *resolved_addrs;
 	struct addrinfo *current_addr;
-	LmSocket         fd;
+	LmSocketT         fd;
 	GIOChannel      *io_channel;
 } LmConnectData;
 
-void             _lm_connection_failed_with_error (LmConnectData *connect_data,
+void             _lm_socket_failed_with_error (LmConnectData *connect_data,
                                                    int error);
-void             _lm_connection_failed            (LmConnectData *connect_data);
-void             _lm_connection_succeeded         (LmConnectData *connect_data);
+void             _lm_socket_failed            (LmConnectData *connect_data);
+void             _lm_socket_succeeded         (LmConnectData *connect_data);
+gboolean         _lm_connection_error_event (LmSocket     *socket,
+					     GIOCondition  condition,
+					     LmConnection *connection);
+void     _lm_connection_do_close           (LmConnection        *connection);
+void     _lm_connection_signal_disconnect (LmConnection       *connection,
+					   LmDisconnectReason  reason);
+
+void     _lm_connection_socket_result (LmConnection *connection,
+				       gboolean      result);
+gboolean _lm_connection_async_connect_waiting (LmConnection *connection);
+void _lm_connection_set_async_connect_waiting (LmConnection *connection,
+					       gboolean      waiting);
+
 LmCallback *     _lm_utils_new_callback             (gpointer          func, 
 						     gpointer          data,
 						     GDestroyNotify    notify);
@@ -84,20 +99,20 @@ _lm_message_handler_handle_message                (LmMessageHandler *handler,
 						   LmMessage        *messag);
 gboolean         _lm_sock_library_init            (void);
 void             _lm_sock_library_shutdown        (void);
-void             _lm_sock_set_blocking            (LmSocket               sock,
+void             _lm_sock_set_blocking            (LmSocketT               sock,
 						   gboolean               block);
-void             _lm_sock_shutdown                (LmSocket               sock);
-void             _lm_sock_close                   (LmSocket               sock);
-LmSocket         _lm_sock_makesocket              (int                    af,
+void             _lm_sock_shutdown                (LmSocketT               sock);
+void             _lm_sock_close                   (LmSocketT               sock);
+LmSocketT         _lm_sock_makesocket              (int                    af,
 						   int                    type,
 						   int                    protocol);
-int              _lm_sock_connect                 (LmSocket               sock,
+int              _lm_sock_connect                 (LmSocketT               sock,
 						   const struct sockaddr *name,
 						   int                    namelen);
 gboolean         _lm_sock_is_blocking_error       (int                    err);
 gboolean         _lm_sock_is_blocking_success     (int                    err);
 int              _lm_sock_get_last_error          (void);
-void             _lm_sock_get_error               (LmSocket               sock, 
+void             _lm_sock_get_error               (LmSocketT               sock, 
 						   void                  *error, 
 						   socklen_t             *len);
 const gchar *    _lm_sock_get_error_str           (int                    err);

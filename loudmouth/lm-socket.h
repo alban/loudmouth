@@ -18,46 +18,43 @@
  * Boston, MA 02111-1307, USA.
  */
 
+#ifndef __LM_SOCKET_H__ 
+#define __LM_SOCKET_H__
+
 #include <glib.h>
 
-#ifndef __LM_SOCKET_H__
-#define __LM_SOCKET_H__
+#include "lm-internals.h"
 
 typedef struct _LmSocket LmSocket;
 
-typedef struct {
-	/* ConnectCB */
-	/* InCB */
-	/* HupCB */
-} LmSocketFuncs;
+typedef void    (* IncomingDataFunc)  (LmSocket       *socket,
+				       const gchar    *buf,
+				       gpointer        user_data);
 
-typedef enum {
-	LM_SOCKET_STATE_CLOSED,
-	LM_SOCKET_STATE_DNS_LOOKUP,
-	LM_SOCKET_STATE_OPENING,
-	LM_SOCKET_STATE_OPEN
-} LmSocketState;
+gboolean  lm_socket_output_is_buffered    (LmSocket       *socket,
+					   const gchar    *buffer,
+					   gint            len);
+void      lm_socket_setup_output_buffer   (LmSocket       *socket,
+					   const gchar    *buffer,
+					   gint            len);
+gint      lm_socket_do_write              (LmSocket       *socket,
+					   const gchar    *buf,
+					   gint            len);
 
-LmSocket * lm_socket_new               (LmSocketFuncs     funcs,
-					const gchar      *host,
-					guint             port);
-void       lm_socket_open              (LmSocket         *socket);									
-int        lm_socket_get_fd            (LmSocket         *socket);
-gboolean   lm_socket_get_is_blocking   (LmSocket         *socket);
-void       lm_socket_set_is_blocking   (LmSocket         *socket,
-					gboolean          is_block);
-int        lm_socket_write             (LmSocket         *socket,
-					gsize             size,
-					gchar            *buf,
-					GError          **error);
-int        lm_socket_read              (LmSocket         *socket,
-					gsize             size,
-					gchar            *buf,
-					GError          **error);
-gboolean   lm_socket_close             (LmSocket         *socket,
-					GError          **error);
-LmSock *   lm_socket_ref               (LmSocket         *socket);
-void       lm_socket_unref             (LmSocket         *socket);
+LmSocket *  lm_socket_create              (GMainContext   *context, 
+					   IncomingDataFunc func,
+					   gpointer         user_data,
+					   LmConnection   *connection,
+					   gboolean        blocking,
+					   const gchar    *server, 
+					   guint           port, 
+					   LmSSL          *ssl,
+					   LmProxy        *proxy,
+					   GError        **error);
+void        lm_socket_flush               (LmSocket       *socket);
+void        lm_socket_close               (LmSocket       *socket);
+LmSocket *  lm_socket_ref                 (LmSocket       *socket);
+void        lm_socket_unref               (LmSocket       *socket);
 
 #endif /* __LM_SOCKET_H__ */
 

@@ -31,6 +31,10 @@ libloudmouth_1_la_SOURCES =		\
 	lm-message.c	 		\
 	lm-message-handler.c		\
 	lm-message-node.c		\
+	lm-message-queue.c		\
+	lm-message-queue.h		\
+	lm-misc.c                       \
+	lm-misc.h                       \
 	lm-parser.c			\
 	lm-parser.h			\
 	lm-internals.h			\
@@ -45,6 +49,8 @@ libloudmouth_1_la_SOURCES =		\
 	lm-proxy.c                      \
 	lm-sock.h			\
 	lm-sock.c			\
+	lm-socket.c                     \
+	lm-socket.h                     \
 	$(NULL)
 
 libloudmouthinclude_HEADERS =		\

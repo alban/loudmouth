@@ -110,7 +110,7 @@ _lm_sock_library_shutdown (void)
 }
 
 void
-_lm_sock_set_blocking (LmSocket sock, 
+_lm_sock_set_blocking (LmSocketT sock, 
 		       gboolean block)
 {
 	int res;
@@ -130,13 +130,13 @@ _lm_sock_set_blocking (LmSocket sock,
 }
 
 void
-_lm_sock_shutdown (LmSocket sock)
+_lm_sock_shutdown (LmSocketT sock)
 {
 	shutdown (sock, LM_SHUTDOWN);
 }
 
 void
-_lm_sock_close (LmSocket sock)
+_lm_sock_close (LmSocketT sock)
 {
 #ifndef G_OS_WIN32
 	close (sock);
@@ -145,16 +145,16 @@ _lm_sock_close (LmSocket sock)
 #endif /* G_OS_WIN32 */
 }
 
-LmSocket 
+LmSocketT
 _lm_sock_makesocket (int af,
 		     int type, 
 		     int protocol)
 {
-	return (LmSocket)socket (af, type, protocol);
+	return (LmSocketT)socket (af, type, protocol);
 }
 
 int 
-_lm_sock_connect (LmSocket               sock, 
+_lm_sock_connect (LmSocketT               sock, 
 		  const struct sockaddr *name, 
 		  int                    namelen)
 {
@@ -190,7 +190,7 @@ _lm_sock_get_last_error (void)
 }
 
 void 
-_lm_sock_get_error (LmSocket   sock, 
+_lm_sock_get_error (LmSocketT   sock, 
 		    void      *error, 
 		    socklen_t *len)
 {
