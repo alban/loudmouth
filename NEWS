@@ -1,3 +1,8 @@
+Changes in 1.2.0:
+---------------
+* This is the same as 1.1.5 but marked as stable and released as 1.2.0.
+* For a complete list of changes since 1.0.5 look at the changes in 1.1.1-1.1.5
+
 Changes in 1.1.5:
 -----------------
 * Fixed leak when closing a connection, LM-59
