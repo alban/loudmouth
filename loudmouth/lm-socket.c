@@ -137,29 +137,27 @@ lm_socket_do_write (LmSocket     *socket,
 }
 
 static gboolean
-socket_in_event (GIOChannel   *source,
-		     GIOCondition  condition,
-		     LmSocket     *socket)
+socket_read_incoming (LmSocket     *socket,
+		      gchar        *buf,
+		      gsize         buf_size,
+		      gsize        *bytes_read,
+		      gboolean     *hangup)
 {
-	gchar     buf[IN_BUFFER_SIZE];
-	gsize     bytes_read;
 	GIOStatus status;
-       
-	if (!socket->io_channel) {
-		return FALSE;
-	}
+
+	*hangup = FALSE;
 
 	if (socket->ssl) {
 		status = _lm_ssl_read (socket->ssl, 
-				       buf, IN_BUFFER_SIZE - 1, &bytes_read);
+				       buf, buf_size - 1, bytes_read);
 	} else {
 		status = g_io_channel_read_chars (socket->io_channel,
-						  buf, IN_BUFFER_SIZE - 1,
-						  &bytes_read,
+						  buf, buf_size - 1,
+						  bytes_read,
 						  NULL);
 	}
 
-	if (status != G_IO_STATUS_NORMAL || bytes_read < 0) {
+	if (status != G_IO_STATUS_NORMAL || *bytes_read < 0) {
 		gint reason;
 		
 		switch (status) {
@@ -167,7 +165,8 @@ socket_in_event (GIOChannel   *source,
 			reason = LM_DISCONNECT_REASON_HUP;
 			break;
 		case G_IO_STATUS_AGAIN:
-			return TRUE;
+			/* No data readable but we didn't hangup */
+			return FALSE;
 			break;
 		case G_IO_STATUS_ERROR:
 			reason = LM_DISCONNECT_REASON_ERROR;
@@ -178,28 +177,55 @@ socket_in_event (GIOChannel   *source,
 
 		_lm_connection_do_close (socket->connection);
 		_lm_connection_signal_disconnect (socket->connection, reason);
+
+		/* Notify connection_in_event that we hangup the connection */
+		*hangup = TRUE;
 		
 		return FALSE;
 	}
 
-	buf[bytes_read] = '\0';
-	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "\nRECV [%d]:\n", 
-	       (int)bytes_read);
-	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
-	       "-----------------------------------\n");
-	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "'%s'\n", buf);
- 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
-	       "-----------------------------------\n");
+	buf[*bytes_read] = '\0';
 
-	lm_verbose ("Read: %d chars\n", (int)bytes_read);
-
-	(socket->func) (socket, buf, socket->user_data);
-
+	/* There is more data to be read */
 	return TRUE;
 }
 
+static gboolean
+socket_in_event (GIOChannel   *source,
+		     GIOCondition  condition,
+		     LmSocket     *socket)
+{
+	gchar     buf[IN_BUFFER_SIZE];
+	gsize     bytes_read;
+	gboolean  hangup;
 
+	if (!socket->io_channel) {
+		return FALSE;
+	}
 
+	while (socket_read_incoming (socket, buf, IN_BUFFER_SIZE, 
+				     &bytes_read, &hangup)) {
+		
+		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "\nRECV [%d]:\n", 
+		       (int)bytes_read);
+		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
+		       "-----------------------------------\n");
+		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "'%s'\n", buf);
+		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
+		       "-----------------------------------\n");
+		
+		lm_verbose ("Read: %d chars\n", (int)bytes_read);
+
+		(socket->func) (socket, buf, socket->user_data);
+	}
+
+	if (hangup) {
+		return FALSE;
+	}
+
+	return TRUE;
+}
+	
 static gboolean
 socket_hup_event (GIOChannel   *source,
 		      GIOCondition  condition,
