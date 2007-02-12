@@ -34,7 +34,7 @@ typedef struct _LmSSL LmSSL;
 typedef enum {
 	LM_CERT_INVALID,
 	LM_CERT_ISSUER_NOT_FOUND,
-	LM_CERT_REVOKED,
+	LM_CERT_REVOKED
 } LmCertificateStatus;
 
 typedef enum {
@@ -44,12 +44,12 @@ typedef enum {
 	LM_SSL_STATUS_CERT_NOT_ACTIVATED,
 	LM_SSL_STATUS_CERT_HOSTNAME_MISMATCH,			
 	LM_SSL_STATUS_CERT_FINGERPRINT_MISMATCH,			
-	LM_SSL_STATUS_GENERIC_ERROR,	
+	LM_SSL_STATUS_GENERIC_ERROR
 } LmSSLStatus;
 
 typedef enum {
 	LM_SSL_RESPONSE_CONTINUE,
-	LM_SSL_RESPONSE_STOP,
+	LM_SSL_RESPONSE_STOP
 } LmSSLResponse;
 
 typedef LmSSLResponse (* LmSSLFunction)      (LmSSL        *ssl,
