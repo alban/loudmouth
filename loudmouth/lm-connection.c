@@ -1134,6 +1134,10 @@ connection_in_event (GIOChannel   *source,
 	gsize    bytes_read;
 	gboolean hangup;
 
+	if (connection->io_channel == NULL) {
+		return FALSE;
+	}
+
 	while (connection_read_incoming (connection, buf, IN_BUFFER_SIZE,
 					 &bytes_read, &hangup)) {
 		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "\nRECV [%d]:\n", 
