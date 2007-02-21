@@ -1577,7 +1577,7 @@ lm_connection_unregister_message_handler (LmConnection      *connection,
 					  LmMessageHandler  *handler,
 					  LmMessageType      type)
 {
-	GSList *l, *prev = NULL;
+	GSList *l;
 	
 	g_return_if_fail (connection != NULL);
 	g_return_if_fail (handler != NULL);
@@ -1586,19 +1586,13 @@ lm_connection_unregister_message_handler (LmConnection      *connection,
 	for (l = connection->handlers[type]; l; l = l->next) {
 		HandlerData *hd = (HandlerData *) l->data;
 		
-		if (hd->handler == handler) {
-			if (prev) {
-				prev->next = l->next;
-			} else {
-				connection->handlers[type] = l->next;
-			}
-			l->next = NULL;
+		if (handler == hd->handler) {
+			connection->handlers[type] = g_slist_remove_link (connection->handlers[type], l);
 			g_slist_free (l);
 			lm_message_handler_unref (hd->handler);
 			g_free (hd);
 			break;
 		}
-		prev = l;
 	}
 }
 
