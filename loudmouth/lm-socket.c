@@ -1,6 +1,8 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
  * Copyright (C) 2006 Imendio AB
+ * Copyright (C) 2006 Nokia Corporation. All rights reserved.
+ * Copyright (C) 2007 Collabora Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License as
@@ -21,6 +23,8 @@
 #include <config.h>
 
 #include <string.h>
+#include <arpa/nameser.h>
+#include <resolv.h>
 
 #include "lm-debug.h"
 #include "lm-internals.h"
@@ -612,6 +616,59 @@ socket_buffered_write_cb (GIOChannel   *source,
 	return TRUE;
 }
 
+static gboolean
+_parse_srv_response (unsigned char *srv, int srv_len, gchar **out_server, guint *out_port)
+{
+	int qdcount;
+	int ancount;
+	int len;
+	const unsigned char *pos = srv + sizeof(HEADER);
+	unsigned char *end = srv + srv_len;
+	HEADER *head = (HEADER *)srv;
+	char name[256];
+	char pref_name[256];
+	guint pref_port = 0;
+	guint pref_prio = 9999;
+
+	pref_name[0] = 0;
+
+	qdcount = ntohs (head->qdcount);
+	ancount = ntohs (head->ancount);
+
+	/* Ignore the questions */
+	while (qdcount-- > 0 && (len = dn_expand (srv, end, pos, name, 255)) >= 0) {
+		g_assert (len >= 0);
+		pos += len + QFIXEDSZ;
+	}
+
+	/* Parse the answers */
+	while (ancount-- > 0 && (len = dn_expand (srv, end, pos, name, 255)) >= 0) {
+		/* Ignore the initial string */
+		uint16_t pref, weight, port;
+		g_assert (len >= 0);
+		pos += len;
+		/* Ignore type, ttl, class and dlen */
+		pos += 10;
+		GETSHORT (pref, pos);
+		GETSHORT (weight, pos);
+		GETSHORT (port, pos);
+		len = dn_expand (srv, end, pos, name, 255);
+		if (pref < pref_prio) {
+			pref_prio = pref;
+			strcpy (pref_name, name);
+			pref_port = port;
+		}
+		pos += len;
+	}
+
+	if (pref_name[0]) {
+		*out_server = g_strdup (pref_name);
+		*out_port = pref_port;
+		return TRUE;
+	} 
+	return FALSE;
+}
+
 LmSocket *
 lm_socket_create (GMainContext      *context,
 		  IncomingDataFunc   func,
@@ -627,7 +684,12 @@ lm_socket_create (GMainContext      *context,
 	LmSocket        *socket;
 	struct addrinfo  req;
 	struct addrinfo *ans;
+	const char      *remote_addr;
 	LmConnectData   *data;
+	int              err;
+	char            *srv;
+#define SRV_LEN 8192
+	unsigned char    srv_ans[SRV_LEN];
 
 	g_return_val_if_fail (server != NULL, NULL);
 	g_return_val_if_fail ((port >= MIN_PORT && port <= MAX_PORT), NULL);
@@ -653,53 +715,39 @@ lm_socket_create (GMainContext      *context,
 	socket->func = func;
 	socket->user_data = user_data;
 
+	res_init ();
+	srv = g_strdup_printf ("_xmpp-client._tcp.%s", socket->server);
+	err = res_query (srv, C_IN, T_SRV, srv_ans, SRV_LEN);
+	if (err > 0) {
+		_parse_srv_response (srv_ans, err, &(socket->server), &(socket->port));
+	}
+	g_free (srv);
+
 	if (context) {
 		socket->context = g_main_context_ref (context);
 	}
 
 	if (proxy) {
-		int          err;
-		const gchar *proxy_server;
-
 		socket->proxy = lm_proxy_ref (proxy);
+		remote_addr = lm_proxy_get_server (socket->proxy);
+	} else {
+	    	remote_addr = socket->server;
+	}
 
-		proxy_server = lm_proxy_get_server (socket->proxy);
+	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET,
+	       "Going to connect to %s%s:%u\n", (proxy) ? "proxy " : "",
+	       remote_addr, socket->port);
 
-		/* Connect through proxy */
-		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET,
-		       "Going to connect to proxy %s\n", proxy_server);
+	err = getaddrinfo (remote_addr, NULL, &req, &ans);
+	if (err != 0) {
+		const char *str;
 
-		err = getaddrinfo (proxy_server, NULL, &req, &ans);
-		if (err != 0) {
-			const char *str;
-
-			str = _lm_sock_addrinfo_get_error_str (err);
-			g_set_error (error,
-				     LM_ERROR,                 
-				     LM_ERROR_CONNECTION_FAILED,   
-				     str);
-			return NULL;
-		}
-	} else { 
-		int err;
-
-		/* Connect directly */
-		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET,
-		       "Going to connect to %s\n", 
-		       socket->server);
-
-		err = getaddrinfo (socket->server, 
-				   NULL, &req, &ans);
-		if (err != 0) {
-			const char *str;
-
-			str = _lm_sock_addrinfo_get_error_str (err);
-			g_set_error (error,
-				     LM_ERROR,                 
-				     LM_ERROR_CONNECTION_FAILED,   
-				     str);
-			return NULL;
-		}
+		str = _lm_sock_addrinfo_get_error_str (err);
+		g_set_error (error,
+			     LM_ERROR,                 
+			     LM_ERROR_CONNECTION_FAILED,   
+			     str);
+		return NULL;
 	}
 
 	if (ssl) {
