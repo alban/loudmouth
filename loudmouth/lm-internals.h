@@ -56,9 +56,9 @@ typedef struct {
 	GIOChannel      *io_channel;
 } LmConnectData;
 
-void             _lm_socket_failed_with_error (LmConnectData *connect_data,
+gboolean         _lm_socket_failed_with_error (LmConnectData *connect_data,
                                                    int error);
-void             _lm_socket_failed            (LmConnectData *connect_data);
+gboolean         _lm_socket_failed            (LmConnectData *connect_data);
 void             _lm_socket_succeeded         (LmConnectData *connect_data);
 gboolean         _lm_connection_error_event (LmSocket     *socket,
 					     GIOCondition  condition,

@@ -71,7 +71,7 @@ struct _LmSocket {
 }; 
 
 static void         socket_free                 (LmSocket      *socket);
-static void         socket_do_connect        (LmConnectData *connect_data);
+static gboolean     socket_do_connect        (LmConnectData *connect_data);
 static gboolean     socket_connect_cb       (GIOChannel    *source, 
 						 GIOCondition   condition,
 						 LmConnectData *connect_data);
@@ -260,6 +260,7 @@ _lm_socket_succeeded (LmConnectData *connect_data)
 	/* Need some way to report error/success */
 	if (socket->cancel_open) {
 		lm_verbose ("Cancelling connection...\n");
+		_lm_connection_socket_result (socket->connection, FALSE);
 		return;
 	}
 	
@@ -296,6 +297,7 @@ _lm_socket_succeeded (LmConnectData *connect_data)
 
 			_lm_connection_do_close (socket->connection);
 
+			_lm_connection_socket_result (socket->connection, FALSE);
 			return;
 		}
 	
@@ -334,7 +336,7 @@ _lm_socket_succeeded (LmConnectData *connect_data)
 	_lm_connection_socket_result (socket->connection, TRUE);
 }
 
-void 
+gboolean 
 _lm_socket_failed_with_error (LmConnectData *connect_data, int error) 
 {
 	LmSocket *socket;
@@ -360,19 +362,25 @@ _lm_socket_failed_with_error (LmConnectData *connect_data, int error)
 	if (connect_data->current_addr == NULL) {
 		_lm_connection_socket_result (socket->connection, FALSE);
 		
-		freeaddrinfo (connect_data->resolved_addrs);
-		socket->connect_data = NULL;
-		g_free (connect_data);
+		 /* if the user callback called connection_close(), this is already freed */
+		if (socket->connect_data != NULL) {
+			freeaddrinfo (connect_data->resolved_addrs);
+			socket->connect_data = NULL;
+			g_free (connect_data);
+		}
 	} else {
 		/* try to connect to the next host */
-		socket_do_connect (connect_data);
+		return socket_do_connect (connect_data);
 	}
+
+	return FALSE;
 }
 
-void 
+gboolean 
 _lm_socket_failed (LmConnectData *connect_data)
 {
-	_lm_socket_failed_with_error (connect_data, _lm_sock_get_last_error());
+	return _lm_socket_failed_with_error (connect_data,
+                                       _lm_sock_get_last_error());
 }
 
 static gboolean 
@@ -443,7 +451,7 @@ socket_connect_cb (GIOChannel   *source,
  	return TRUE; 
 }
 
-static void
+static gboolean
 socket_do_connect (LmConnectData *connect_data) 
 {
 	LmSocket        *socket;
@@ -472,8 +480,7 @@ socket_do_connect (LmConnectData *connect_data)
 			   NI_NUMERICHOST | NI_NUMERICSERV);
 	
 	if (res < 0) {
-		_lm_socket_failed (connect_data);
-		return;
+		return _lm_socket_failed (connect_data);
 	}
 
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET,
@@ -488,9 +495,7 @@ socket_do_connect (LmConnectData *connect_data)
 		       "Failed making socket, error:%d...\n",
 		       _lm_sock_get_last_error ());
 
-		_lm_socket_failed (connect_data);
-
-		return;
+		return _lm_socket_failed (connect_data);
 	}
 
 	/* Even though it says _unix_new(), it is supported by glib on
@@ -529,11 +534,11 @@ socket_do_connect (LmConnectData *connect_data)
 		err = _lm_sock_get_last_error ();
 		if (!_lm_sock_is_blocking_error (err)) {
 			_lm_sock_close (connect_data->fd);
-			_lm_socket_failed_with_error (connect_data, err);
-
-			return;
+			return _lm_socket_failed_with_error (connect_data, err);
 		}
 	}
+
+	return TRUE;
 }
 
 gboolean
@@ -714,8 +719,13 @@ lm_socket_create (GMainContext      *context,
 
 	socket->connect_data = data;
 
-	socket_do_connect (data);
-
+	if (!socket_do_connect (data)) {
+		g_set_error (error,
+			LM_ERROR,
+			LM_ERROR_CONNECTION_FAILED,
+			"unable to connect");
+		return NULL;
+	}
 	return socket;
 }
 
@@ -732,6 +742,8 @@ void
 lm_socket_close (LmSocket *socket)
 {
 	LmConnectData *data;
+
+	g_return_if_fail (socket != NULL);
 
 	if (socket->watch_connect) {
 		g_source_destroy (socket->watch_connect);
