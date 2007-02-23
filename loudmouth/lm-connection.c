@@ -799,7 +799,7 @@ _lm_connection_set_async_connect_waiting (LmConnection *connection,
 }
 
 static void
-_call_auth_cb (LmConnection *connection, gboolean success)
+connection_call_auth_cb (LmConnection *connection, gboolean success)
 {
 	if (connection->auth_cb) {
 	        LmCallback *cb = connection->auth_cb;
@@ -830,7 +830,7 @@ connection_bind_reply (LmMessageHandler *handler,
 	type = lm_message_get_sub_type (message);
 	if (type == LM_MESSAGE_SUB_TYPE_ERROR) {
 		g_debug ("%s: error while binding to resource", G_STRFUNC);
-		_call_auth_cb (connection, FALSE);
+		connection_call_auth_cb (connection, FALSE);
 		return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 	}
 
@@ -850,7 +850,7 @@ connection_bind_reply (LmMessageHandler *handler,
 	}
 
 	/* We may finally tell the client they're authorized */
-	_call_auth_cb (connection, TRUE);
+	connection_call_auth_cb (connection, TRUE);
 
 	return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
@@ -1126,10 +1126,10 @@ lm_connection_close (LmConnection      *connection,
 }
 
 static void
-sasl_auth_finished (LmSASL *sasl,
-		    LmConnection *connection,
-		    gboolean success,
-		    const gchar *reason)
+connection_sasl_auth_finished (LmSASL *sasl,
+			       LmConnection *connection,
+			       gboolean success,
+			       const gchar *reason)
 {
 	gchar *server_from_jid;
 	gchar *ch;
@@ -1137,7 +1137,7 @@ sasl_auth_finished (LmSASL *sasl,
 
 	if (!success) {
 		lm_verbose ("SASL authentication failed, closing connection\n");
-		_call_auth_cb (connection, FALSE);
+		connection_call_auth_cb (connection, FALSE);
 		return;
 	}
 
@@ -1219,7 +1219,7 @@ lm_connection_authenticate (LmConnection      *connection,
 						username,
 						password,
 						connection->server,
-						sasl_auth_finished);
+						connection_sasl_auth_finished);
 		connection->resource = g_strdup (resource);
 
 		connection->features_cb  =
