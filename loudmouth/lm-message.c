@@ -31,11 +31,17 @@ static struct TypeNames
         LmMessageType  type;
         const gchar   *name;
 } type_names[] = {
-	{ LM_MESSAGE_TYPE_MESSAGE,       "message"       },
-	{ LM_MESSAGE_TYPE_PRESENCE,      "presence"      },
-	{ LM_MESSAGE_TYPE_IQ,            "iq"            },
-	{ LM_MESSAGE_TYPE_STREAM,        "stream:stream" },
-	{ LM_MESSAGE_TYPE_STREAM_ERROR,  "stream:error"  }
+	{ LM_MESSAGE_TYPE_MESSAGE,         "message"         },
+	{ LM_MESSAGE_TYPE_PRESENCE,        "presence"        },
+	{ LM_MESSAGE_TYPE_IQ,              "iq"              },
+	{ LM_MESSAGE_TYPE_STREAM,          "stream:stream"   },
+	{ LM_MESSAGE_TYPE_STREAM_FEATURES, "stream:features" },
+	{ LM_MESSAGE_TYPE_AUTH,            "auth"            },
+	{ LM_MESSAGE_TYPE_CHALLENGE,       "challenge"       },
+	{ LM_MESSAGE_TYPE_RESPONSE,        "response"        },
+	{ LM_MESSAGE_TYPE_SUCCESS,         "success"         },
+	{ LM_MESSAGE_TYPE_FAILURE,         "failure"         },
+	{ LM_MESSAGE_TYPE_STREAM_ERROR,    "stream:error"    }
 };
 
 static struct SubTypeNames 
