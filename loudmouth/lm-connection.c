@@ -824,7 +824,6 @@ connection_bind_reply (LmMessageHandler *handler,
 {
 	LmMessage *m;
 	LmMessageNode *session_node;
-	LmMessageNode *jid_node;
 	int result;
 	LmMessageSubType type;
 
@@ -833,14 +832,6 @@ connection_bind_reply (LmMessageHandler *handler,
 		g_debug ("%s: error while binding to resource", G_STRFUNC);
 		_call_auth_cb (connection, FALSE);
 		return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-	}
-
-	/* Retrieve our official JID, which may have a different resource */
-	jid_node = lm_message_node_find_child (message->node, "jid");
-	if (jid_node) {
-		connection->jid =
-			g_strdup (lm_message_node_get_value (jid_node));
-		g_debug ("%s: using jid '%s'", G_STRFUNC, connection->jid);
 	}
 
 	m = lm_message_new_with_sub_type (NULL,
