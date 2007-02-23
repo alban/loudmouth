@@ -29,6 +29,7 @@ static const GDebugKey debug_keys[] = {
 	{"VERBOSE",      LM_LOG_LEVEL_VERBOSE},
 	{"NET",          LM_LOG_LEVEL_NET},
 	{"PARSER",       LM_LOG_LEVEL_PARSER},
+	{"SSL",          LM_LOG_LEVEL_SSL},
 	{"ALL",          LM_LOG_LEVEL_ALL}
 };
 
