@@ -51,6 +51,12 @@ libloudmouth_1_la_SOURCES =		\
 	lm-sock.c			\
 	lm-socket.c                     \
 	lm-socket.h                     \
+	lm-sasl.c                       \
+	lm-sasl.h                       \
+	md5.c                           \
+	md5.h                           \
+	base64.c                        \
+	base64.h                        \
 	$(NULL)
 
 libloudmouthinclude_HEADERS =		\
