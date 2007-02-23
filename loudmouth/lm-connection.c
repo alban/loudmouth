@@ -1,6 +1,8 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
  * Copyright (C) 2003-2006 Imendio AB
+ * Copyright (C) 2006 Nokia Corporation. All rights reserved.
+ * Copyright (C) 2007 Collabora Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License as
@@ -39,6 +41,8 @@
 #include "lm-connection.h"
 #include "lm-utils.h"
 #include "lm-socket.h"
+#include "lm-sasl.h"
+
 
 typedef struct {
 	LmHandlerPriority  priority;
@@ -61,6 +65,12 @@ struct _LmConnection {
 
 	GHashTable   *id_handlers;
 	GSList       *handlers[LM_MESSAGE_TYPE_UNKNOWN];
+
+	/* XMPP1.0 stuff (SASL, resource binding) */
+	gboolean      use_xmpp;
+	LmSASL       *sasl;
+	gchar        *resource;
+	LmMessageHandler *features_cb;
 
 	/* Communication */
 	guint         open_id;
@@ -89,6 +99,9 @@ typedef enum {
 	AUTH_TYPE_DIGEST = 2,
 	AUTH_TYPE_0K     = 4
 } AuthType;
+
+#define XMPP_NS_BIND "urn:ietf:params:xml:ns:xmpp-bind"
+#define XMPP_NS_SESSION "urn:ietf:params:xml:ns:xmpp-session"
 
 static void     connection_free (LmConnection *connection);
 
@@ -146,6 +159,11 @@ connection_free (LmConnection *connection)
 
 	g_free (connection->server);
 	g_free (connection->jid);
+	g_free (connection->resource);
+
+	if (connection->sasl) {
+		lm_sasl_free (connection->sasl);
+	}
 
 	if (connection->parser) {
 		lm_parser_free (connection->parser);
@@ -642,14 +660,21 @@ static void
 connection_stream_received (LmConnection *connection, LmMessage *m)
 {
 	gboolean result;
+	const char *xmpp_version;
 	
 	g_return_if_fail (connection != NULL);
 	g_return_if_fail (m != NULL);
 	
 	connection->stream_id = g_strdup (lm_message_node_get_attribute (m->node,
 									 "id"));;
-	
-	lm_verbose ("Stream received: %s\n", connection->stream_id);
+
+	xmpp_version = lm_message_node_get_attribute (m->node, "version");
+	if (xmpp_version && !strcmp(xmpp_version, "1.0")) {
+		lm_verbose ("XMPP1.0 stream received: %s\n", connection->stream_id);
+		connection->use_xmpp = TRUE;
+	} else {
+		lm_verbose ("Old Jabber stream received: %s\n", connection->stream_id);
+	}
 	
 	connection->state = LM_CONNECTION_STATE_OPEN;
 	
@@ -744,6 +769,7 @@ _lm_connection_socket_result (LmConnection *connection, gboolean result)
 					"xmlns:stream", 
 					"http://etherx.jabber.org/streams",
 					"xmlns", "jabber:client",
+					"version", "1.0",
 					NULL);
 	
 	lm_verbose ("Opening stream...");
@@ -767,6 +793,115 @@ _lm_connection_set_async_connect_waiting (LmConnection *connection,
 					  gboolean      waiting)
 {
 	connection->async_connect_waiting = waiting;
+}
+
+static void
+_call_auth_cb (LmConnection *connection, gboolean success)
+{
+	if (connection->auth_cb) {
+	        LmCallback *cb = connection->auth_cb;
+
+		connection->auth_cb = NULL;
+
+		if (cb->func) {
+	    		(* ((LmResultFunction) cb->func)) (connection, 
+						           success,
+							   cb->user_data);
+		}
+
+		_lm_utils_free_callback (cb);
+	}
+}
+
+static LmHandlerResult
+connection_bind_reply (LmMessageHandler *handler,
+			LmConnection *connection,
+			LmMessage *message,
+			gpointer user_data)
+{
+	LmMessage *m;
+	LmMessageNode *session_node;
+	LmMessageNode *jid_node;
+	int result;
+	LmMessageSubType type;
+
+	type = lm_message_get_sub_type (message);
+	if (type == LM_MESSAGE_SUB_TYPE_ERROR) {
+		g_debug ("%s: error while binding to resource", G_STRFUNC);
+		_call_auth_cb (connection, FALSE);
+		return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+	}
+
+	/* Retrieve our official JID, which may have a different resource */
+	jid_node = lm_message_node_find_child (message->node, "jid");
+	if (jid_node) {
+		connection->jid =
+			g_strdup (lm_message_node_get_value (jid_node));
+		g_debug ("%s: using jid '%s'", G_STRFUNC, connection->jid);
+	}
+
+	m = lm_message_new_with_sub_type (NULL,
+		LM_MESSAGE_TYPE_IQ, LM_MESSAGE_SUB_TYPE_SET);
+
+	session_node =
+		lm_message_node_add_child (m->node, "session", NULL);
+	lm_message_node_set_attributes (session_node,
+					"xmlns", XMPP_NS_SESSION,
+					NULL);
+
+	result = lm_connection_send (connection, m, NULL);
+	lm_message_unref (m);
+	if (result < 0) {
+		_lm_connection_do_close (connection);
+	}
+
+	/* We may finally tell the client they're authorized */
+	_call_auth_cb (connection, TRUE);
+
+	return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+static LmHandlerResult
+_lm_connection_features_cb (LmMessageHandler *handler,
+			    LmConnection *connection,
+			    LmMessage *message,
+			    gpointer user_data)
+{
+	LmMessageNode *bind_node;
+	LmMessage *bind_msg;
+	const gchar *ns;
+	int result;
+
+	bind_node = lm_message_node_find_child (message->node, "bind");
+	if (bind_node) {
+		ns = lm_message_node_get_attribute (bind_node, "xmlns");
+		if (!ns || strcmp (ns, XMPP_NS_BIND))
+			return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+
+		bind_msg = lm_message_new_with_sub_type (NULL,
+			LM_MESSAGE_TYPE_IQ, LM_MESSAGE_SUB_TYPE_SET);
+
+		bind_node = lm_message_node_add_child (bind_msg->node, "bind", NULL);
+		lm_message_node_set_attributes (bind_node,
+						"xmlns", XMPP_NS_BIND,
+						NULL);
+
+		lm_message_node_add_child (bind_node, "resource",
+					   connection->resource);
+
+		handler = lm_message_handler_new (connection_bind_reply,
+						  NULL, NULL);
+		result = lm_connection_send_with_reply (connection, bind_msg, 
+							handler, NULL);
+		lm_message_handler_unref (handler);
+		lm_message_unref (bind_msg);
+
+		if (result < 0) {
+			g_debug ("%s: can't send resource binding request", G_STRFUNC);
+			_lm_connection_do_close (connection);
+		}
+	}
+	return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
 
 /**
@@ -808,6 +943,7 @@ lm_connection_new (const gchar *server)
 	connection->keep_alive_source = NULL;
 	connection->keep_alive_rate   = 0;
 	connection->socket            = NULL;
+	connection->use_xmpp          = FALSE;
 	
 	connection->id_handlers = g_hash_table_new_full (g_str_hash, 
 							 g_str_equal,
@@ -990,6 +1126,46 @@ lm_connection_close (LmConnection      *connection,
 	return no_errors;
 }
 
+static void
+sasl_auth_finished (LmSASL *sasl,
+		    LmConnection *connection,
+		    gboolean success,
+		    const gchar *reason)
+{
+	gchar *server_from_jid;
+	gchar *ch;
+	LmMessage *m;
+
+	if (!success) {
+		lm_verbose ("SASL authentication failed, closing connection\n");
+		_call_auth_cb (connection, FALSE);
+		return;
+	}
+
+	if (connection->jid != NULL && (ch = strchr (connection->jid, '@')) != NULL) {
+		server_from_jid = ch + 1;
+	} else {
+		server_from_jid = connection->server;
+	}
+
+	m = lm_message_new (server_from_jid, LM_MESSAGE_TYPE_STREAM);
+	lm_message_node_set_attributes (m->node,
+					"xmlns:stream", 
+					"http://etherx.jabber.org/streams",
+					"xmlns", "jabber:client",
+					"version", "1.0",
+					NULL);
+
+	lm_verbose ("Reopening XMPP 1.0 stream...");
+
+	if (!lm_connection_send (connection, m, NULL)) {
+		lm_verbose ("Failed to send stream information\n");
+		_lm_connection_do_close (connection);
+	}
+		
+	lm_message_unref (m);
+}
+
 /**
  * lm_connection_authenticate:
  * @connection: #LmConnection to authenticate.
@@ -1033,13 +1209,30 @@ lm_connection_authenticate (LmConnection      *connection,
 		return FALSE;
 	}
 
-	/* FIXME: Do SASL authentication here (if XMPP 1.0 is used) */
-
 	connection->state = LM_CONNECTION_STATE_AUTHENTICATING;
 	
 	connection->auth_cb = _lm_utils_new_callback (function, 
 						      user_data, 
 						      notify);
+
+	if (connection->use_xmpp) {
+		connection->sasl = lm_sasl_new (connection,
+						username,
+						password,
+						connection->server,
+						sasl_auth_finished);
+		connection->resource = g_strdup (resource);
+
+		connection->features_cb  =
+			lm_message_handler_new (_lm_connection_features_cb,
+				NULL, NULL);
+		lm_connection_register_message_handler (connection,
+			connection->features_cb,
+			LM_MESSAGE_TYPE_STREAM_FEATURES,
+			LM_HANDLER_PRIORITY_FIRST);
+
+		return TRUE;
+	}
 
 	m = connection_create_auth_req_msg (username);
 		
