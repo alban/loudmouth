@@ -180,6 +180,10 @@ connection_free (LmConnection *connection)
 
 	lm_connection_set_disconnect_function (connection, NULL, NULL, NULL);
 
+	if (connection->proxy) {
+		lm_proxy_unref (connection->proxy);
+	}
+
 	lm_message_queue_unref (connection->queue);
 
         if (connection->context) {
@@ -417,7 +421,9 @@ _lm_connection_do_close (LmConnection *connection)
 {
 	connection_stop_keep_alive (connection);
 
-	lm_socket_close (connection->socket);
+	if (connection->socket) {
+		lm_socket_close (connection->socket);
+	}
 
 	lm_message_queue_detach (connection->queue);
 	
@@ -933,6 +939,11 @@ void
 lm_connection_cancel_open (LmConnection *connection)
 {
 	g_return_if_fail (connection != NULL);
+
+	if (connection->open_cb) {
+		_lm_utils_free_callback (connection->open_cb);
+		connection->open_cb = NULL;
+	}
 
 	connection->cancel_open = TRUE;
 }
