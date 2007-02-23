@@ -669,11 +669,14 @@ connection_stream_received (LmConnection *connection, LmMessage *m)
 									 "id"));;
 
 	xmpp_version = lm_message_node_get_attribute (m->node, "version");
-	if (xmpp_version && !strcmp(xmpp_version, "1.0")) {
-		lm_verbose ("XMPP1.0 stream received: %s\n", connection->stream_id);
+	if (xmpp_version && strcmp (xmpp_version, "1.0") == 0) {
+		lm_verbose ("XMPP 1.0 stream received: %s\n",
+			    connection->stream_id);
+
 		connection->use_xmpp = TRUE;
 	} else {
-		lm_verbose ("Old Jabber stream received: %s\n", connection->stream_id);
+		lm_verbose ("Old Jabber stream received: %s\n", 
+			    connection->stream_id);
 	}
 	
 	connection->state = LM_CONNECTION_STATE_OPEN;
@@ -867,21 +870,25 @@ _lm_connection_features_cb (LmMessageHandler *handler,
 			    LmMessage *message,
 			    gpointer user_data)
 {
-	LmMessageNode *bind_node;
-	LmMessage *bind_msg;
-	const gchar *ns;
-	int result;
+	LmMessageNode    *bind_node;
+	LmMessageHandler *new_handler;
+	LmMessage        *bind_msg;
+	const gchar      *ns;
+	int               result;
 
 	bind_node = lm_message_node_find_child (message->node, "bind");
 	if (bind_node) {
 		ns = lm_message_node_get_attribute (bind_node, "xmlns");
-		if (!ns || strcmp (ns, XMPP_NS_BIND))
+		if (!ns || strcmp (ns, XMPP_NS_BIND) != 0) {
 			return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+		}
 
 		bind_msg = lm_message_new_with_sub_type (NULL,
-			LM_MESSAGE_TYPE_IQ, LM_MESSAGE_SUB_TYPE_SET);
+							 LM_MESSAGE_TYPE_IQ, 
+							 LM_MESSAGE_SUB_TYPE_SET);
 
-		bind_node = lm_message_node_add_child (bind_msg->node, "bind", NULL);
+		bind_node = lm_message_node_add_child (bind_msg->node, 
+						       "bind", NULL);
 		lm_message_node_set_attributes (bind_node,
 						"xmlns", XMPP_NS_BIND,
 						NULL);
@@ -889,11 +896,11 @@ _lm_connection_features_cb (LmMessageHandler *handler,
 		lm_message_node_add_child (bind_node, "resource",
 					   connection->resource);
 
-		handler = lm_message_handler_new (connection_bind_reply,
-						  NULL, NULL);
+		new_handler = lm_message_handler_new (connection_bind_reply,
+						      NULL, NULL);
 		result = lm_connection_send_with_reply (connection, bind_msg, 
-							handler, NULL);
-		lm_message_handler_unref (handler);
+							new_handler, NULL);
+		lm_message_handler_unref (new_handler);
 		lm_message_unref (bind_msg);
 
 		if (result < 0) {
@@ -901,6 +908,7 @@ _lm_connection_features_cb (LmMessageHandler *handler,
 			_lm_connection_do_close (connection);
 		}
 	}
+
 	return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
 
