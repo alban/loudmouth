@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <glib.h>
 
+#include "lm-debug.h"
 #include "lm-error.h"
 #include "lm-ssl-base.h"
 #include "lm-ssl-internals.h"
@@ -61,46 +62,39 @@ ssl_print_state (LmSSL *ssl, const char *func, int val)
 
 	switch (SSL_get_error(ssl->ssl, val)) {
 		case SSL_ERROR_NONE:
-			fprintf(stderr,
-				"%s(): %i / SSL_ERROR_NONE\n",
-				func, val);
+			g_warning ("%s(): %i / SSL_ERROR_NONE",
+				   func, val);
 			break;
 		case SSL_ERROR_ZERO_RETURN:
-			fprintf(stderr,
-				"%s(): %i / SSL_ERROR_ZERO_RETURN\n",
-				func, val);
+			g_warning ("%s(): %i / SSL_ERROR_ZERO_RETURN",
+				   func, val);
 			break;
 		case SSL_ERROR_WANT_READ:
-			fprintf(stderr,
-				"%s(): %i / SSL_ERROR_WANT_READ\n",
-				func, val);
+			g_warning ("%s(): %i / SSL_ERROR_WANT_READ",
+				   func, val);
 			break;
 		case SSL_ERROR_WANT_WRITE:
-			fprintf(stderr,
-				"%s(): %i / SSL_ERROR_WANT_WRITE\n",
-				func, val);
+			g_warning ("%s(): %i / SSL_ERROR_WANT_WRITE",
+				   func, val);
 			break;
 		case SSL_ERROR_WANT_X509_LOOKUP:
-			fprintf(stderr,
-				"%s(): %i / SSL_ERROR_WANT_X509_LOOKUP\n",
-				func, val);
+			g_warning ("%s(): %i / SSL_ERROR_WANT_X509_LOOKUP",
+				   func, val);
 			break;
 		case SSL_ERROR_SYSCALL:
-			fprintf(stderr,
-				"%s(): %i / SSL_ERROR_SYSCALL\n",
-				func, val);
+			g_warning ("%s(): %i / SSL_ERROR_SYSCALL",
+				   func, val);
 			break;
 		case SSL_ERROR_SSL:
-			fprintf(stderr,
-				"%s(): %i / SSL_ERROR_SSL\n",
-				func, val);
+			g_warning ("%s(): %i / SSL_ERROR_SSL",
+				   func, val);
 			break;
 	}
 	do {
 		errid = ERR_get_error();
 		if (errid) {
 			errmsg = ERR_error_string(errid, NULL);
-			fprintf(stderr, "\t%s\n", errmsg);
+			g_warning ("\t%s", errmsg);
 		}
 	} while (errid != 0);
 }
@@ -134,11 +128,13 @@ ssl_verify_certificate (LmSSL *ssl, const gchar *server)
 
 	base = LM_SSL_BASE(ssl);
 
-	fprintf(stderr, "%s: Cipher: %s/%s/%i\n",
-		__FILE__,
-		SSL_get_cipher_version(ssl->ssl),
-		SSL_get_cipher_name(ssl->ssl),
-		SSL_get_cipher_bits(ssl->ssl, NULL));
+	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SSL,
+	       "%s: Cipher: %s/%s/%i\n",
+	       __FILE__,
+	       SSL_get_cipher_version(ssl->ssl),
+	       SSL_get_cipher_name(ssl->ssl),
+	       SSL_get_cipher_bits(ssl->ssl, NULL));
+
 	verify_res = SSL_get_verify_result(ssl->ssl);
 	srv_crt = SSL_get_peer_certificate(ssl->ssl);
 	if (base->expected_fingerprint != NULL) {
@@ -153,9 +149,10 @@ ssl_verify_certificate (LmSSL *ssl, const gchar *server)
 			}
 		}
 	}
-	fprintf(stderr, "%s: SSL_get_verify_result() = %ld\n",
-		__FILE__,
-		verify_res);
+	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SSL,
+	       "%s: SSL_get_verify_result() = %ld\n",
+	       __FILE__,
+	       verify_res);
 	switch (verify_res) {
 		case X509_V_OK:
 			break;
@@ -207,30 +204,30 @@ ssl_verify_certificate (LmSSL *ssl, const gchar *server)
 	}*/
 	crt_subj = X509_get_subject_name(srv_crt);
 	cn = (gchar *) g_malloc0(LM_SSL_CN_MAX + 1);
-	if (cn == NULL) {
-		fprintf(stderr, "g_malloc0() out of memory @ %s:%d\n",
-			__FILE__, __LINE__);
-		abort();
-	}
-	if (X509_NAME_get_text_by_NID(crt_subj, NID_commonName, cn,
-		LM_SSL_CN_MAX) > 0) {
-	fprintf(stderr, "%s: server = '%s', cn = '%s'\n",
-		__FILE__, server, cn);
-		if (strncmp(server, cn, LM_SSL_CN_MAX) != 0) {
-			if (base->func(ssl,
-				LM_SSL_STATUS_CERT_HOSTNAME_MISMATCH,
-				base->func_data) != LM_SSL_RESPONSE_CONTINUE) {
+	
+	if (X509_NAME_get_text_by_NID(crt_subj, NID_commonName, cn, LM_SSL_CN_MAX) > 0) {
+		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SSL,
+		      "%s: server = '%s', cn = '%s'\n",
+		      __FILE__, server, cn);
+		
+		if (strncmp (server, cn, LM_SSL_CN_MAX) != 0) {
+			if (base->func (ssl,
+					LM_SSL_STATUS_CERT_HOSTNAME_MISMATCH,
+					base->func_data) != LM_SSL_RESPONSE_CONTINUE) {
 				retval = FALSE;
 			}
 		}
 	} else {
-		fprintf(stderr, "X509_NAME_get_text_by_NID() failed\n");
+		g_warning ("X509_NAME_get_text_by_NID() failed");
 	}
-	fprintf(stderr, "%s:\n\tIssuer: %s\n\tSubject: %s\n\tFor: %s\n",
-		__FILE__,
-		X509_NAME_oneline(X509_get_issuer_name(srv_crt), NULL, 0),
-		X509_NAME_oneline(X509_get_subject_name(srv_crt), NULL, 0),
-		cn);
+
+	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SSL, 
+	       "%s:\n\tIssuer: %s\n\tSubject: %s\n\tFor: %s\n",
+	       __FILE__,
+	       X509_NAME_oneline(X509_get_issuer_name(srv_crt), NULL, 0),
+	       X509_NAME_oneline(X509_get_subject_name(srv_crt), NULL, 0),
+	       cn);
+
 	g_free(cn);
 	
 	return retval;
@@ -294,12 +291,12 @@ _lm_ssl_initialize (LmSSL *ssl)
 
 	ssl->ssl_method = TLSv1_client_method();
 	if (ssl->ssl_method == NULL) {
-		fprintf(stderr, "TLSv1_client_method() == NULL\n");
+		g_warning ("TLSv1_client_method() == NULL");
 		abort();
 	}
 	ssl->ssl_ctx = SSL_CTX_new(ssl->ssl_method);
 	if (ssl->ssl_ctx == NULL) {
-		fprintf(stderr, "SSL_CTX_new() == NULL\n");
+		g_warning ("SSL_CTX_new() == NULL");
 		abort();
 	}
 	/*if (access("/etc/ssl/cert.pem", R_OK) == 0)
@@ -308,8 +305,8 @@ _lm_ssl_initialize (LmSSL *ssl)
 		cert_file, "/etc/ssl/certs")) {
 		fprintf(stderr, "SSL_CTX_load_verify_locations() failed\n");
 	}*/
-	SSL_CTX_set_default_verify_paths(ssl->ssl_ctx);
-	SSL_CTX_set_verify(ssl->ssl_ctx, SSL_VERIFY_PEER, ssl_verify_cb);
+	SSL_CTX_set_default_verify_paths (ssl->ssl_ctx);
+	SSL_CTX_set_verify (ssl->ssl_ctx, SSL_VERIFY_PEER, ssl_verify_cb);
 }
 
 gboolean
@@ -320,13 +317,14 @@ _lm_ssl_begin (LmSSL *ssl, gint fd, const gchar *server, GError **error)
 
 	ssl->ssl = SSL_new(ssl->ssl_ctx);
 	if (ssl->ssl == NULL) {
-		fprintf(stderr, "SSL_new() == NULL\n");
+		g_warning ("SSL_new() == NULL");
 		g_set_error(error, LM_ERROR, LM_ERROR_CONNECTION_OPEN,
-			"SSL_new()");
+			    "SSL_new()");
 		return FALSE;
 	}
-	if (!SSL_set_fd(ssl->ssl, fd)) {
-		fprintf(stderr, "SSL_set_fd() failed\n");
+
+	if (!SSL_set_fd (ssl->ssl, fd)) {
+		g_warning ("SSL_set_fd() failed");
 		g_set_error(error, LM_ERROR, LM_ERROR_CONNECTION_OPEN,
 			"SSL_set_fd()");
 		return FALSE;
