@@ -662,7 +662,7 @@ connection_stream_received (LmConnection *connection, LmMessage *m)
 			        			   cb->user_data);
 
 		}
-		_lm_utils_free_callback (connection->open_cb);
+		_lm_utils_free_callback (cb);
 	}
 }
 
