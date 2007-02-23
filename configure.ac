@@ -111,6 +111,7 @@ dnl | Checking for libnsl and libsocket need on some systems |-
 dnl +--------------------------------------------------------+
 AC_CHECK_LIB(nsl,gethostbyname)
 AC_CHECK_LIB(socket,socket)
+AC_CHECK_LIB(resolv,res_query)
 
 dnl +--------------------------------------------------------+
 dnl | Checking for SSL support                               |-
