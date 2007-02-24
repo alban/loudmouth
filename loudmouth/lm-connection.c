@@ -154,6 +154,7 @@ static void      connection_incoming_data        (LmSocket        *socket,
 						  LmConnection    *connection);
 static gboolean  connection_get_server_from_jid  (const gchar     *jid,
 						  gchar          **server);
+static void      connection_send_stream_header   (LmConnection    *connection);
 
 static void
 connection_free (LmConnection *connection)
@@ -770,12 +771,39 @@ connection_get_server_from_jid (const gchar     *jid,
 	return FALSE;
 }
 
-void 
-_lm_connection_socket_result (LmConnection *connection, gboolean result)
+static void
+connection_send_stream_header (LmConnection *connection)
 {
 	LmMessage *m;
 	gchar     *server_from_jid;
 
+	lm_verbose ("Sending stream header\n");
+
+	if (!connection_get_server_from_jid (connection->jid, &server_from_jid)) {
+		server_from_jid = g_strdup (connection->server);
+	}
+
+	m = lm_message_new (server_from_jid, LM_MESSAGE_TYPE_STREAM);
+	lm_message_node_set_attributes (m->node,
+					"xmlns:stream", 
+					"http://etherx.jabber.org/streams",
+					"xmlns", "jabber:client",
+					"version", "1.0",
+					NULL);
+	
+	g_free (server_from_jid);
+
+	if (!lm_connection_send (connection, m, NULL)) {
+		lm_verbose ("Failed to send stream information\n");
+		_lm_connection_do_close (connection);
+	}
+		
+	lm_message_unref (m);
+}
+
+void 
+_lm_connection_socket_result (LmConnection *connection, gboolean result)
+{
 	if (!result) {
 		_lm_connection_do_close (connection);
 
@@ -803,27 +831,7 @@ _lm_connection_socket_result (LmConnection *connection, gboolean result)
 		return;
 	}
 
-	if (!connection_get_server_from_jid (connection->jid, &server_from_jid)) {
-		server_from_jid = g_strdup (connection->server);
-	}
-
-	m = lm_message_new (server_from_jid, LM_MESSAGE_TYPE_STREAM);
-	lm_message_node_set_attributes (m->node,
-					"xmlns:stream", 
-					"http://etherx.jabber.org/streams",
-					"xmlns", "jabber:client",
-					"version", "1.0",
-					NULL);
-	
-	g_free (server_from_jid);
-	lm_verbose ("Opening stream...");
-
-	if (!lm_connection_send (connection, m, NULL)) {
-		lm_verbose ("Failed to send stream information\n");
-		_lm_connection_do_close (connection);
-	}
-		
-	lm_message_unref (m);
+	connection_send_stream_header (connection);
 }
 
 gboolean 
@@ -1183,37 +1191,13 @@ connection_sasl_auth_finished (LmSASL *sasl,
 			       gboolean success,
 			       const gchar *reason)
 {
-	gchar     *server_from_jid;
-	LmMessage *m;
-
 	if (!success) {
 		lm_verbose ("SASL authentication failed, closing connection\n");
 		connection_call_auth_cb (connection, FALSE);
 		return;
 	}
 
-	if (!connection_get_server_from_jid (connection->jid, &server_from_jid)) {
-		server_from_jid = g_strdup (connection->server);
-	}
-
-	m = lm_message_new (server_from_jid, LM_MESSAGE_TYPE_STREAM);
-	lm_message_node_set_attributes (m->node,
-					"xmlns:stream", 
-					"http://etherx.jabber.org/streams",
-					"xmlns", "jabber:client",
-					"version", "1.0",
-					NULL);
-
-	g_free (server_from_jid);
-
-	lm_verbose ("Reopening XMPP 1.0 stream...");
-
-	if (!lm_connection_send (connection, m, NULL)) {
-		lm_verbose ("Failed to send stream information\n");
-		_lm_connection_do_close (connection);
-	}
-		
-	lm_message_unref (m);
+	connection_send_stream_header (connection);
 }
 
 /**
