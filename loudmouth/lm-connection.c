@@ -205,6 +205,7 @@ connection_free (LmConnection *connection)
 
 	g_free (connection->server);
 	g_free (connection->jid);
+	g_free (connection->stream_id);
 
 	if (connection->parser) {
 		lm_parser_free (connection->parser);
