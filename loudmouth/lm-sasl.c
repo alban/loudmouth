@@ -391,7 +391,10 @@ digest_md5_check_server_response(LmSASL *sasl, GHashTable *challenge) {
 
 	rspauth = g_hash_table_lookup (challenge, "rspauth");
 	if (rspauth == NULL) {
-		g_debug ("%s: server sent an invalid reply (no rspauth)", G_STRFUNC);
+		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SSL,
+		       "%s: server sent an invalid reply (no rspauth)\n",
+		       G_STRFUNC);
+
 		if (sasl->handler) {
 			sasl->handler (sasl, sasl->connection, TRUE, "server error");
 		}
@@ -399,7 +402,10 @@ digest_md5_check_server_response(LmSASL *sasl, GHashTable *challenge) {
 	}
 
 	if (strcmp(sasl->digest_md5_rspauth, rspauth)) {
-		g_debug ("%s: server sent an invalid reply (rspauth not matching)", G_STRFUNC);
+		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SSL,
+		       "%s: server sent an invalid reply (rspauth not matching)\n", 
+		       G_STRFUNC);
+
 		if (sasl->handler) {
 			sasl->handler (sasl, sasl->connection, TRUE, "server error");
 		}
@@ -414,8 +420,10 @@ digest_md5_check_server_response(LmSASL *sasl, GHashTable *challenge) {
 	result = lm_connection_send (sasl->connection, msg, NULL);
 	lm_message_unref (msg);
 
-	if (!result)
+	if (!result) {
+		g_warning ("Failed to send SASL response\n");
 		return FALSE;
+	}
 
 	sasl->state = SASL_AUTH_STATE_DIGEST_MD5_SENT_FINAL_RESPONSE;
 
@@ -423,7 +431,7 @@ digest_md5_check_server_response(LmSASL *sasl, GHashTable *challenge) {
 }
 
 static gboolean
-digest_md5_handle_challenge(LmSASL *sasl, LmMessageNode *node)
+digest_md5_handle_challenge (LmSASL *sasl, LmMessageNode *node)
 {
 	const gchar *encoded;
 	gchar *challenge;
@@ -474,7 +482,7 @@ challenge_cb (LmMessageHandler *handler,
 {
 	LmSASL *sasl;
 	const gchar *ns;
-	
+
 	ns = lm_message_node_get_attribute (message->node, "xmlns");
 	if (!ns || strcmp (ns, XMPP_NS_SASL_AUTH))
 		return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
@@ -483,7 +491,10 @@ challenge_cb (LmMessageHandler *handler,
 
 	switch (sasl->auth_type) {
 	case AUTH_TYPE_PLAIN:
-		g_debug ("%s: server sent challenge for PLAIN mechanism", G_STRFUNC);
+		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SSL,
+		       "%s: server sent challenge for PLAIN mechanism",
+		       G_STRFUNC);
+
 		if (sasl->handler) {
 			sasl->handler (sasl, sasl->connection, FALSE, "server error");
 		}
