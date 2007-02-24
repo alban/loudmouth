@@ -2,7 +2,6 @@ html-build.stamp
 html.stamp
 loudmouth-decl-list.txt
 loudmouth-decl.txt
-loudmouth-decl.txt.bak
 loudmouth-undocumented.txt
 loudmouth-unused.txt
 loudmouth.args
@@ -15,6 +14,7 @@ sgml-build.stamp
 sgml.stamp
 tmpl-build.stamp
 tmpl.stamp
+*.bak
 html
 xml
 
