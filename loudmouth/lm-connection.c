@@ -55,6 +55,7 @@ struct _LmConnection {
 	gchar        *server;
 	gchar        *jid;
 	guint         port;
+	gboolean      use_srv;
 
 	LmSocket     *socket;
 	LmSSL        *ssl;
@@ -151,6 +152,8 @@ static void      connection_message_queue_cb     (LmMessageQueue  *queue,
 static void      connection_incoming_data        (LmSocket        *socket, 
 						  const gchar     *buf,
 						  LmConnection    *connection);
+static gboolean  connection_get_server_from_jid  (const gchar     *jid,
+						  gchar          **server);
 
 static void
 connection_free (LmConnection *connection)
@@ -394,6 +397,8 @@ connection_message_queue_cb (LmMessageQueue  *queue,
 static gboolean
 connection_do_open (LmConnection *connection, GError **error) 
 {
+	gchar *connect_server;
+
 	if (lm_connection_is_open (connection)) {
 		g_set_error (error,
 			     LM_ERROR,
@@ -403,11 +408,24 @@ connection_do_open (LmConnection *connection, GError **error)
 	}
 
 	if (!connection->server) {
-		g_set_error (error,
-			     LM_ERROR,
-			     LM_ERROR_CONNECTION_FAILED,
-			     "You need to set the server hostname in the call to lm_connection_new()");
-		return FALSE;
+		if (!connection->use_srv) {
+			g_set_error (error,
+				     LM_ERROR,
+				     LM_ERROR_CONNECTION_FAILED,
+				     "You need to set the server hostname in the call to lm_connection_new()");
+			return FALSE;
+		} else {
+			if (!connection_get_server_from_jid (connection->jid,
+							     &connect_server)) {
+				g_set_error (error,
+					     LM_ERROR,
+					     LM_ERROR_CONNECTION_FAILED,
+					     "You need to either set server hostname or jid");
+				return FALSE;
+			}
+		}
+	} else {
+		connect_server = g_strdup (connection->server);
 	}
 
 	lm_message_queue_attach (connection->queue, connection->context);
@@ -423,12 +441,14 @@ connection_do_open (LmConnection *connection, GError **error)
 					       connection,
 					       connection,
 					       connection->blocking,
-					       connection->server,
+					       connect_server,
 					       connection->port,
-					       FALSE,
+					       connection->use_srv,
 					       connection->ssl,
 					       connection->proxy,
 					       error);
+	g_free (connect_server);
+
 	if (!connection->socket) {
 		return FALSE;
 	}
@@ -729,6 +749,27 @@ connection_incoming_data (LmSocket     *socket,
 	lm_parser_parse (connection->parser, buf);
 }
 
+static gboolean
+connection_get_server_from_jid (const gchar     *jid,
+				gchar          **server)
+{
+	gchar *ch;
+	gchar *ch_end;
+
+	if (jid != NULL && (ch = strchr (jid, '@')) != NULL) {
+		ch_end = strchr(ch + 1, '/');
+		if (ch_end != NULL) {
+			*server = g_strndup (ch + 1, ch_end - ch - 1);
+		} else {
+			*server = g_strdup (ch + 1);
+		}
+
+		return TRUE;
+	} 
+	
+	return FALSE;
+}
+
 void 
 _lm_connection_socket_result (LmConnection *connection, gboolean result)
 {
@@ -942,9 +983,11 @@ lm_connection_new (const gchar *server)
 	connection = g_new0 (LmConnection, 1);
 
 	if (server) {
-		connection->server = _lm_utils_hostname_to_punycode (server);
+		connection->server  = _lm_utils_hostname_to_punycode (server);
+		connection->use_srv = FALSE;
 	} else {
-		connection->server = NULL;
+		connection->server  = NULL;
+		connection->use_srv = TRUE;
 	}
 
 	connection->context           = NULL;
@@ -1149,8 +1192,7 @@ connection_sasl_auth_finished (LmSASL *sasl,
 			       gboolean success,
 			       const gchar *reason)
 {
-	gchar *server_from_jid;
-	gchar *ch;
+	gchar     *server_from_jid;
 	LmMessage *m;
 
 	if (!success) {
@@ -1159,10 +1201,8 @@ connection_sasl_auth_finished (LmSASL *sasl,
 		return;
 	}
 
-	if (connection->jid != NULL && (ch = strchr (connection->jid, '@')) != NULL) {
-		server_from_jid = ch + 1;
-	} else {
-		server_from_jid = connection->server;
+	if (!connection_get_server_from_jid (connection->jid, &server_from_jid)) {
+		server_from_jid = g_strdup (connection->server);
 	}
 
 	m = lm_message_new (server_from_jid, LM_MESSAGE_TYPE_STREAM);
@@ -1172,6 +1212,8 @@ connection_sasl_auth_finished (LmSASL *sasl,
 					"xmlns", "jabber:client",
 					"version", "1.0",
 					NULL);
+
+	g_free (server_from_jid);
 
 	lm_verbose ("Reopening XMPP 1.0 stream...");
 
@@ -1451,6 +1493,7 @@ lm_connection_set_server (LmConnection *connection, const gchar *server)
 	
 	g_free (connection->server);
 	connection->server = _lm_utils_hostname_to_punycode (server);
+	connection->use_srv = FALSE;
 }
 
 /**

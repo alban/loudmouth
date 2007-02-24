@@ -736,7 +736,10 @@ lm_socket_create (GMainContext      *context,
 
 		res_init ();
 
+
 		srv = g_strdup_printf ("_xmpp-client._tcp.%s", socket->server);
+		lm_verbose ("Performing a SRV lookup for %s\n", srv);
+
 		err = res_query (srv, C_IN, T_SRV, srv_ans, SRV_LEN);
 		if (err > 0) {
 			gchar    *new_server;
@@ -753,6 +756,8 @@ lm_socket_create (GMainContext      *context,
 			}
 		}
 		g_free (srv);
+	} else {
+		lm_verbose ("SRV lookup disabled for %s\n", socket->server);
 	}
 
 	if (context) {
