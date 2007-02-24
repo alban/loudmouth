@@ -147,7 +147,7 @@ main (int argc, char **argv)
 	g_option_context_parse (context, &argc, &argv, NULL);
 	g_option_context_free (context);
 	
-	if (!server || !username || !password || !recipient) {
+	if (!username || !password || !recipient) {
 		g_printerr ("For usage, try %s --help\n", argv[0]);
 		return EXIT_FAILURE;
 	}
