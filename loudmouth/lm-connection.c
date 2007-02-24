@@ -801,6 +801,12 @@ _lm_connection_set_async_connect_waiting (LmConnection *connection,
 static void
 connection_call_auth_cb (LmConnection *connection, gboolean success)
 {
+	if (success) {
+		connection->state = LM_CONNECTION_STATE_AUTHENTICATED;
+	} else {
+		connection->state = LM_CONNECTION_STATE_OPEN;
+	}
+
 	if (connection->auth_cb) {
 	        LmCallback *cb = connection->auth_cb;
 
