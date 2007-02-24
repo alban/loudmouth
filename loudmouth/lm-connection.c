@@ -822,23 +822,25 @@ connection_bind_reply (LmMessageHandler *handler,
 			LmMessage *message,
 			gpointer user_data)
 {
-	LmMessage *m;
-	LmMessageNode *session_node;
-	int result;
-	LmMessageSubType type;
+	LmMessage        *m;
+	LmMessageNode    *session_node;
+	int               result;
+	LmMessageSubType  type;
 
 	type = lm_message_get_sub_type (message);
 	if (type == LM_MESSAGE_SUB_TYPE_ERROR) {
 		g_debug ("%s: error while binding to resource", G_STRFUNC);
+	
 		connection_call_auth_cb (connection, FALSE);
+		
 		return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 	}
 
 	m = lm_message_new_with_sub_type (NULL,
-		LM_MESSAGE_TYPE_IQ, LM_MESSAGE_SUB_TYPE_SET);
+					  LM_MESSAGE_TYPE_IQ, 
+					  LM_MESSAGE_SUB_TYPE_SET);
 
-	session_node =
-		lm_message_node_add_child (m->node, "session", NULL);
+	session_node = lm_message_node_add_child (m->node, "session", NULL);
 	lm_message_node_set_attributes (session_node,
 					"xmlns", XMPP_NS_SESSION,
 					NULL);
@@ -862,13 +864,14 @@ _lm_connection_features_cb (LmMessageHandler *handler,
 			    gpointer user_data)
 {
 	LmMessageNode    *bind_node;
-	LmMessageHandler *new_handler;
-	LmMessage        *bind_msg;
-	const gchar      *ns;
-	int               result;
-
+	
 	bind_node = lm_message_node_find_child (message->node, "bind");
 	if (bind_node) {
+		LmMessageHandler *bind_handler;
+		LmMessage        *bind_msg;
+		const gchar      *ns;
+		int               result;
+
 		ns = lm_message_node_get_attribute (bind_node, "xmlns");
 		if (!ns || strcmp (ns, XMPP_NS_BIND) != 0) {
 			return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
@@ -887,11 +890,11 @@ _lm_connection_features_cb (LmMessageHandler *handler,
 		lm_message_node_add_child (bind_node, "resource",
 					   connection->resource);
 
-		new_handler = lm_message_handler_new (connection_bind_reply,
-						      NULL, NULL);
+		bind_handler = lm_message_handler_new (connection_bind_reply,
+						       NULL, NULL);
 		result = lm_connection_send_with_reply (connection, bind_msg, 
-							new_handler, NULL);
-		lm_message_handler_unref (new_handler);
+							bind_handler, NULL);
+		lm_message_handler_unref (bind_handler);
 		lm_message_unref (bind_msg);
 
 		if (result < 0) {
