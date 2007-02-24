@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- * Copyright (C) 2003-2006 Imendio AB
+ * Copyright (C) 2003-2007 Imendio AB
  * Copyright (C) 2006 Nokia Corporation. All rights reserved.
  * Copyright (C) 2007 Collabora Ltd.
  *
@@ -773,10 +773,8 @@ connection_get_server_from_jid (const gchar     *jid,
 void 
 _lm_connection_socket_result (LmConnection *connection, gboolean result)
 {
-	LmMessage    *m;
-	gchar        *server_from_jid;
-	gchar        *ch;
-	gchar        *ch_end;
+	LmMessage *m;
+	gchar     *server_from_jid;
 
 	if (!result) {
 		_lm_connection_do_close (connection);
@@ -805,14 +803,7 @@ _lm_connection_socket_result (LmConnection *connection, gboolean result)
 		return;
 	}
 
-	if (connection->jid != NULL && (ch = strchr (connection->jid, '@')) != NULL) {
-		ch_end = strchr(ch + 1, '/');
-		if (ch_end != NULL) {
-			server_from_jid = g_strndup (ch + 1, ch_end - ch - 1);
-		} else {
-			server_from_jid = g_strdup (ch + 1);
-		}
-	} else {
+	if (!connection_get_server_from_jid (connection->jid, &server_from_jid)) {
 		server_from_jid = g_strdup (connection->server);
 	}
 
@@ -824,6 +815,7 @@ _lm_connection_socket_result (LmConnection *connection, gboolean result)
 					"version", "1.0",
 					NULL);
 	
+	g_free (server_from_jid);
 	lm_verbose ("Opening stream...");
 
 	if (!lm_connection_send (connection, m, NULL)) {
@@ -831,7 +823,6 @@ _lm_connection_socket_result (LmConnection *connection, gboolean result)
 		_lm_connection_do_close (connection);
 	}
 		
-	g_free (server_from_jid);
 	lm_message_unref (m);
 }
 
