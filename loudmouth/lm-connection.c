@@ -340,6 +340,7 @@ _lm_connection_succeeded (LmConnectData *connect_data)
 	LmMessage    *m;
 	gchar        *server_from_jid;
 	gchar        *ch;
+	gchar        *ch_end;
 
 	connection = connect_data->connection;
 	
@@ -440,9 +441,14 @@ _lm_connection_succeeded (LmConnectData *connect_data)
 	}
 
 	if (connection->jid != NULL && (ch = strchr (connection->jid, '@')) != NULL) {
-		server_from_jid = ch + 1;
+		ch_end = strchr(ch + 1, '/');
+		if (ch_end != NULL) {
+			server_from_jid = g_strndup (ch + 1, ch_end - ch - 1);
+		} else {
+			server_from_jid = g_strdup (ch + 1);
+		}
 	} else {
-		server_from_jid = connection->server;
+		server_from_jid = g_strdup (connection->server);
 	}
 
 	m = lm_message_new (server_from_jid, LM_MESSAGE_TYPE_STREAM);
@@ -459,6 +465,7 @@ _lm_connection_succeeded (LmConnectData *connect_data)
 		connection_do_close (connection);
 	}
 		
+	g_free (server_from_jid);
 	lm_message_unref (m);
 }
 
