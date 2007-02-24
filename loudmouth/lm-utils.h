@@ -18,8 +18,8 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#ifndef __LM_UTIL_H__
-#define __LM_UTIL_H__
+#ifndef __LM_UTILS_H__
+#define __LM_UTILS_H__
 
 #if !defined (LM_INSIDE_LOUDMOUTH_H) && !defined (LM_COMPILATION)
 #error "Only <loudmouth/loudmouth.h> can be included directly, this file may di\sappear or change contents."
@@ -29,8 +29,8 @@
 
 G_BEGIN_DECLS
 
-struct tm *lm_utils_get_localtime (const gchar *stamp);
+struct tm * lm_utils_get_localtime (const gchar *stamp);
 
 G_END_DECLS
 
-#endif /* __LM_UTIL__ */
+#endif /* __LM_UTILS_H__ */
