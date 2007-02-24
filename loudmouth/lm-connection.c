@@ -425,6 +425,7 @@ connection_do_open (LmConnection *connection, GError **error)
 					       connection->blocking,
 					       connection->server,
 					       connection->port,
+					       FALSE,
 					       connection->ssl,
 					       connection->proxy,
 					       error);

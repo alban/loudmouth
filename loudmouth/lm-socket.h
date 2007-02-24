@@ -48,6 +48,7 @@ LmSocket *  lm_socket_create              (GMainContext   *context,
 					   gboolean        blocking,
 					   const gchar    *server, 
 					   guint           port, 
+					   gboolean        use_srv,
 					   LmSSL          *ssl,
 					   LmProxy        *proxy,
 					   GError        **error);

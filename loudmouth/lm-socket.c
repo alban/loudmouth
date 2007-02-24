@@ -39,6 +39,7 @@
 #define IN_BUFFER_SIZE 1024
 #define MIN_PORT 1
 #define MAX_PORT 65536
+#define SRV_LEN 8192
 
 struct _LmSocket {
 	LmConnection *connection;
@@ -46,6 +47,8 @@ struct _LmSocket {
 
 	gchar        *server;
 	guint         port;
+
+	gboolean      use_srv;
 
 	gboolean      blocking;
 
@@ -89,6 +92,10 @@ static gboolean
 socket_buffered_write_cb (GIOChannel   *source, 
 			      GIOCondition  condition,
 			      LmSocket     *socket);
+static gboolean socket_parse_srv_response (unsigned char  *srv, 
+					   int             srv_len, 
+					   gchar         **out_server, 
+					   guint          *out_port);
 
 static void
 socket_free (LmSocket *socket)
@@ -578,8 +585,8 @@ lm_socket_setup_output_buffer (LmSocket     *socket,
 
 static gboolean
 socket_buffered_write_cb (GIOChannel   *source, 
-			      GIOCondition  condition,
-			      LmSocket     *socket)
+			  GIOCondition  condition,
+			  LmSocket     *socket)
 {
 	gint     b_written;
 	GString *out_buf;
@@ -617,20 +624,27 @@ socket_buffered_write_cb (GIOChannel   *source,
 }
 
 static gboolean
-_parse_srv_response (unsigned char *srv, int srv_len, gchar **out_server, guint *out_port)
+socket_parse_srv_response (unsigned char  *srv, 
+			   int             srv_len, 
+			   gchar         **out_server, 
+			   guint          *out_port)
 {
-	int qdcount;
-	int ancount;
-	int len;
-	const unsigned char *pos = srv + sizeof(HEADER);
-	unsigned char *end = srv + srv_len;
-	HEADER *head = (HEADER *)srv;
-	char name[256];
-	char pref_name[256];
-	guint pref_port = 0;
-	guint pref_prio = 9999;
+	int                  qdcount;
+	int                  ancount;
+	int                  len;
+	const unsigned char *pos;
+	unsigned char       *end;
+	HEADER              *head;
+	char                 name[256];
+	char                 pref_name[256];
+	guint                pref_port = 0;
+	guint                pref_prio = 9999;
 
 	pref_name[0] = 0;
+
+	pos = srv + sizeof (HEADER);
+	end = srv + srv_len;
+	head = (HEADER *) srv;
 
 	qdcount = ntohs (head->qdcount);
 	ancount = ntohs (head->ancount);
@@ -645,6 +659,7 @@ _parse_srv_response (unsigned char *srv, int srv_len, gchar **out_server, guint 
 	while (ancount-- > 0 && (len = dn_expand (srv, end, pos, name, 255)) >= 0) {
 		/* Ignore the initial string */
 		uint16_t pref, weight, port;
+
 		g_assert (len >= 0);
 		pos += len;
 		/* Ignore type, ttl, class and dlen */
@@ -652,6 +667,7 @@ _parse_srv_response (unsigned char *srv, int srv_len, gchar **out_server, guint 
 		GETSHORT (pref, pos);
 		GETSHORT (weight, pos);
 		GETSHORT (port, pos);
+
 		len = dn_expand (srv, end, pos, name, 255);
 		if (pref < pref_prio) {
 			pref_prio = pref;
@@ -677,6 +693,7 @@ lm_socket_create (GMainContext      *context,
 		  gboolean           blocking,
 		  const gchar       *server,
 		  guint              port, 
+		  gboolean           use_srv,
 		  LmSSL             *ssl,
 		  LmProxy           *proxy,
 		  GError           **error)
@@ -687,10 +704,7 @@ lm_socket_create (GMainContext      *context,
 	const char      *remote_addr;
 	LmConnectData   *data;
 	int              err;
-	char            *srv;
-#define SRV_LEN 8192
-	unsigned char    srv_ans[SRV_LEN];
-
+	
 	g_return_val_if_fail (server != NULL, NULL);
 	g_return_val_if_fail ((port >= MIN_PORT && port <= MAX_PORT), NULL);
 	g_return_val_if_fail (func != NULL, NULL);
@@ -708,6 +722,7 @@ lm_socket_create (GMainContext      *context,
 	socket->connection = connection;
 	socket->server = g_strdup (server);
 	socket->port = port;
+	socket->use_srv = use_srv;
 	socket->cancel_open = FALSE;
 	socket->ssl = NULL;
 	socket->proxy = NULL;
@@ -715,13 +730,30 @@ lm_socket_create (GMainContext      *context,
 	socket->func = func;
 	socket->user_data = user_data;
 
-	res_init ();
-	srv = g_strdup_printf ("_xmpp-client._tcp.%s", socket->server);
-	err = res_query (srv, C_IN, T_SRV, srv_ans, SRV_LEN);
-	if (err > 0) {
-		_parse_srv_response (srv_ans, err, &(socket->server), &(socket->port));
+	if (use_srv) {
+		char          *srv;
+		unsigned char  srv_ans[SRV_LEN];
+
+		res_init ();
+
+		srv = g_strdup_printf ("_xmpp-client._tcp.%s", socket->server);
+		err = res_query (srv, C_IN, T_SRV, srv_ans, SRV_LEN);
+		if (err > 0) {
+			gchar    *new_server;
+			guint     new_port;
+			gboolean  result;
+			
+			result = socket_parse_srv_response (srv_ans, err, 
+							    &new_server, 
+							    &new_port);
+			if (result == TRUE) {
+				g_free (socket->server);
+				socket->server = new_server;
+				socket->port = new_port;
+			}
+		}
+		g_free (srv);
 	}
-	g_free (srv);
 
 	if (context) {
 		socket->context = g_main_context_ref (context);
@@ -774,6 +806,7 @@ lm_socket_create (GMainContext      *context,
 			"unable to connect");
 		return NULL;
 	}
+
 	return socket;
 }
 
