@@ -534,7 +534,8 @@ success_cb (LmMessageHandler *handler,
 		}
 		break;
 	case AUTH_TYPE_DIGEST:
-		if (sasl->state != SASL_AUTH_STATE_DIGEST_MD5_SENT_FINAL_RESPONSE) {
+		if (sasl->state != SASL_AUTH_STATE_DIGEST_MD5_SENT_AUTH_RESPONSE &&
+		    sasl->state != SASL_AUTH_STATE_DIGEST_MD5_SENT_FINAL_RESPONSE) {
 			g_debug ("%s: server sent success before finishing auth", G_STRFUNC);
 			if (sasl->handler) {
 				sasl->handler (sasl, sasl->connection, FALSE, "server error");
