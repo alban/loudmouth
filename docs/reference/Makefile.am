@@ -47,7 +47,7 @@ CFILE_GLOB=$(top_srcdir)/loudmouth/*.c
 
 # Header files to ignore when scanning.
 # e.g. IGNORE_HFILES=gtkdebug.h gtkintl.h
-IGNORE_HFILES=base64.h md5.h lm-internals.h lm-sha.h lm-parser.h lm-sock.h lm-socket.h lm-message-queue.h lm-ssl-base.h lm-ssl-internals.h loudmouth.h
+IGNORE_HFILES=base64.h md5.h lm-internals.h lm-sha.h lm-parser.h lm-sock.h lm-socket.h lm-message-queue.h lm-ssl-base.h lm-ssl-internals.h loudmouth.h lm-sasl.h lm-misc.h
 
 # Images to copy into HTML directory.
 # e.g. HTML_IMAGES=$(top_srcdir)/gtk/stock-icons/stock_about_24.png
