@@ -380,8 +380,7 @@ connection_send (LmConnection  *connection,
 }
 
 static void
-connection_message_queue_cb (LmMessageQueue  *queue,
-			     LmConnection    *connection)
+connection_message_queue_cb (LmMessageQueue *queue, LmConnection *connection)
 {
 	LmMessage *m;
 

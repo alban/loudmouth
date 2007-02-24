@@ -77,25 +77,24 @@ struct _LmSocket {
 	guint          ref_count;
 }; 
 
-static void         socket_free                 (LmSocket      *socket);
-static gboolean     socket_do_connect        (LmConnectData *connect_data);
-static gboolean     socket_connect_cb       (GIOChannel    *source, 
-						 GIOCondition   condition,
-						 LmConnectData *connect_data);
-static gboolean socket_in_event          (GIOChannel   *source,
-					      GIOCondition  condition,
-					      LmSocket     *socket);
-static gboolean socket_hup_event         (GIOChannel   *source,
-					      GIOCondition  condition,
-					      LmSocket     *socket);
-static gboolean
-socket_buffered_write_cb (GIOChannel   *source, 
-			      GIOCondition  condition,
-			      LmSocket     *socket);
-static gboolean socket_parse_srv_response (unsigned char  *srv, 
-					   int             srv_len, 
-					   gchar         **out_server, 
-					   guint          *out_port);
+static void         socket_free               (LmSocket       *socket);
+static gboolean     socket_do_connect         (LmConnectData  *connect_data);
+static gboolean     socket_connect_cb         (GIOChannel     *source, 
+					       GIOCondition    condition,
+					       LmConnectData  *connect_data);
+static gboolean     socket_in_event           (GIOChannel     *source,
+					       GIOCondition    condition,
+					       LmSocket       *socket);
+static gboolean     socket_hup_event          (GIOChannel     *source,
+					       GIOCondition    condition,
+					       LmSocket       *socket);
+static gboolean     socket_buffered_write_cb  (GIOChannel     *source, 
+					       GIOCondition    condition,
+					       LmSocket       *socket);
+static gboolean     socket_parse_srv_response (unsigned char  *srv, 
+					       int             srv_len, 
+					       gchar         **out_server, 
+					       guint          *out_port);
 
 static void
 socket_free (LmSocket *socket)
@@ -118,9 +117,7 @@ socket_free (LmSocket *socket)
 }
 
 gint
-lm_socket_do_write (LmSocket     *socket,
-		     const gchar  *buf,
-		     gint          len)
+lm_socket_do_write (LmSocket *socket, const gchar *buf, gint len)
 {
 	gint b_written;
 
@@ -148,11 +145,11 @@ lm_socket_do_write (LmSocket     *socket,
 }
 
 static gboolean
-socket_read_incoming (LmSocket     *socket,
-		      gchar        *buf,
-		      gsize         buf_size,
-		      gsize        *bytes_read,
-		      gboolean     *hangup)
+socket_read_incoming (LmSocket *socket,
+		      gchar    *buf,
+		      gsize     buf_size,
+		      gsize    *bytes_read,
+		      gboolean *hangup)
 {
 	GIOStatus status;
 
@@ -567,9 +564,7 @@ lm_socket_output_is_buffered (LmSocket     *socket,
 }
 
 void
-lm_socket_setup_output_buffer (LmSocket     *socket,
-				const gchar  *buffer,
-				gint          len)
+lm_socket_setup_output_buffer (LmSocket *socket, const gchar *buffer, gint len)
 {
 	lm_verbose ("OUTPUT BUFFER ENABLED\n");
 
