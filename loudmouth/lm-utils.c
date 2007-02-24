@@ -174,7 +174,7 @@ _lm_utils_hostname_to_punycode (const gchar *hostname)
 }
 
 /**
- * lm_utils_get_localtime
+ * lm_utils_get_localtime:
  * @stamp: An XMPP timestamp
  *
  * Converts an XMPP timestamp to a struct tm showing local time.
