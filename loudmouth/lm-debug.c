@@ -30,6 +30,7 @@ static const GDebugKey debug_keys[] = {
 	{"NET",          LM_LOG_LEVEL_NET},
 	{"PARSER",       LM_LOG_LEVEL_PARSER},
 	{"SSL",          LM_LOG_LEVEL_SSL},
+	{"SASL",         LM_LOG_LEVEL_SASL},
 	{"ALL",          LM_LOG_LEVEL_ALL}
 };
 
@@ -47,6 +48,12 @@ debug_log_handler (const gchar    *log_domain,
 		}
 		else if (log_level & LM_LOG_LEVEL_PARSER) {
 			g_print ("LM-PARSER: ");
+		} 
+		else if (log_level & LM_LOG_LEVEL_SASL) {
+			g_print ("LM-SASL: ");
+		}
+		else if (log_level & LM_LOG_LEVEL_SSL) {
+			g_print ("LM-SSL: ");
 		}
 	
 		g_print ("%s", message);

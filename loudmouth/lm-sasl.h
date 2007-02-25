@@ -36,11 +36,13 @@ typedef void (*LmSASLResultHandler) (LmSASL *sasl,
 				     gboolean success,
 				     const gchar *reason);
 
-LmSASL *lm_sasl_new (LmConnection *connection,
-		     const gchar *username,
-		     const gchar *password,
-		     const gchar *server,
-		     LmSASLResultHandler handler);
+LmSASL *lm_sasl_new (LmConnection *connection);
+
+void lm_sasl_authenticate (LmSASL *sasl, 
+			   const gchar *username,
+			   const gchar *password,
+			   const gchar *server,
+			   LmSASLResultHandler handler);
 
 void lm_sasl_free (LmSASL *sasl);
 

@@ -65,6 +65,9 @@ struct _LmSASL {
 	LmMessageHandler    *success_cb;
 	LmMessageHandler    *failure_cb;
 
+	gboolean             features_received;
+	gboolean             start_auth;
+
 	LmSASLResultHandler  handler;
 };
 
@@ -152,7 +155,9 @@ sasl_digest_md5_challenge_to_hash (const gchar * challenge)
 
 	return result;
 error:
-	g_debug ("Failed to parse challenge: %s", challenge);
+	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SASL, 
+	       "Failed to parse challenge: %s", challenge);
+
 	g_hash_table_destroy (result);
 	return NULL;
 }
@@ -209,7 +214,8 @@ sasl_md5_prepare_response (LmSASL *sasl, GHashTable *challenge)
 	response = g_string_new ("");
 
 	if (sasl->username == NULL || sasl->password == NULL) {
-		g_debug ("%s: no username or password provided", G_STRFUNC);
+		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SASL,
+		       "%s: no username or password provided", G_STRFUNC);
 		if (sasl->handler) {
 			sasl->handler (sasl, sasl->connection, 
 				       FALSE, "no username/password provided");
@@ -219,7 +225,9 @@ sasl_md5_prepare_response (LmSASL *sasl, GHashTable *challenge)
 
 	nonce = g_hash_table_lookup (challenge, "nonce");
 	if (nonce == NULL || nonce == '\0') {
-		g_debug ("%s: server didn't provide a nonce in the challenge", G_STRFUNC);
+		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SASL,
+		       "%s: server didn't provide a nonce in the challenge", 
+		       G_STRFUNC);
 		if (sasl->handler) {
 			sasl->handler (sasl, sasl->connection,
 				       FALSE, "server error");
@@ -393,7 +401,8 @@ sasl_digest_md5_handle_challenge (LmSASL *sasl, LmMessageNode *node)
 
 	encoded = lm_message_node_get_value (node);
 	if (!encoded) {
-		g_debug ("%s: got empty challenge!", G_STRFUNC);
+		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SASL,
+		       "%s: got empty challenge!", G_STRFUNC);
 		return FALSE;
 	}
 
@@ -402,7 +411,8 @@ sasl_digest_md5_handle_challenge (LmSASL *sasl, LmMessageNode *node)
 	g_free(challenge);
 
 	if (!h) {
-		g_debug ("%s: server sent an invalid challenge", G_STRFUNC);
+		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SASL,
+		       "%s: server sent an invalid challenge", G_STRFUNC);
 		if (sasl->handler) {
 			sasl->handler (sasl, sasl->connection, 
 				       FALSE, "server error");
@@ -418,7 +428,9 @@ sasl_digest_md5_handle_challenge (LmSASL *sasl, LmMessageNode *node)
 		sasl_digest_md5_check_server_response (sasl, h); 
 		break;
 	default:
-		g_debug ("%s: server sent a challenge at the wrong time", G_STRFUNC);
+		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SASL,
+		       "%s: server sent a challenge at the wrong time", 
+		       G_STRFUNC);
 		if (sasl->handler) {
 			sasl->handler (sasl, sasl->connection,
 				       FALSE, "server error");
@@ -489,7 +501,9 @@ sasl_success_cb (LmMessageHandler *handler,
 	switch (sasl->auth_type) {
 	case AUTH_TYPE_PLAIN:
 		if (sasl->state != SASL_AUTH_STATE_PLAIN_STARTED) {
-			g_debug ("%s: server sent success before finishing auth", G_STRFUNC);
+			g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SASL,
+			       "%s: server sent success before finishing auth", 
+			       G_STRFUNC);
 			if (sasl->handler) {
 				sasl->handler (sasl, sasl->connection, 
 					       FALSE, "server error");
@@ -499,7 +513,9 @@ sasl_success_cb (LmMessageHandler *handler,
 	case AUTH_TYPE_DIGEST:
 		if (sasl->state != SASL_AUTH_STATE_DIGEST_MD5_SENT_AUTH_RESPONSE &&
 		    sasl->state != SASL_AUTH_STATE_DIGEST_MD5_SENT_FINAL_RESPONSE) {
-			g_debug ("%s: server sent success before finishing auth", G_STRFUNC);
+			g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SASL,
+			       "%s: server sent success before finishing auth", 
+			       G_STRFUNC);
 			if (sasl->handler) {
 				sasl->handler (sasl, sasl->connection, 
 					       FALSE, "server error");
@@ -511,7 +527,8 @@ sasl_success_cb (LmMessageHandler *handler,
 		break;
 	}
 
-	g_debug ("%s: SASL authentication successful", G_STRFUNC);
+	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SASL,
+	       "%s: SASL authentication successful", G_STRFUNC);
 
 	if (sasl->handler) {
 		sasl->handler (sasl, sasl->connection, TRUE, NULL);
@@ -547,7 +564,8 @@ sasl_failure_cb (LmMessageHandler *handler,
 		}
 	}
 	
-	g_debug ("%s: SASL authentication failed: %s", G_STRFUNC, reason);
+	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SASL,
+	       "%s: SASL authentication failed: %s", G_STRFUNC, reason);
 
 	if (sasl->handler) {
 		sasl->handler (sasl, sasl->connection, FALSE, reason);
@@ -576,7 +594,9 @@ sasl_start (LmSASL *sasl)
 		sasl->state = SASL_AUTH_STATE_PLAIN_STARTED;
 
 		if (sasl->username == NULL || sasl->password == NULL) {
-			g_debug ("%s: no username or password provided", G_STRFUNC);
+			g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SASL,
+			       "%s: no username or password provided", 
+			       G_STRFUNC);
 			if (sasl->handler) {
 				sasl->handler (sasl, sasl->connection, FALSE, "no username/password provided");
 			}
@@ -623,11 +643,12 @@ sasl_start (LmSASL *sasl)
 }
 
 static gboolean
-lm_sasl_authenticate (LmSASL *sasl, LmMessageNode *mechanisms)
+sasl_set_auth_type (LmSASL *sasl, LmMessageNode *mechanisms)
 {
 	LmMessageNode *m;
-	AuthType       auth_type = 0;
 	const gchar   *ns;
+
+	sasl->auth_type = 0;
 
 	ns = lm_message_node_get_attribute (mechanisms, "xmlns");
 	if (!ns || strcmp (ns, XMPP_NS_SASL_AUTH) != 0) {
@@ -643,25 +664,38 @@ lm_sasl_authenticate (LmSASL *sasl, LmMessageNode *mechanisms)
 			continue;
 		}
 		if (strcmp (name, "PLAIN") == 0) {
-			auth_type |= AUTH_TYPE_PLAIN;
+			sasl->auth_type |= AUTH_TYPE_PLAIN;
 			continue;
 		}
 		if (strcmp (name, "DIGEST-MD5") == 0) {
-			auth_type |= AUTH_TYPE_DIGEST;
+			sasl->auth_type |= AUTH_TYPE_DIGEST;
 			continue;
 		}
-		g_debug ("%s: unknown SASL auth mechanism: %s", G_STRFUNC, name);
+
+		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SASL,
+		       "%s: unknown SASL auth mechanism: %s", G_STRFUNC, name);
 	}
-	if (auth_type == 0) {
-		g_debug ("%s: no supported SASL auth mechanisms found", G_STRFUNC);
+
+	return TRUE;
+}
+
+static gboolean
+sasl_authenticate (LmSASL *sasl)
+{
+	if (sasl->auth_type == 0) {
+		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SASL,
+		      "%s: no supported SASL auth mechanisms found",
+		      G_STRFUNC);
+
 		return FALSE;
 	}
+
 	/* Prefer DIGEST */
-	if (auth_type & AUTH_TYPE_DIGEST) {
+	if (sasl->auth_type & AUTH_TYPE_DIGEST) {
 		sasl->auth_type = AUTH_TYPE_DIGEST;
 		return sasl_start (sasl);
 	}
-	else if (auth_type & AUTH_TYPE_PLAIN) {
+	else if (sasl->auth_type & AUTH_TYPE_PLAIN) {
 		sasl->auth_type = AUTH_TYPE_PLAIN;
 		return sasl_start (sasl);
 	} 
@@ -678,45 +712,62 @@ sasl_features_cb (LmMessageHandler *handler,
     	LmMessageNode *mechanisms;
 	LmSASL        *sasl;
 
+	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SASL, "Stream features received\n");
 	mechanisms = lm_message_node_find_child (message->node, "mechanisms");
 	if (!mechanisms) {
 		return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 	}
 
 	sasl = (LmSASL *) user_data;
+	sasl->features_received = TRUE;
 
-	lm_sasl_authenticate (sasl, mechanisms);
+	sasl_set_auth_type (sasl, mechanisms);
+
+	if (sasl->start_auth) {
+		sasl_authenticate (sasl);
+	}
 
 	return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
 
 LmSASL *
-lm_sasl_new (LmConnection        *connection,
-	     const gchar         *username,
-	     const gchar         *password,
-	     const gchar         *server,
-	     LmSASLResultHandler  handler)
+lm_sasl_new (LmConnection *connection)
 {
-	LmSASL *sasl = g_new0 (LmSASL, 1);
+	LmSASL *sasl;
+	
+	sasl = g_new0 (LmSASL, 1);
 
 	sasl->connection = connection;
+	sasl->features_received = FALSE;
+	sasl->start_auth = FALSE;
+
+	sasl->features_cb = lm_message_handler_new (sasl_features_cb,
+						    sasl,
+						    NULL);
+
+	lm_connection_register_message_handler (connection,
+						sasl->features_cb,
+						LM_MESSAGE_TYPE_STREAM_FEATURES,
+						LM_HANDLER_PRIORITY_FIRST);
+	return sasl;
+}
+
+void
+lm_sasl_authenticate (LmSASL              *sasl,
+		      const gchar         *username,
+		      const gchar         *password,
+		      const gchar         *server,
+		      LmSASLResultHandler  handler)
+{
 	sasl->username   = g_strdup (username);
 	sasl->password   = g_strdup (password);
 	sasl->server     = g_strdup (server);
 	sasl->handler    = handler;
 
-	sasl->features_cb = lm_message_handler_new (sasl_features_cb,
-						    sasl,
-						    NULL);
-	lm_connection_register_message_handler (connection,
-						sasl->features_cb,
-						LM_MESSAGE_TYPE_STREAM_FEATURES,
-						LM_HANDLER_PRIORITY_FIRST);
-
 	sasl->challenge_cb = lm_message_handler_new (sasl_challenge_cb,
 						     sasl,
 						     NULL);
-	lm_connection_register_message_handler (connection,
+	lm_connection_register_message_handler (sasl->connection,
 						sasl->challenge_cb,
 						LM_MESSAGE_TYPE_CHALLENGE,
 						LM_HANDLER_PRIORITY_FIRST);
@@ -724,7 +775,7 @@ lm_sasl_new (LmConnection        *connection,
 	sasl->success_cb = lm_message_handler_new (sasl_success_cb,
 						   sasl,
 						   NULL);
-	lm_connection_register_message_handler (connection,
+	lm_connection_register_message_handler (sasl->connection,
 						sasl->success_cb,
 						LM_MESSAGE_TYPE_SUCCESS,
 						LM_HANDLER_PRIORITY_FIRST);
@@ -732,11 +783,16 @@ lm_sasl_new (LmConnection        *connection,
 	sasl->failure_cb = lm_message_handler_new (sasl_failure_cb,
 						   sasl,
 						   NULL);
-	lm_connection_register_message_handler (connection,
+	lm_connection_register_message_handler (sasl->connection,
 						sasl->failure_cb,
 						LM_MESSAGE_TYPE_FAILURE,
 						LM_HANDLER_PRIORITY_FIRST);
-	return sasl;
+
+	if (sasl->features_received) {
+		sasl_authenticate (sasl);
+	} else {
+		sasl->start_auth = TRUE;
+	}
 }
 
 void

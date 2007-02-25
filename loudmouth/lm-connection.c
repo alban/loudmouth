@@ -696,6 +696,8 @@ connection_stream_received (LmConnection *connection, LmMessage *m)
 			    connection->stream_id);
 
 		connection->use_xmpp = TRUE;
+		
+		connection->sasl = lm_sasl_new (connection);
 	} else {
 		lm_verbose ("Old Jabber stream received: %s\n", 
 			    connection->stream_id);
@@ -872,9 +874,9 @@ connection_call_auth_cb (LmConnection *connection, gboolean success)
 
 static LmHandlerResult
 connection_bind_reply (LmMessageHandler *handler,
-			LmConnection *connection,
-			LmMessage *message,
-			gpointer user_data)
+			LmConnection    *connection,
+			LmMessage       *message,
+			gpointer         user_data)
 {
 	LmMessage        *m;
 	LmMessageNode    *session_node;
@@ -913,11 +915,11 @@ connection_bind_reply (LmMessageHandler *handler,
 
 static LmHandlerResult
 _lm_connection_features_cb (LmMessageHandler *handler,
-			    LmConnection *connection,
-			    LmMessage *message,
-			    gpointer user_data)
+			    LmConnection     *connection,
+			    LmMessage        *message,
+			    gpointer          user_data)
 {
-	LmMessageNode    *bind_node;
+	LmMessageNode *bind_node;
 	
 	bind_node = lm_message_node_find_child (message->node, "bind");
 	if (bind_node) {
@@ -1249,11 +1251,11 @@ lm_connection_authenticate (LmConnection      *connection,
 						      notify);
 
 	if (connection->use_xmpp) {
-		connection->sasl = lm_sasl_new (connection,
-						username,
-						password,
-						connection->server,
-						connection_sasl_auth_finished);
+		lm_sasl_authenticate (connection->sasl,
+				      username, password,
+				      connection->server,
+				      connection_sasl_auth_finished);
+
 		connection->resource = g_strdup (resource);
 
 		connection->features_cb  =
