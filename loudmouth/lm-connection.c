@@ -115,6 +115,7 @@ static void     connection_new_message_cb    (LmParser             *parser,
 					      LmConnection         *connection);
 static gboolean connection_do_open           (LmConnection         *connection,
 					      GError              **error);
+void            connection_do_close          (LmConnection         *connection);
 
 
 static LmMessage *     connection_create_auth_req_msg (const gchar *username);
@@ -149,12 +150,25 @@ static gboolean  connection_send                 (LmConnection    *connection,
 						  GError         **error);
 static void      connection_message_queue_cb     (LmMessageQueue  *queue,
 						  LmConnection    *connection);
+static void      connection_signal_disconnect    (LmConnection       *connection,
+						  LmDisconnectReason  reason);
 static void      connection_incoming_data        (LmSocket        *socket, 
 						  const gchar     *buf,
 						  LmConnection    *connection);
+static void      connection_socket_closed_cb     (LmSocket        *socket,
+						  LmDisconnectReason reason,
+						  LmConnection       *connection);
+static void      connection_socket_connect_cb    (LmSocket           *socket,
+						  gboolean            result,
+						  LmConnection       *connection);
+
 static gboolean  connection_get_server_from_jid  (const gchar     *jid,
 						  gchar          **server);
 static void      connection_send_stream_header   (LmConnection    *connection);
+static LmHandlerResult connection_features_cb (LmMessageHandler *handler,
+					       LmConnection     *connection,
+					       LmMessage        *message,
+					       gpointer          user_data);
 
 static void
 connection_free (LmConnection *connection)
@@ -190,7 +204,7 @@ connection_free (LmConnection *connection)
 
 	g_hash_table_destroy (connection->id_handlers);
 	if (connection->state >= LM_CONNECTION_STATE_OPENING) {
-		_lm_connection_do_close (connection);
+		connection_do_close (connection);
 	}
 
 	if (connection->open_cb) {
@@ -364,9 +378,9 @@ connection_send (LmConnection  *connection,
 	b_written = lm_socket_do_write (connection->socket, str, len);
 
 	if (b_written < 0) {
-		_lm_connection_error_event (connection->socket, 
-					    G_IO_HUP,
-					    connection);
+		connection_do_close (connection);
+		connection_signal_disconnect (connection, 
+					      LM_DISCONNECT_REASON_ERROR);
 		return FALSE;
 	}
 
@@ -438,6 +452,8 @@ connection_do_open (LmConnection *connection, GError **error)
 
 	connection->socket = lm_socket_create (connection->context,
 					       (IncomingDataFunc) connection_incoming_data,
+					       (SocketClosedFunc) connection_socket_closed_cb,
+					       (ConnectResultFunc) connection_socket_connect_cb,
 					       connection,
 					       connection,
 					       connection->blocking,
@@ -457,7 +473,7 @@ connection_do_open (LmConnection *connection, GError **error)
 }
 					
 void
-_lm_connection_do_close (LmConnection *connection)
+connection_do_close (LmConnection *connection)
 {
 	connection_stop_keep_alive (connection);
 
@@ -479,24 +495,6 @@ _lm_connection_do_close (LmConnection *connection)
 	if (connection->ssl) {
 		_lm_ssl_close (connection->ssl);
 	}
-}
-
-gboolean
-_lm_connection_error_event (LmSocket     *socket,
-			GIOCondition  condition,
-			LmConnection *connection)
-{
-	lm_verbose ("Error event: %d->'%s'\n", 
-		    condition, lm_misc_io_condition_to_str (condition));
-
-	if (!connection->socket) {
-		return FALSE;
-	}
-
-	_lm_connection_do_close (connection);
-	_lm_connection_signal_disconnect (connection, LM_DISCONNECT_REASON_ERROR);
-	
-	return TRUE;
 }
 
 typedef struct {
@@ -730,8 +728,8 @@ connection_handler_compare_func (HandlerData *a, HandlerData *b)
 	return b->priority - a->priority;
 }
 
-void
-_lm_connection_signal_disconnect (LmConnection       *connection,
+static void
+connection_signal_disconnect (LmConnection       *connection,
 			      LmDisconnectReason  reason)
 {
 	if (connection->disconnect_cb && connection->disconnect_cb->func) {
@@ -749,6 +747,50 @@ connection_incoming_data (LmSocket     *socket,
 			  LmConnection *connection)
 {
 	lm_parser_parse (connection->parser, buf);
+}
+
+static void
+connection_socket_closed_cb (LmSocket        *socket,
+			     LmDisconnectReason reason,
+			     LmConnection       *connection)
+{
+	connection_do_close (connection);
+	connection_signal_disconnect (connection, reason);
+}
+
+static void
+connection_socket_connect_cb (LmSocket           *socket,
+			      gboolean            result,
+			      LmConnection       *connection)
+{
+	if (!result) {
+		connection_do_close (connection);
+
+		if (connection->open_cb) {
+			LmCallback *cb = connection->open_cb;
+
+			connection->open_cb = NULL;
+			
+			(* ((LmResultFunction) cb->func)) (connection, FALSE,
+							   cb->user_data);
+			_lm_utils_free_callback (cb);
+		}
+	
+		return;
+	}
+	
+	/* FIXME: Set up according to XMPP 1.0 specification */
+	/*        StartTLS and the like */
+	if (!connection_send (connection, 
+			      "<?xml version='1.0' encoding='UTF-8'?>", -1,
+			      NULL)) {
+		lm_verbose ("Failed to send xml version and encoding\n");
+		connection_do_close (connection);
+
+		return;
+	}
+
+	connection_send_stream_header (connection);
 }
 
 static gboolean
@@ -796,43 +838,10 @@ connection_send_stream_header (LmConnection *connection)
 
 	if (!lm_connection_send (connection, m, NULL)) {
 		lm_verbose ("Failed to send stream information\n");
-		_lm_connection_do_close (connection);
+		connection_do_close (connection);
 	}
 		
 	lm_message_unref (m);
-}
-
-void 
-_lm_connection_socket_result (LmConnection *connection, gboolean result)
-{
-	if (!result) {
-		_lm_connection_do_close (connection);
-
-		if (connection->open_cb) {
-			LmCallback *cb = connection->open_cb;
-
-			connection->open_cb = NULL;
-			
-			(* ((LmResultFunction) cb->func)) (connection, FALSE,
-							   cb->user_data);
-			_lm_utils_free_callback (cb);
-		}
-	
-		return;
-	}
-	
-	/* FIXME: Set up according to XMPP 1.0 specification */
-	/*        StartTLS and the like */
-	if (!connection_send (connection, 
-			      "<?xml version='1.0' encoding='UTF-8'?>", -1,
-			      NULL)) {
-		lm_verbose ("Failed to send xml version and encoding\n");
-		_lm_connection_do_close (connection);
-
-		return;
-	}
-
-	connection_send_stream_header (connection);
 }
 
 gboolean 
@@ -904,7 +913,7 @@ connection_bind_reply (LmMessageHandler *handler,
 	result = lm_connection_send (connection, m, NULL);
 	lm_message_unref (m);
 	if (result < 0) {
-		_lm_connection_do_close (connection);
+		connection_do_close (connection);
 	}
 
 	/* We may finally tell the client they're authorized */
@@ -914,7 +923,7 @@ connection_bind_reply (LmMessageHandler *handler,
 }
 
 static LmHandlerResult
-_lm_connection_features_cb (LmMessageHandler *handler,
+connection_features_cb (LmMessageHandler *handler,
 			    LmConnection     *connection,
 			    LmMessage        *message,
 			    gpointer          user_data)
@@ -955,7 +964,7 @@ _lm_connection_features_cb (LmMessageHandler *handler,
 
 		if (result < 0) {
 			g_debug ("%s: can't send resource binding request", G_STRFUNC);
-			_lm_connection_do_close (connection);
+			connection_do_close (connection);
 		}
 	}
 
@@ -1180,8 +1189,8 @@ lm_connection_close (LmConnection      *connection,
 		lm_socket_flush (connection->socket);
 	}
 	
-	_lm_connection_do_close (connection);
-	_lm_connection_signal_disconnect (connection, LM_DISCONNECT_REASON_OK);
+	connection_do_close (connection);
+	connection_signal_disconnect (connection, LM_DISCONNECT_REASON_OK);
 	
 	return no_errors;
 }
@@ -1259,7 +1268,7 @@ lm_connection_authenticate (LmConnection      *connection,
 		connection->resource = g_strdup (resource);
 
 		connection->features_cb  =
-			lm_message_handler_new (_lm_connection_features_cb,
+			lm_message_handler_new (connection_features_cb,
 				NULL, NULL);
 		lm_connection_register_message_handler (connection,
 			connection->features_cb,

@@ -60,15 +60,6 @@ gboolean         _lm_socket_failed_with_error (LmConnectData *connect_data,
                                                    int error);
 gboolean         _lm_socket_failed            (LmConnectData *connect_data);
 void             _lm_socket_succeeded         (LmConnectData *connect_data);
-gboolean         _lm_connection_error_event (LmSocket     *socket,
-					     GIOCondition  condition,
-					     LmConnection *connection);
-void     _lm_connection_do_close           (LmConnection        *connection);
-void     _lm_connection_signal_disconnect (LmConnection       *connection,
-					   LmDisconnectReason  reason);
-
-void     _lm_connection_socket_result (LmConnection *connection,
-				       gboolean      result);
 gboolean _lm_connection_async_connect_waiting (LmConnection *connection);
 void _lm_connection_set_async_connect_waiting (LmConnection *connection,
 					       gboolean      waiting);

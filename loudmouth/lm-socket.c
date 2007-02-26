@@ -71,7 +71,9 @@ struct _LmSocket {
 
 	LmConnectData *connect_data;
 
-	IncomingDataFunc func;
+	IncomingDataFunc data_func;
+	SocketClosedFunc closed_func;
+	ConnectResultFunc connect_func;
 	gpointer         user_data;
 
 	guint          ref_count;
@@ -86,6 +88,9 @@ static gboolean     socket_in_event           (GIOChannel     *source,
 					       GIOCondition    condition,
 					       LmSocket       *socket);
 static gboolean     socket_hup_event          (GIOChannel     *source,
+					       GIOCondition    condition,
+					       LmSocket       *socket);
+static gboolean     socket_error_event        (GIOChannel     *source,
 					       GIOCondition    condition,
 					       LmSocket       *socket);
 static gboolean     socket_buffered_write_cb  (GIOChannel     *source, 
@@ -183,8 +188,7 @@ socket_read_incoming (LmSocket *socket,
 			reason = LM_DISCONNECT_REASON_UNKNOWN;
 		}
 
-		_lm_connection_do_close (socket->connection);
-		_lm_connection_signal_disconnect (socket->connection, reason);
+		(socket->closed_func) (socket, reason, socket->user_data);
 
 		/* Notify connection_in_event that we hangup the connection */
 		*hangup = TRUE;
@@ -224,7 +228,7 @@ socket_in_event (GIOChannel   *source,
 		
 		lm_verbose ("Read: %d chars\n", (int)bytes_read);
 
-		(socket->func) (socket, buf, socket->user_data);
+		(socket->data_func) (socket, buf, socket->user_data);
 	}
 
 	if (hangup) {
@@ -246,9 +250,26 @@ socket_hup_event (GIOChannel   *source,
 		return FALSE;
 	}
 
-	_lm_connection_do_close (socket->connection);
-	_lm_connection_signal_disconnect (socket->connection, 
-					  LM_DISCONNECT_REASON_HUP);
+	(socket->closed_func) (socket, LM_DISCONNECT_REASON_HUP, 
+			       socket->user_data);
+	
+	return TRUE;
+}
+
+static gboolean
+socket_error_event (GIOChannel   *source,
+		    GIOCondition  condition,
+		    LmSocket     *socket)
+{
+	lm_verbose ("ERROR event: %d->'%s'\n", 
+		    condition, lm_misc_io_condition_to_str (condition));
+
+	if (!socket->io_channel) {
+		return FALSE;
+	}
+
+	(socket->closed_func) (socket, LM_DISCONNECT_REASON_ERROR, 
+			       socket->user_data);
 	
 	return TRUE;
 }
@@ -268,7 +289,7 @@ _lm_socket_succeeded (LmConnectData *connect_data)
 	/* Need some way to report error/success */
 	if (socket->cancel_open) {
 		lm_verbose ("Cancelling connection...\n");
-		_lm_connection_socket_result (socket->connection, FALSE);
+		(socket->connect_func) (socket, FALSE, socket->user_data);
 		return;
 	}
 	
@@ -303,9 +324,8 @@ _lm_socket_succeeded (LmConnectData *connect_data)
  			_lm_sock_shutdown (socket->fd);
  			_lm_sock_close (socket->fd);
 
-			_lm_connection_do_close (socket->connection);
-
-			_lm_connection_socket_result (socket->connection, FALSE);
+			(socket->connect_func) (socket, FALSE, 
+						socket->user_data);
 			return;
 		}
 	
@@ -330,7 +350,7 @@ _lm_socket_succeeded (LmConnectData *connect_data)
 		lm_misc_add_io_watch (socket->context,
 				      socket->io_channel,
 				      G_IO_ERR,
-				      (GIOFunc) _lm_connection_error_event,
+				      (GIOFunc) socket_error_event,
 				      socket);
 		
 	socket->watch_hup =
@@ -341,7 +361,7 @@ _lm_socket_succeeded (LmConnectData *connect_data)
 				      socket);
 #endif
 
-	_lm_connection_socket_result (socket->connection, TRUE);
+	(socket->connect_func) (socket, TRUE, socket->user_data);
 }
 
 gboolean 
@@ -368,7 +388,7 @@ _lm_socket_failed_with_error (LmConnectData *connect_data, int error)
 	}
 	
 	if (connect_data->current_addr == NULL) {
-		_lm_connection_socket_result (socket->connection, FALSE);
+		(socket->connect_func) (socket, FALSE, socket->user_data);
 		
 		 /* if the user callback called connection_close(), this is already freed */
 		if (socket->connect_data != NULL) {
@@ -596,8 +616,8 @@ socket_buffered_write_cb (GIOChannel   *source,
 	b_written = lm_socket_do_write (socket, out_buf->str, out_buf->len);
 
 	if (b_written < 0) {
-		_lm_connection_error_event (socket,
-					    G_IO_HUP, socket->connection);
+		(socket->closed_func) (socket, LM_DISCONNECT_REASON_ERROR, 
+				       socket->user_data);
 		return FALSE;
 	}
 
@@ -682,7 +702,9 @@ socket_parse_srv_response (unsigned char  *srv,
 
 LmSocket *
 lm_socket_create (GMainContext      *context,
-		  IncomingDataFunc   func,
+		  IncomingDataFunc   data_func,
+		  SocketClosedFunc   closed_func,
+		  ConnectResultFunc  connect_func,
 		  gpointer           user_data,
 		  LmConnection      *connection,
 		  gboolean           blocking,
@@ -702,7 +724,9 @@ lm_socket_create (GMainContext      *context,
 	
 	g_return_val_if_fail (server != NULL, NULL);
 	g_return_val_if_fail ((port >= MIN_PORT && port <= MAX_PORT), NULL);
-	g_return_val_if_fail (func != NULL, NULL);
+	g_return_val_if_fail (data_func != NULL, NULL);
+	g_return_val_if_fail (closed_func != NULL, NULL);
+	g_return_val_if_fail (connect_func != NULL, NULL);
 
 	socket = g_new0 (LmSocket, 1);
 
@@ -722,7 +746,9 @@ lm_socket_create (GMainContext      *context,
 	socket->ssl = NULL;
 	socket->proxy = NULL;
 	socket->blocking = blocking;
-	socket->func = func;
+	socket->data_func = data_func;
+	socket->closed_func = closed_func;
+	socket->connect_func = connect_func;
 	socket->user_data = user_data;
 
 	if (use_srv) {

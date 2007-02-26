@@ -31,6 +31,14 @@ typedef void    (* IncomingDataFunc)  (LmSocket       *socket,
 				       const gchar    *buf,
 				       gpointer        user_data);
 
+typedef void    (* SocketClosedFunc)  (LmSocket       *socket,
+				       LmDisconnectReason reason,
+				       gpointer        user_data);
+
+typedef void    (* ConnectResultFunc) (LmSocket        *socket,
+				       gboolean         result,
+				       gpointer         user_data);
+
 gboolean  lm_socket_output_is_buffered    (LmSocket       *socket,
 					   const gchar    *buffer,
 					   gint            len);
@@ -42,7 +50,9 @@ gint      lm_socket_do_write              (LmSocket       *socket,
 					   gint            len);
 
 LmSocket *  lm_socket_create              (GMainContext   *context, 
-					   IncomingDataFunc func,
+					   IncomingDataFunc data_func,
+					   SocketClosedFunc closed_func,
+					   ConnectResultFunc connect_func,
 					   gpointer         user_data,
 					   LmConnection   *connection,
 					   gboolean        blocking,
