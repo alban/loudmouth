@@ -510,14 +510,6 @@ _lm_connection_failed_with_error (LmConnectData *connect_data, int error)
 							   cb->user_data);
 			_lm_utils_free_callback (cb);
 		}
-		
-		/* If the user callback called connection_close(), this is
-		 * already freed */
-		if (connection->connect_data) {
-			freeaddrinfo (connect_data->resolved_addrs);
-			connection->connect_data = NULL;
-			g_free (connect_data);
-		}
 	} else {
 		/* try to connect to the next host */
 		connection_do_connect (connect_data);
