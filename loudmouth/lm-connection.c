@@ -171,7 +171,7 @@ static GSource * connection_create_source       (LmConnection *connection);
 static void      connection_signal_disconnect   (LmConnection *connection,
 						 LmDisconnectReason reason);
 
-static void     connection_do_connect           (LmConnectData *connect_data);
+static gboolean connection_do_connect           (LmConnectData *connect_data);
 static guint    connection_add_watch            (LmConnection  *connection,
 						 GIOChannel    *channel,
 						 GIOCondition   condition,
@@ -469,7 +469,7 @@ _lm_connection_succeeded (LmConnectData *connect_data)
 	lm_message_unref (m);
 }
 
-void 
+gboolean 
 _lm_connection_failed_with_error (LmConnectData *connect_data, int error) 
 {
 	LmConnection *connection;
@@ -512,15 +512,17 @@ _lm_connection_failed_with_error (LmConnectData *connect_data, int error)
 		}
 	} else {
 		/* try to connect to the next host */
-		connection_do_connect (connect_data);
+		return connection_do_connect (connect_data);
 	}
+
+	return FALSE;
 }
 
-void 
+gboolean
 _lm_connection_failed (LmConnectData *connect_data)
 {
-	_lm_connection_failed_with_error (connect_data, 
-					  _lm_sock_get_last_error());
+	return _lm_connection_failed_with_error (connect_data, 
+						 _lm_sock_get_last_error());
 }
 
 static gboolean 
@@ -585,7 +587,7 @@ connection_connect_cb (GIOChannel   *source,
 		/* for blocking sockets, G_IO_OUT means we are connected */
 		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET,
 		       "Connection success.\n");
-		
+
 		_lm_connection_succeeded (connect_data);
 	}
 
@@ -613,7 +615,7 @@ connection_condition_to_str (GIOCondition condition)
 	return buf;
 }
 
-static void
+static gboolean
 connection_do_connect (LmConnectData *connect_data) 
 {
 	LmConnection    *connection;
@@ -642,8 +644,7 @@ connection_do_connect (LmConnectData *connect_data)
 			   NI_NUMERICHOST | NI_NUMERICSERV);
 	
 	if (res < 0) {
-		_lm_connection_failed (connect_data);
-		return;
+		return _lm_connection_failed (connect_data);
 	}
 
 	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET,
@@ -658,9 +659,7 @@ connection_do_connect (LmConnectData *connect_data)
 		       "Failed making socket, error:%d...\n",
 		       _lm_sock_get_last_error ());
 
-		_lm_connection_failed (connect_data);
-
-		return;
+		return _lm_connection_failed (connect_data);
 	}
 
 	/* Even though it says _unix_new(), it is supported by glib on
@@ -700,11 +699,11 @@ connection_do_connect (LmConnectData *connect_data)
 		err = _lm_sock_get_last_error ();
 		if (!_lm_sock_is_blocking_error (err)) {
 			_lm_sock_close (connect_data->fd);
-			_lm_connection_failed_with_error (connect_data, err);
-
-			return;
+			return _lm_connection_failed_with_error (connect_data, err);
 		}
 	}
+
+	return TRUE;
 }
 
 static guint
@@ -944,7 +943,14 @@ connection_do_open (LmConnection *connection, GError **error)
 
 	connection->connect_data = data;
 
-	connection_do_connect (data);
+	if (!connection_do_connect (data)) {
+		g_set_error (error,
+			LM_ERROR,                 
+			LM_ERROR_CONNECTION_FAILED,
+			"unable to connect");
+		return FALSE;
+	}
+
 	return TRUE;
 }
 					

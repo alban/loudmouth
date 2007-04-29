@@ -54,9 +54,9 @@ typedef struct {
 	GIOChannel      *io_channel;
 } LmConnectData;
 
-void             _lm_connection_failed_with_error (LmConnectData *connect_data,
+gboolean         _lm_connection_failed_with_error (LmConnectData *connect_data,
                                                    int error);
-void             _lm_connection_failed            (LmConnectData *connect_data);
+gboolean         _lm_connection_failed            (LmConnectData *connect_data);
 void             _lm_connection_succeeded         (LmConnectData *connect_data);
 LmCallback *     _lm_utils_new_callback             (gpointer          func, 
 						     gpointer          data,
