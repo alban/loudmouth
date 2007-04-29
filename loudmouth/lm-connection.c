@@ -100,6 +100,8 @@ struct _LmConnection {
 
 	LmConnectData *connect_data;
 
+	LmDisconnectReason disconnect_reason;
+
 	gint          ref_count;
 };
 
@@ -156,6 +158,8 @@ static LmHandlerResult connection_auth_reply (LmMessageHandler    *handler,
 					      LmMessage           *m,
 					      gpointer             user_data);
 
+static void     connection_stream_error      (LmConnection        *connection,
+					      LmMessage           *m);
 static void     connection_stream_received   (LmConnection        *connection, 
 					      LmMessage           *m);
 
@@ -277,6 +281,10 @@ connection_handle_message (LmConnection *connection, LmMessage *m)
 
 	if (lm_message_get_type (m) == LM_MESSAGE_TYPE_STREAM) {
 		connection_stream_received (connection, m);
+		goto out;
+	}
+	else if (lm_message_get_type (m) == LM_MESSAGE_TYPE_STREAM_ERROR) {
+		connection_stream_error (connection, m);
 		goto out;
 	}
 	
@@ -590,6 +598,9 @@ connection_connect_cb (GIOChannel   *source,
 
 		_lm_connection_succeeded (connect_data);
 	}
+
+	/* set the default disconnect reason to unknown */
+	connection->disconnect_reason = LM_DISCONNECT_REASON_UNKNOWN;
 
  	return TRUE; 
 }
@@ -1108,16 +1119,23 @@ connection_read_incoming (LmConnection *connection,
 		switch (status) {
 		case G_IO_STATUS_EOF:
 			reason = LM_DISCONNECT_REASON_HUP;
+			lm_verbose ("Disconnect reason: %d\n", reason);
 			break;
 		case G_IO_STATUS_AGAIN:
 			/* No data readable but we didn't hangup */
 			return FALSE;
 			break;
 		case G_IO_STATUS_ERROR:
-			reason = LM_DISCONNECT_REASON_ERROR;
-			break;
+			/* If no reason set, we set it to ERROR here,
+			 * otherwise it might already have been set by
+			 * the stream error handler.
+			 */
+			if (connection->disconnect_reason == LM_DISCONNECT_REASON_UNKNOWN) {
+				connection->disconnect_reason = LM_DISCONNECT_REASON_ERROR;
+			}
 		default:
-			reason = LM_DISCONNECT_REASON_UNKNOWN;
+			reason = connection->disconnect_reason;
+			lm_verbose ("Disconnect reason: %d\n", reason);
 		}
 
 		connection_do_close (connection);
@@ -1440,6 +1458,35 @@ connection_auth_reply (LmMessageHandler *handler,
 	return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
 
+static void
+connection_stream_error (LmConnection *connection, LmMessage *m)
+{
+	LmMessageNode *node;
+
+	g_return_if_fail (connection != NULL);
+	g_return_if_fail (m != NULL);
+
+	node = m->node;
+
+	/* Resource conflict */
+	node = lm_message_node_get_child (node, "conflict");
+	if (node) {
+		lm_verbose ("Stream error: Conflict (resource connected elsewhere)\n");
+		connection->disconnect_reason = LM_DISCONNECT_REASON_RESOURCE_CONFLICT;
+		return;
+	}
+
+	/* XML is crack */
+	node = lm_message_node_get_child (node, "xml-not-well-formed");
+	if (node) {
+		lm_verbose ("Stream error: XML not well formed\n");
+		connection->disconnect_reason = LM_DISCONNECT_REASON_INVALID_XML;
+		return;
+	}
+
+	lm_verbose ("Stream error: Unrecognised error\n");
+	connection->disconnect_reason = LM_DISCONNECT_REASON_ERROR;
+}
 
 static void
 connection_stream_received (LmConnection *connection, LmMessage *m)
@@ -1585,6 +1632,7 @@ lm_connection_new (const gchar *server)
 							 g_str_equal,
 							 g_free, 
 							 (GDestroyNotify) lm_message_handler_unref);
+	connection->disconnect_reason = LM_DISCONNECT_REASON_UNKNOWN;
 	connection->ref_count         = 1;
 	
 	for (i = 0; i < LM_MESSAGE_TYPE_UNKNOWN; ++i) {
