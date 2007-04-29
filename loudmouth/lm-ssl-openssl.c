@@ -180,7 +180,21 @@ _lm_ssl_begin (LmSSL *ssl, gint fd, const gchar *server, GError **error)
 	BIO       *sbio;
 	GIOStatus  status;
 
+	if (!ssl->ctx) {
+		g_set_error (error,
+			     LM_ERROR, LM_ERROR_CONNECTION_OPEN,
+			     "No SSL Context for OpenSSL");
+		return FALSE;
+	}
+
 	ssl->session = SSL_new (ssl->ctx);
+	if (ssl->session == NULL) {
+		g_set_error (error,
+			     LM_ERROR, LM_ERROR_CONNECTION_OPEN,
+			     "Failed to create an SSL session through OpenSSL");
+		return FALSE;
+	}
+	
 	sbio = BIO_new_socket (fd, BIO_NOCLOSE);
 	SSL_set_bio (ssl->session, sbio, sbio);
 
