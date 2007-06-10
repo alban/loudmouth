@@ -28,6 +28,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #include <fcntl.h>
 #define LM_SHUTDOWN SHUT_RDWR
 
@@ -42,6 +43,8 @@
 #include "lm-connection.h"
 #include "lm-sock.h"
 #include "lm-debug.h"
+
+#define IPV6_MAX_ADDRESS_LEN 46 /* 45 + '\0' */
 
 static gboolean initialised = FALSE;
 
@@ -159,6 +162,40 @@ _lm_sock_connect (LmSocket               sock,
 		  int                    namelen)
 {
 	return connect (sock, name, namelen);
+}
+
+gchar *
+_lm_sock_get_local_host (LmSocket   sock)
+{
+	struct sockaddr      addr_info;
+	void                *sock_addr;
+	socklen_t            namelen;
+	char                 addrbuf[IPV6_MAX_ADDRESS_LEN];
+	const char          *host;
+
+	namelen = sizeof (struct sockaddr);
+	if (getsockname (sock, &addr_info, &namelen)) {
+		return NULL;
+	}
+
+	switch (addr_info.sa_family) {
+		case AF_INET: 
+			
+			sock_addr = & (((struct sockaddr_in *) &addr_info)->sin_addr);
+			break;
+		case AF_INET6:
+			sock_addr = & (((struct sockaddr_in6 *) &addr_info)->sin6_addr);
+			break;
+		default:
+			return NULL;
+	}
+	/* inet_ntoa has been obsoleted in favour of inet_ntop */
+	host = inet_ntop (addr_info.sa_family,
+			  sock_addr,
+			  addrbuf,
+			  IPV6_MAX_ADDRESS_LEN);
+
+	return g_strdup (host);
 }
 
 gboolean

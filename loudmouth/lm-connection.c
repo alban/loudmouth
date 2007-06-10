@@ -54,6 +54,7 @@ struct _LmConnection {
 	GMainContext *context;
 	gchar        *server;
 	gchar        *jid;
+	gchar        *resource;
 	guint         port;
 
 	LmSSL        *ssl;
@@ -210,6 +211,7 @@ connection_free (LmConnection *connection)
 	g_free (connection->server);
 	g_free (connection->jid);
 	g_free (connection->stream_id);
+	g_free (connection->resource);
 
 	if (connection->parser) {
 		lm_parser_free (connection->parser);
@@ -1617,6 +1619,7 @@ lm_connection_new (const gchar *server)
 	connection->context           = NULL;
 	connection->port              = LM_CONNECTION_DEFAULT_PORT;
 	connection->jid               = NULL;
+	connection->resource          = NULL;
 	connection->ssl               = NULL;
 	connection->proxy             = NULL;
 	connection->disconnect_cb     = NULL;
@@ -1863,6 +1866,8 @@ lm_connection_authenticate (LmConnection      *connection,
 	data->password = g_strdup (password);
 	data->resource = g_strdup (resource);
 	
+	/* assume that this is our visible resource. */
+	connection->resource = g_strdup (resource);
 	handler = lm_message_handler_new (connection_auth_req_reply, 
 					  data, 
 					  (GDestroyNotify) auth_req_data_free);
@@ -2072,6 +2077,23 @@ lm_connection_get_jid (LmConnection *connection)
 	g_return_val_if_fail (connection != NULL, NULL);
 
 	return connection->jid;
+}
+
+/**
+ * lm_connection_get_full_jid:
+ * @connection: an #LmConnection
+ *
+ * Creates a full jid for @connection out of the connection jid and the 
+ * resource used for authentication.
+ *
+ * Return value: A newly created string representing the full jid.
+ **/
+gchar *
+lm_connection_get_full_jid (LmConnection *connection)
+{
+	g_return_val_if_fail (connection != NULL, NULL);
+
+	return g_strconcat(connection->jid, "/", connection->resource, NULL);
 }
 
 /**
@@ -2483,6 +2505,21 @@ lm_connection_send_raw (LmConnection  *connection,
 
 	return connection_send (connection, str, -1, error);
 }
+
+/**
+ * lm_connection_get_client_host:
+ * @connection: An #LmConnection
+ *
+ * Returns the local host name of the connection.
+ *
+ * Return value: A newly allocated string representing the local host name.
+ **/
+gchar *
+lm_connection_get_local_host (LmConnection *connection)
+{
+	return _lm_sock_get_local_host (connection->fd);
+}
+
 /**
  * lm_connection_get_state:
  * @connection: Connection to get state on

@@ -118,7 +118,7 @@ void          lm_connection_set_server        (LmConnection       *connection,
 void          lm_connection_set_jid           (LmConnection       *connection,
 					       const gchar        *jid);
 const gchar * lm_connection_get_jid           (LmConnection       *connection);
-
+gchar *       lm_connection_get_full_jid      (LmConnection       *connection);
 guint         lm_connection_get_port          (LmConnection       *connection);
 void          lm_connection_set_port          (LmConnection       *connection,
 					       guint               port);
@@ -159,6 +159,7 @@ gboolean      lm_connection_send_raw          (LmConnection       *connection,
 					       const gchar        *str,
 					       GError            **error);
 LmConnectionState lm_connection_get_state     (LmConnection       *connection);
+gchar *       lm_connection_get_local_host    (LmConnection       *connection);
 LmConnection* lm_connection_ref               (LmConnection       *connection);
 void          lm_connection_unref             (LmConnection       *connection);
 

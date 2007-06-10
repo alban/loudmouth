@@ -94,6 +94,7 @@ LmSocket         _lm_sock_makesocket              (int                    af,
 int              _lm_sock_connect                 (LmSocket               sock,
 						   const struct sockaddr *name,
 						   int                    namelen);
+gchar          * _lm_sock_get_local_host          (LmSocket               socket);
 gboolean         _lm_sock_is_blocking_error       (int                    err);
 gboolean         _lm_sock_is_blocking_success     (int                    err);
 int              _lm_sock_get_last_error          (void);
