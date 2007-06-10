@@ -287,7 +287,7 @@ connection_handle_message (LmConnection *connection, LmMessage *m)
 	}
 	else if (lm_message_get_type (m) == LM_MESSAGE_TYPE_STREAM_ERROR) {
 		connection_stream_error (connection, m);
-		goto out;
+		goto run_global_handlers;
 	}
 	
 	id = lm_message_node_get_attribute (m->node, "id");
@@ -306,6 +306,7 @@ connection_handle_message (LmConnection *connection, LmMessage *m)
 		goto out;
 	}
 
+run_global_handlers:
 	for (l = connection->handlers[lm_message_get_type (m)]; 
 	     l && result == LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS; 
 	     l = l->next) {
@@ -1463,7 +1464,7 @@ connection_auth_reply (LmMessageHandler *handler,
 static void
 connection_stream_error (LmConnection *connection, LmMessage *m)
 {
-	LmMessageNode *node;
+	LmMessageNode *node, *child;
 
 	g_return_if_fail (connection != NULL);
 	g_return_if_fail (m != NULL);
@@ -1471,16 +1472,16 @@ connection_stream_error (LmConnection *connection, LmMessage *m)
 	node = m->node;
 
 	/* Resource conflict */
-	node = lm_message_node_get_child (node, "conflict");
-	if (node) {
+	child = lm_message_node_get_child (node, "conflict");
+	if (child) {
 		lm_verbose ("Stream error: Conflict (resource connected elsewhere)\n");
 		connection->disconnect_reason = LM_DISCONNECT_REASON_RESOURCE_CONFLICT;
 		return;
 	}
 
 	/* XML is crack */
-	node = lm_message_node_get_child (node, "xml-not-well-formed");
-	if (node) {
+	child = lm_message_node_get_child (node, "xml-not-well-formed");
+	if (child) {
 		lm_verbose ("Stream error: XML not well formed\n");
 		connection->disconnect_reason = LM_DISCONNECT_REASON_INVALID_XML;
 		return;
