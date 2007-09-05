@@ -167,7 +167,8 @@ socket_read_incoming (LmSocket *socket,
 		      gchar    *buf,
 		      gsize     buf_size,
 		      gsize    *bytes_read,
-		      gboolean *hangup)
+		      gboolean *hangup,
+		      gint     *reason)
 {
 	GIOStatus status;
 
@@ -184,24 +185,20 @@ socket_read_incoming (LmSocket *socket,
 	}
 
 	if (status != G_IO_STATUS_NORMAL || *bytes_read < 0) {
-		gint reason;
-		
 		switch (status) {
 		case G_IO_STATUS_EOF:
-			reason = LM_DISCONNECT_REASON_HUP;
+			*reason = LM_DISCONNECT_REASON_HUP;
 			break;
 		case G_IO_STATUS_AGAIN:
 			/* No data readable but we didn't hangup */
 			return FALSE;
 			break;
 		case G_IO_STATUS_ERROR:
-			reason = LM_DISCONNECT_REASON_ERROR;
+			*reason = LM_DISCONNECT_REASON_ERROR;
 			break;
 		default:
-			reason = LM_DISCONNECT_REASON_UNKNOWN;
+			*reason = LM_DISCONNECT_REASON_UNKNOWN;
 		}
-
-		(socket->closed_func) (socket, reason, socket->user_data);
 
 		/* Notify connection_in_event that we hangup the connection */
 		*hangup = TRUE;
@@ -222,14 +219,16 @@ socket_in_event (GIOChannel   *source,
 {
 	gchar     buf[IN_BUFFER_SIZE];
 	gsize     bytes_read;
+	gboolean  read_anything = FALSE;
 	gboolean  hangup;
+	gint      reason;
 
 	if (!socket->io_channel) {
 		return FALSE;
 	}
 
 	while (socket_read_incoming (socket, buf, IN_BUFFER_SIZE, 
-				     &bytes_read, &hangup)) {
+				     &bytes_read, &hangup, &reason)) {
 		
 		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "\nRECV [%d]:\n", 
 		       (int)bytes_read);
@@ -242,9 +241,14 @@ socket_in_event (GIOChannel   *source,
 		lm_verbose ("Read: %d chars\n", (int)bytes_read);
 
 		(socket->data_func) (socket, buf, socket->user_data);
+
+		read_anything = TRUE;
 	}
 
-	if (hangup) {
+	/* If we have read something, delay the hangup so that the data can be
+	 * processed. */
+	if (hangup && !read_anything) {
+		(socket->closed_func) (socket, reason, socket->user_data);
 		return FALSE;
 	}
 
