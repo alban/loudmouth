@@ -31,11 +31,13 @@
 
 #include <gnutls/x509.h>
 
+#define CA_PEM_FILE "/etc/ssl/certs/ca-certificates.crt"
+
 struct _LmSSL {
 	LmSSLBase base;
 
-	gnutls_session                        gnutls_session;
-	gnutls_certificate_client_credentials gnutls_xcred;
+	gnutls_session                 gnutls_session;
+	gnutls_certificate_credentials gnutls_xcred;
 };
 
 static gboolean       ssl_verify_certificate    (LmSSL       *ssl,
@@ -45,16 +47,33 @@ static gboolean
 ssl_verify_certificate (LmSSL *ssl, const gchar *server)
 {
 	LmSSLBase *base;
-	int        status;
+	unsigned int        status;
+	int rc;
 
 	base = LM_SSL_BASE (ssl);
 
 	/* This verification function uses the trusted CAs in the credentials
 	 * structure. So you must have installed one or more CA certificates.
 	 */
-	status = gnutls_certificate_verify_peers (ssl->gnutls_session);
+	rc = gnutls_certificate_verify_peers2 (ssl->gnutls_session, &status);
 
-	if (status == GNUTLS_E_NO_CERTIFICATE_FOUND) {
+	if (rc == GNUTLS_E_NO_CERTIFICATE_FOUND) {
+		if (base->func (ssl,
+			       LM_SSL_STATUS_NO_CERT_FOUND,
+			       base->func_data) != LM_SSL_RESPONSE_CONTINUE) {
+			return FALSE;
+		}
+	}
+
+	if (rc != 0) {
+		if (base->func (ssl,
+			       LM_SSL_STATUS_GENERIC_ERROR,
+			       base->func_data) != LM_SSL_RESPONSE_CONTINUE) {
+			return FALSE;
+		}
+	}
+
+	if (rc == GNUTLS_E_NO_CERTIFICATE_FOUND) {
 		if (base->func (ssl,
 			       LM_SSL_STATUS_NO_CERT_FOUND,
 			       base->func_data) != LM_SSL_RESPONSE_CONTINUE) {
@@ -100,8 +119,8 @@ ssl_verify_certificate (LmSSL *ssl, const gchar *server)
 
 		gnutls_x509_crt_init (&cert);
 
-		if (!gnutls_x509_crt_import (cert, &cert_list[0],
-					     GNUTLS_X509_FMT_DER)) {
+		if (gnutls_x509_crt_import (cert, &cert_list[0],
+					     GNUTLS_X509_FMT_DER) != 0) {
 			if (base->func (ssl, LM_SSL_STATUS_NO_CERT_FOUND, 
 					base->func_data) != LM_SSL_RESPONSE_CONTINUE) {
 				return FALSE;
@@ -165,6 +184,9 @@ _lm_ssl_initialize (LmSSL *ssl)
 {
 	gnutls_global_init ();
 	gnutls_certificate_allocate_credentials (&ssl->gnutls_xcred);
+	gnutls_certificate_set_x509_trust_file(ssl->gnutls_xcred,
+					       CA_PEM_FILE,
+					       GNUTLS_X509_FMT_PEM);
 }
 
 gboolean
