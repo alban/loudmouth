@@ -51,6 +51,8 @@ libloudmouth_1_la_SOURCES =		\
 	lm-sock.c			\
 	lm-socket.c                     \
 	lm-socket.h                     \
+	asyncns.c     \
+	asyncns.h     \
 	lm-sasl.c                       \
 	lm-sasl.h                       \
 	md5.c                           \
@@ -73,7 +75,8 @@ libloudmouthinclude_HEADERS =		\
 
 libloudmouth_1_la_LIBADD = 		\
 	$(LOUDMOUTH_LIBS)		\
-	$(LIBIDN_LIBS)
+	$(LIBIDN_LIBS) \
+	-lresolv
 
 libloudmouthincludedir = $(includedir)/loudmouth-1.0/loudmouth
 

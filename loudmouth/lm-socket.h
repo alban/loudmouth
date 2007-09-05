@@ -66,6 +66,9 @@ void        lm_socket_flush               (LmSocket       *socket);
 void        lm_socket_close               (LmSocket       *socket);
 LmSocket *  lm_socket_ref                 (LmSocket       *socket);
 void        lm_socket_unref               (LmSocket       *socket);
+#ifdef HAVE_ASYNCNS
+void	    _asyncns_cancel               (LmSocket *socket);
+#endif
 
 #endif /* __LM_SOCKET_H__ */
 

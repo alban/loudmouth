@@ -26,6 +26,8 @@
 #include <sys/stat.h> 
 #include <sys/types.h>
 #include <fcntl.h>
+#include <arpa/nameser.h>
+#include <resolv.h>
 
 #include <glib.h>
 
@@ -43,6 +45,8 @@
 #include "lm-socket.h"
 #include "lm-sasl.h"
 
+#define IN_BUFFER_SIZE 1024
+#define SRV_LEN 8192
 
 typedef struct {
 	LmHandlerPriority  priority;
@@ -1151,6 +1155,10 @@ lm_connection_cancel_open (LmConnection *connection)
 	}
 
 	connection->cancel_open = TRUE;
+
+#ifdef HAVE_ASYNCNS
+	_asyncns_cancel(connection->socket);
+#endif
 }
 
 /**
@@ -1169,6 +1177,10 @@ lm_connection_close (LmConnection      *connection,
 	gboolean no_errors = TRUE;
 	
 	g_return_val_if_fail (connection != NULL, FALSE);
+
+#ifdef HAVE_ASYNCNS
+	_asyncns_cancel (connection->socket);
+#endif
 
 	if (connection->state == LM_CONNECTION_STATE_CLOSED) {
 		g_set_error (error,

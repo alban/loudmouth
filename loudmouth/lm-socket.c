@@ -37,6 +37,11 @@
 #include "lm-sock.h"
 #include "lm-error.h"
 
+#ifdef HAVE_ASYNCNS
+#include <asyncns.h>
+#define freeaddrinfo(x) asyncns_freeaddrinfo(x)
+#endif
+
 #define IN_BUFFER_SIZE 1024
 #define MIN_PORT 1
 #define MAX_PORT 65536
@@ -78,6 +83,13 @@ struct _LmSocket {
 	gpointer         user_data;
 
 	guint          ref_count;
+
+#ifdef HAVE_ASYNCNS
+	GSource		*watch_resolv;
+	asyncns_query_t *resolv_query;
+	asyncns_t	*asyncns_ctx;
+	GIOChannel	*resolv_channel;
+#endif
 }; 
 
 static void         socket_free               (LmSocket       *socket);
@@ -701,6 +713,206 @@ socket_parse_srv_response (unsigned char  *srv,
 	return FALSE;
 }
 
+static void
+_lm_socket_create_phase1 (LmSocket *socket, unsigned char *srv_ans, int len);
+static void
+_lm_socket_create_phase2 (LmSocket *socket, struct addrinfo *ans);
+
+#ifdef HAVE_ASYNCNS
+#define PHASE_1 0
+#define PHASE_2 1
+
+static gboolean
+_lm_socket_resolver_done (GSource *source,
+    			  GIOCondition condition,
+			  gpointer data);
+
+
+void _asyncns_cancel (LmSocket *socket)
+{
+	if (socket == NULL)
+		return;
+	if (socket->asyncns_ctx) {
+		if (socket->watch_resolv) {
+			g_source_destroy (socket->watch_resolv);
+			socket->watch_resolv = NULL;
+		}
+		if (socket->resolv_channel) {
+			g_io_channel_close (socket->resolv_channel);
+			socket->resolv_channel = NULL;
+		}
+		asyncns_cancel (socket->asyncns_ctx, socket->resolv_query);
+		asyncns_free (socket->asyncns_ctx);
+		socket->asyncns_ctx = NULL;
+	}
+}
+
+static gboolean
+_asyncns_prep (LmSocket *socket, GError **error)
+{
+	if (socket->asyncns_ctx) {
+		return TRUE;
+	}
+
+	socket->asyncns_ctx = asyncns_new (1);
+	if (socket->asyncns_ctx == NULL) {
+		g_set_error (error,
+				LM_ERROR,                 
+				LM_ERROR_CONNECTION_FAILED,   
+				"can't initialise libasyncns");
+		return FALSE;
+	}
+
+	socket->resolv_channel =
+		g_io_channel_unix_new (asyncns_fd (socket->asyncns_ctx));
+
+	socket->watch_resolv = 
+		lm_misc_add_io_watch (socket->context,
+				      socket->resolv_channel,
+				      G_IO_IN,
+				      (GIOFunc) _lm_socket_resolver_done,
+				      socket);
+
+	return TRUE;
+}
+
+static void
+_asyncns_done (LmSocket *socket)
+{
+	if (socket->resolv_channel == NULL)
+		return;
+
+	g_io_channel_unref (socket->resolv_channel);
+	socket->resolv_channel = NULL;
+	asyncns_free (socket->asyncns_ctx);
+	socket->asyncns_ctx = NULL;
+	socket->watch_resolv = NULL;
+	socket->resolv_query = NULL;
+}
+
+static gboolean
+_lm_socket_resolver_done (GSource *source,
+    			  GIOCondition condition,
+			  gpointer data)
+{
+	LmSocket	*socket = (LmSocket *) data;
+	struct addrinfo	*ans;
+	unsigned char   *srv_ans;
+	int 		 err;
+
+	/* process pending data */
+	asyncns_wait (socket->asyncns_ctx, FALSE);
+
+	if (!asyncns_isdone (socket->asyncns_ctx, socket->resolv_query)) {
+		return TRUE;
+	}
+
+	switch ((guint) asyncns_getuserdata (socket->asyncns_ctx, socket->resolv_query)) {
+	case PHASE_1:
+		err = asyncns_res_done (socket->asyncns_ctx, socket->resolv_query, &srv_ans);
+		_lm_socket_create_phase1 (socket, (err) ? NULL : srv_ans, err);
+		return TRUE;
+		break;
+	case PHASE_2:
+		err = asyncns_getaddrinfo_done (socket->asyncns_ctx, socket->resolv_query, &ans);
+		_lm_socket_create_phase2 (socket, (err) ? NULL : ans);
+		_asyncns_done (socket);
+		return FALSE;
+	}
+
+	g_assert_not_reached ();
+	return FALSE;
+}
+
+#endif
+
+static void
+_lm_socket_create_phase1 (LmSocket *socket,
+			  unsigned char *srv_ans,
+			  int len)
+{
+	const char          *remote_addr;
+	LmConnectData       *data;
+	struct addrinfo      req;
+#ifndef HAVE_ASYNCNS
+	struct addrinfo *ans;
+	int              err;
+#endif
+
+	if (srv_ans != NULL) {
+		gchar    *new_server;
+		guint     new_port;
+		gboolean  result;
+		result = socket_parse_srv_response (srv_ans, len, 
+						    &new_server, 
+						    &new_port);
+		if (result == TRUE) {
+			g_free (socket->server);
+			socket->server = new_server;
+			if (!socket->port) socket->port = new_port;
+		}
+	}
+
+	if (socket->proxy) {
+		remote_addr = lm_proxy_get_server (socket->proxy);
+	} else {
+		remote_addr = socket->server;
+	}
+
+	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET,
+	       "Going to connect to %s%s:%u\n", (socket->proxy) ? "proxy " : "",
+	       remote_addr, socket->port);
+
+	data = g_new0 (LmConnectData, 1);
+
+	data->socket        = socket;
+	data->connection    = socket->connection;
+	data->fd            = -1;
+	socket->connect_data = data;
+
+	memset (&req, 0, sizeof(req));
+	req.ai_family   = AF_UNSPEC;
+	req.ai_socktype = SOCK_STREAM;
+	req.ai_protocol = IPPROTO_TCP;
+
+#ifdef HAVE_ASYNCNS
+	if (!_asyncns_prep (socket, NULL))
+		return;
+
+	socket->resolv_query =
+	  	asyncns_getaddrinfo (socket->asyncns_ctx,
+		    		     remote_addr,
+				     NULL,
+				     &req);
+
+	asyncns_setuserdata (socket->asyncns_ctx,
+			     socket->resolv_query,
+			     (gpointer) PHASE_2);
+#else
+	err = getaddrinfo (remote_addr, NULL, &req, &ans);
+	_lm_socket_create_phase2 (socket, (err) ? NULL : ans);
+	if (err != 0)
+		return;
+#endif
+}
+
+static void
+_lm_socket_create_phase2 (LmSocket *socket, struct addrinfo *ans)
+{
+	if (ans == NULL) {
+		lm_verbose ("error while resolving, bailing out");
+		(socket->connect_func) (socket, FALSE, socket->user_data);
+		g_free (socket->connect_data);
+		socket->connect_data = NULL;
+		return;
+	}
+
+	socket->connect_data->resolved_addrs = ans;
+	socket->connect_data->current_addr   = ans;
+
+	socket_do_connect (socket->connect_data);
+}
+
 LmSocket *
 lm_socket_create (GMainContext      *context,
 		  IncomingDataFunc   data_func,
@@ -717,11 +929,11 @@ lm_socket_create (GMainContext      *context,
 		  GError           **error)
 {
 	LmSocket        *socket;
-	struct addrinfo  req;
-	struct addrinfo *ans;
-	const char      *remote_addr;
-	LmConnectData   *data;
+
+#ifndef HAVE_ASYNCNS
+	unsigned char    srv_ans[SRV_LEN];
 	int              err;
+#endif
 	
 	g_return_val_if_fail (server != NULL, NULL);
 	g_return_val_if_fail ((port >= MIN_PORT && port <= MAX_PORT), NULL);
@@ -730,12 +942,6 @@ lm_socket_create (GMainContext      *context,
 	g_return_val_if_fail (connect_func != NULL, NULL);
 
 	socket = g_new0 (LmSocket, 1);
-
-	memset (&req, 0, sizeof(req));
-
-	req.ai_family   = AF_UNSPEC;
-	req.ai_socktype = SOCK_STREAM;
-	req.ai_protocol = IPPROTO_TCP;
 
 	socket->ref_count = 1;
 
@@ -752,61 +958,12 @@ lm_socket_create (GMainContext      *context,
 	socket->connect_func = connect_func;
 	socket->user_data = user_data;
 
-	if (use_srv) {
-		char          *srv;
-		unsigned char  srv_ans[SRV_LEN];
-
-		res_init ();
-
-
-		srv = g_strdup_printf ("_xmpp-client._tcp.%s", socket->server);
-		lm_verbose ("Performing a SRV lookup for %s\n", srv);
-
-		err = res_query (srv, C_IN, T_SRV, srv_ans, SRV_LEN);
-		if (err > 0) {
-			gchar    *new_server;
-			guint     new_port;
-			gboolean  result;
-			
-			result = socket_parse_srv_response (srv_ans, err, 
-							    &new_server, 
-							    &new_port);
-			if (result == TRUE) {
-				g_free (socket->server);
-				socket->server = new_server;
-				socket->port = new_port;
-			}
-		}
-		g_free (srv);
-	} else {
-		lm_verbose ("SRV lookup disabled for %s\n", socket->server);
-	}
-
 	if (context) {
 		socket->context = g_main_context_ref (context);
 	}
 
 	if (proxy) {
 		socket->proxy = lm_proxy_ref (proxy);
-		remote_addr = lm_proxy_get_server (socket->proxy);
-	} else {
-	    	remote_addr = socket->server;
-	}
-
-	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET,
-	       "Going to connect to %s%s:%u\n", (proxy) ? "proxy " : "",
-	       remote_addr, socket->port);
-
-	err = getaddrinfo (remote_addr, NULL, &req, &ans);
-	if (err != 0) {
-		const char *str;
-
-		str = _lm_sock_addrinfo_get_error_str (err);
-		g_set_error (error,
-			     LM_ERROR,                 
-			     LM_ERROR_CONNECTION_FAILED,   
-			     str);
-		return NULL;
 	}
 
 	if (ssl) {
@@ -814,24 +971,29 @@ lm_socket_create (GMainContext      *context,
 		_lm_ssl_initialize (socket->ssl);
 	}
 
-	/* Prepare and do the nonblocking connection */
-	data = g_new (LmConnectData, 1);
 
-	data->socket         = socket;
-	data->connection     = connection;
-	data->resolved_addrs = ans;
-	data->current_addr   = ans;
-	data->io_channel     = NULL;
-	data->fd             = -1;
+	if (use_srv) {
+		char          *srv;
+		srv = g_strdup_printf ("_xmpp-client._tcp.%s", socket->server);
+		lm_verbose ("Performing a SRV lookup for %s\n", srv);
 
-	socket->connect_data = data;
+#ifdef HAVE_ASYNCNS
+		if (!_asyncns_prep (socket, error))
+			return NULL;
+		
+		socket->resolv_query =
+			asyncns_res_query (socket->asyncns_ctx, srv, C_IN, T_SRV);
+		asyncns_setuserdata (socket->asyncns_ctx, socket->resolv_query, (gpointer) PHASE_1);
+#else
+		res_init ();
 
-	if (!socket_do_connect (data)) {
-		g_set_error (error,
-			LM_ERROR,
-			LM_ERROR_CONNECTION_FAILED,
-			"unable to connect");
-		return NULL;
+		err = res_query (srv, C_IN, T_SRV, srv_ans, SRV_LEN);
+		_lm_socket_create_phase1 (socket, (err) ? NULL : srv_ans, err);
+		g_free (srv);
+#endif
+	} else {
+		lm_verbose ("SRV lookup disabled for %s\n", socket->server);
+		_lm_socket_create_phase1 (socket, NULL, 0);
 	}
 
 	return socket;
