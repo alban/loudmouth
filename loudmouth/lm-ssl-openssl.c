@@ -303,7 +303,7 @@ _lm_ssl_initialize (LmSSL *ssl)
 		cert_file = "/etc/ssl/cert.pem";
 	if (!SSL_CTX_load_verify_locations(ssl->ssl_ctx,
 		cert_file, "/etc/ssl/certs")) {
-		fprintf(stderr, "SSL_CTX_load_verify_locations() failed\n");
+		g_warning("SSL_CTX_load_verify_locations() failed");
 	}*/
 	SSL_CTX_set_default_verify_paths (ssl->ssl_ctx);
 	SSL_CTX_set_verify (ssl->ssl_ctx, SSL_VERIFY_PEER, ssl_verify_cb);
@@ -331,7 +331,7 @@ _lm_ssl_begin (LmSSL *ssl, gint fd, const gchar *server, GError **error)
 	}
 	/*ssl->bio = BIO_new_socket (fd, BIO_NOCLOSE);
 	if (ssl->bio == NULL) {
-		fprintf(stderr, "BIO_new_socket() failed\n");
+		g_warning("BIO_new_socket() failed");
 		g_set_error(error, LM_ERROR, LM_ERROR_CONNECTION_OPEN,
 			"BIO_new_socket()");
 		return FALSE;
