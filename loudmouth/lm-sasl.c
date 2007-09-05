@@ -124,6 +124,8 @@ sasl_digest_md5_challenge_to_hash (const gchar * challenge)
 					g_free, g_free);
 
 	do { 
+		while (g_ascii_isspace(*c)) c++;
+
 		keystart = c;
 		for (; *c != '\0' && *c != '='; c++);
 
