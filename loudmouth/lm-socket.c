@@ -55,8 +55,6 @@ struct _LmSocket {
 	gchar        *server;
 	guint         port;
 
-	gboolean      use_srv;
-
 	gboolean      blocking;
 
 	LmSSL        *ssl;
@@ -883,6 +881,12 @@ _lm_socket_create_phase1 (LmSocket *socket,
 		}
 	}
 
+	/* If server wasn't specified and SRV failed, use domain */
+	if (!socket->server) {
+		lm_verbose ("SRV lookup failed, trying jid domain\n");
+		socket->server = g_strdup (socket->domain);
+	}
+
 	if (socket->proxy) {
 		remote_addr = lm_proxy_get_server (socket->proxy);
 	} else {
@@ -930,7 +934,7 @@ static void
 _lm_socket_create_phase2 (LmSocket *socket, struct addrinfo *ans)
 {
 	if (ans == NULL) {
-		lm_verbose ("error while resolving, bailing out");
+		lm_verbose ("error while resolving, bailing out\n");
 		(socket->connect_func) (socket, FALSE, socket->user_data);
 		g_free (socket->connect_data);
 		socket->connect_data = NULL;
@@ -952,8 +956,8 @@ lm_socket_create (GMainContext      *context,
 		  LmConnection      *connection,
 		  gboolean           blocking,
 		  const gchar       *server,
+		  const gchar       *domain,
 		  guint              port, 
-		  gboolean           use_srv,
 		  LmSSL             *ssl,
 		  LmProxy           *proxy,
 		  GError           **error)
@@ -965,7 +969,7 @@ lm_socket_create (GMainContext      *context,
 	int              len;
 #endif
 	
-	g_return_val_if_fail (server != NULL, NULL);
+	g_return_val_if_fail (domain != NULL, NULL);
 	g_return_val_if_fail ((port >= MIN_PORT && port <= MAX_PORT), NULL);
 	g_return_val_if_fail (data_func != NULL, NULL);
 	g_return_val_if_fail (closed_func != NULL, NULL);
@@ -976,10 +980,9 @@ lm_socket_create (GMainContext      *context,
 	socket->ref_count = 1;
 
 	socket->connection = connection;
-	socket->domain = g_strdup (server);
+	socket->domain = g_strdup (domain);
 	socket->server = g_strdup (server);
 	socket->port = port;
-	socket->use_srv = use_srv;
 	socket->cancel_open = FALSE;
 	socket->ssl = NULL;
 	socket->proxy = NULL;
@@ -1003,9 +1006,9 @@ lm_socket_create (GMainContext      *context,
 	}
 
 
-	if (use_srv) {
+	if (!server) {
 		char          *srv;
-		srv = g_strdup_printf ("_xmpp-client._tcp.%s", socket->server);
+		srv = g_strdup_printf ("_xmpp-client._tcp.%s", socket->domain);
 		lm_verbose ("Performing a SRV lookup for %s\n", srv);
 
 #ifdef HAVE_ASYNCNS

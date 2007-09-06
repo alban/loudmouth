@@ -421,7 +421,7 @@ connection_message_queue_cb (LmMessageQueue *queue, LmConnection *connection)
 static gboolean
 connection_do_open (LmConnection *connection, GError **error) 
 {
-	gchar *connect_server;
+	gchar *domain;
 
 	if (lm_connection_is_open (connection)) {
 		g_set_error (error,
@@ -431,25 +431,12 @@ connection_do_open (LmConnection *connection, GError **error)
 		return FALSE;
 	}
 
-	if (!connection->server) {
-		if (!connection->use_srv) {
-			g_set_error (error,
-				     LM_ERROR,
-				     LM_ERROR_CONNECTION_FAILED,
-				     "You need to set the server hostname in the call to lm_connection_new()");
-			return FALSE;
-		} else {
-			if (!connection_get_server_from_jid (connection->jid,
-							     &connect_server)) {
-				g_set_error (error,
-					     LM_ERROR,
-					     LM_ERROR_CONNECTION_FAILED,
-					     "You need to either set server hostname or jid");
-				return FALSE;
-			}
-		}
-	} else {
-		connect_server = g_strdup (connection->server);
+	if (!connection_get_server_from_jid (connection->jid, &domain)) {
+		g_set_error (error,
+			LM_ERROR,
+			LM_ERROR_CONNECTION_FAILED,
+			"You need to either set server hostname or jid");
+		return FALSE;
 	}
 
 	lm_message_queue_attach (connection->queue, connection->context);
@@ -467,13 +454,12 @@ connection_do_open (LmConnection *connection, GError **error)
 					       connection,
 					       connection,
 					       connection->blocking,
-					       connect_server,
+					       connection->server,
+					       domain,
 					       connection->port,
-					       connection->use_srv,
 					       connection->ssl,
 					       connection->proxy,
 					       error);
-	g_free (connect_server);
 
 	if (!connection->socket) {
 		return FALSE;
