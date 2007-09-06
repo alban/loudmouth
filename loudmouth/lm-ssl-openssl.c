@@ -206,17 +206,23 @@ ssl_verify_certificate (LmSSL *ssl, const gchar *server)
 	cn = (gchar *) g_malloc0(LM_SSL_CN_MAX + 1);
 	
 	if (X509_NAME_get_text_by_NID(crt_subj, NID_commonName, cn, LM_SSL_CN_MAX) > 0) {
+		gchar *domain = cn;
+
 		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SSL,
 		      "%s: server = '%s', cn = '%s'\n",
 		      __FILE__, server, cn);
 		
-		if (strncmp (server, cn, LM_SSL_CN_MAX) != 0) {
+		if ((cn[0] == '*') && (cn[1] == '.')) {
+			domain = strstr (cn, server);
+		}
+
+		if ((domain == NULL) || (strncmp (server, domain, LM_SSL_CN_MAX) != 0)) {
 			if (base->func (ssl,
 					LM_SSL_STATUS_CERT_HOSTNAME_MISMATCH,
 					base->func_data) != LM_SSL_RESPONSE_CONTINUE) {
 				retval = FALSE;
 			}
-		}
+    }
 	} else {
 		g_warning ("X509_NAME_get_text_by_NID() failed");
 	}

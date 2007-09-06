@@ -41,7 +41,9 @@ static struct TypeNames
 	{ LM_MESSAGE_TYPE_RESPONSE,        "response"        },
 	{ LM_MESSAGE_TYPE_SUCCESS,         "success"         },
 	{ LM_MESSAGE_TYPE_FAILURE,         "failure"         },
-	{ LM_MESSAGE_TYPE_STREAM_ERROR,    "stream:error"    }
+	{ LM_MESSAGE_TYPE_STREAM_ERROR,    "stream:error"    },
+	{ LM_MESSAGE_TYPE_PROCEED,         "proceed"         },
+	{ LM_MESSAGE_TYPE_STARTTLS,        "starttls"        }
 };
 
 static struct SubTypeNames 
@@ -81,7 +83,7 @@ message_type_from_string (const gchar *type_str)
         }
 
         for (i = LM_MESSAGE_TYPE_MESSAGE;
-	     i <= LM_MESSAGE_TYPE_STREAM_ERROR;
+	     i <= LM_MESSAGE_TYPE_STARTTLS;
 	     ++i) {
                 if (strcmp (type_str, type_names[i].name) == 0) {
                         return i;
@@ -96,7 +98,7 @@ const gchar *
 _lm_message_type_to_string (LmMessageType type)
 {
         if (type < LM_MESSAGE_TYPE_MESSAGE ||
-            type > LM_MESSAGE_TYPE_STREAM_ERROR) {
+            type > LM_MESSAGE_TYPE_STARTTLS) {
                 type = LM_MESSAGE_TYPE_UNKNOWN;
         }
 

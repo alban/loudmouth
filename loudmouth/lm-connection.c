@@ -71,11 +71,16 @@ struct _LmConnection {
 	GHashTable   *id_handlers;
 	GSList       *handlers[LM_MESSAGE_TYPE_UNKNOWN];
 
-	/* XMPP1.0 stuff (SASL, resource binding) */
+	/* XMPP1.0 stuff (SASL, resource binding, StartTLS) */
 	gboolean      use_xmpp;
 	LmSASL       *sasl;
 	gchar        *resource;
 	LmMessageHandler *features_cb;
+	gboolean      use_starttls;
+	LmMessageHandler *starttls_cb;
+	LmSSLFunction     ssl_fail_cb;
+	gpointer          ssl_fail_cb_data;
+	gboolean      require_starttls;
 
 	/* Communication */
 	guint         open_id;
@@ -107,6 +112,7 @@ typedef enum {
 
 #define XMPP_NS_BIND "urn:ietf:params:xml:ns:xmpp-bind"
 #define XMPP_NS_SESSION "urn:ietf:params:xml:ns:xmpp-session"
+#define XMPP_NS_STARTTLS "urn:ietf:params:xml:ns:xmpp-tls"
 
 static void     connection_free (LmConnection *connection);
 
@@ -699,7 +705,10 @@ connection_stream_received (LmConnection *connection, LmMessage *m)
 
 		connection->use_xmpp = TRUE;
 		
-		connection->sasl = lm_sasl_new (connection);
+		/* stream is started multiple times, but we only want
+		 * one sasl mechanism */
+		if (!connection->sasl)
+			connection->sasl = lm_sasl_new(connection);
 	} else {
 		lm_verbose ("Old Jabber stream received: %s\n", 
 			    connection->stream_id);
@@ -885,6 +894,16 @@ connection_call_auth_cb (LmConnection *connection, gboolean success)
 	}
 }
 
+static LmSSLResponse
+connection_tls_error (LmSSL        *ssl,
+		      LmSSLStatus   status,
+		      gpointer      user_data)
+{
+	LmConnection *conn = (LmConnection *) user_data;
+
+	return conn->ssl_fail_cb (ssl, status, conn->ssl_fail_cb_data);
+}
+
 static LmHandlerResult
 connection_bind_reply (LmMessageHandler *handler,
 			LmConnection    *connection,
@@ -927,13 +946,57 @@ connection_bind_reply (LmMessageHandler *handler,
 }
 
 static LmHandlerResult
+_lm_connection_starttls_cb (LmMessageHandler *handler,
+			    LmConnection *connection,
+			    LmMessage *message,
+			    gpointer user_data)
+{
+	connection->ssl = lm_ssl_new (NULL, connection_tls_error, connection, NULL);
+	lm_ssl_ref (connection->ssl);
+	if (lm_socket_starttls (connection->socket, connection->ssl)) {
+		connection_send_stream_header (connection);
+	} else {
+		connection_do_close (connection);
+		connection_signal_disconnect (connection, 
+					      LM_DISCONNECT_REASON_ERROR);
+	}
+
+	return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+static LmHandlerResult
 connection_features_cb (LmMessageHandler *handler,
 			    LmConnection     *connection,
 			    LmMessage        *message,
 			    gpointer          user_data)
 {
 	LmMessageNode *bind_node;
+	LmMessageNode    *starttls_node;
 	
+	starttls_node = lm_message_node_find_child (message->node, "starttls");
+	if (connection->use_starttls && starttls_node) {
+		LmMessage        *msg;
+
+		msg = lm_message_new (NULL, LM_MESSAGE_TYPE_STARTTLS);
+
+		lm_message_node_set_attributes (msg->node,
+						"xmlns", XMPP_NS_STARTTLS,
+						NULL);
+
+		lm_connection_send (connection, msg, NULL);
+		lm_message_unref (msg);
+
+		return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+	} else if (!connection->ssl && connection->require_starttls) {
+		/* If we don't have ssl set up already, and there
+		 * were no starttls features present, and we do
+		 * require it, this is the place to scream */
+
+		g_debug ("%s: required StartTLS feature not supported by server", G_STRFUNC);
+		connection_do_close (connection);
+		return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+	}
+
 	bind_node = lm_message_node_find_child (message->node, "bind");
 	if (bind_node) {
 		LmMessageHandler *bind_handler;
@@ -1286,6 +1349,16 @@ lm_connection_authenticate (LmConnection      *connection,
 			connection->features_cb,
 			LM_MESSAGE_TYPE_STREAM_FEATURES,
 			LM_HANDLER_PRIORITY_FIRST);
+
+		if (connection->use_starttls) {
+			connection->starttls_cb  =
+				lm_message_handler_new (_lm_connection_starttls_cb,
+					NULL, NULL);
+			lm_connection_register_message_handler (connection,
+				connection->starttls_cb,
+				LM_MESSAGE_TYPE_PROCEED,
+				LM_HANDLER_PRIORITY_FIRST);
+		}
 
 		return TRUE;
 	}
@@ -1961,5 +2034,21 @@ lm_connection_unref (LmConnection *connection)
 	if (connection->ref_count == 0) {
 		connection_free (connection);
 	}
+}
+
+/*
+ * lm_connection_use_startls:
+ * @connection: Connection to use STARTTLS on
+ */
+void
+lm_connection_use_starttls (LmConnection *connection,
+			    gboolean require,
+			    LmSSLFunction ssl_fail_cb,
+			    gpointer user_data)
+{
+	connection->use_starttls = TRUE;
+	connection->ssl_fail_cb = ssl_fail_cb;
+	connection->ssl_fail_cb_data = user_data;
+	connection->require_starttls = require;
 }
 

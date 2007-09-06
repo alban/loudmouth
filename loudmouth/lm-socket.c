@@ -51,6 +51,7 @@ struct _LmSocket {
 	LmConnection *connection;
 	GMainContext *context;
 
+	gchar        *domain;
 	gchar        *server;
 	guint         port;
 
@@ -118,6 +119,7 @@ static void
 socket_free (LmSocket *socket)
 {
 	g_free (socket->server);
+	g_free (socket->domain);
 
 	if (socket->ssl) {
 		lm_ssl_unref (socket->ssl);
@@ -291,6 +293,58 @@ socket_error_event (GIOChannel   *source,
 	return TRUE;
 }
 
+static gboolean
+_lm_socket_ssl_init (LmSocket *socket, gboolean delayed)
+{
+	GError *error = NULL;
+
+	lm_verbose ("Setting up SSL...\n");
+
+	_lm_ssl_initialize (socket->ssl);
+
+#ifdef HAVE_GNUTLS
+	/* GNU TLS requires the socket to be blocking */
+	_lm_sock_set_blocking (socket->fd, TRUE);
+#endif
+
+	if (!_lm_ssl_begin (socket->ssl, socket->fd, socket->domain, &error)) {
+		lm_verbose ("Could not begin SSL\n");
+
+		if (error) {
+			g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET,
+				"%s\n", error->message);
+				g_error_free (error);
+		}
+
+		_lm_sock_shutdown (socket->fd);
+		_lm_sock_close (socket->fd);
+
+                if (!delayed)
+                        (socket->connect_func) (socket, FALSE, socket->user_data);
+
+		return FALSE;
+	}
+
+#ifdef HAVE_GNUTLS
+	_lm_sock_set_blocking (socket->fd, FALSE); 
+#endif
+
+  return TRUE;
+}
+
+gboolean
+lm_socket_starttls (LmSocket *socket, LmSSL *ssl)
+{
+	/* no-op if we're using old-style ssl (so ssl is set up already) */
+	if (socket->ssl)
+		return TRUE;
+
+	socket->ssl = ssl;
+	return _lm_socket_ssl_init (socket, TRUE);
+}
+
+
+
 void
 _lm_socket_succeeded (LmConnectData *connect_data)
 {
@@ -317,38 +371,10 @@ _lm_socket_succeeded (LmConnectData *connect_data)
 	socket->connect_data = NULL;
 	g_free (connect_data);
 
+	/* old-style ssl should be started immediately */
 	if (socket->ssl) {
-		GError *error = NULL;
-
-		lm_verbose ("Setting up SSL...\n");
-	
-#ifdef HAVE_GNUTLS
-		/* GNU TLS requires the socket to be blocking */
-		_lm_sock_set_blocking (socket->fd, TRUE);
-#endif
-
-		if (!_lm_ssl_begin (socket->ssl, socket->fd,
-				    socket->server,
-				    &error)) {
-			lm_verbose ("Could not begin SSL\n");
-				    
-			if (error) {
-				g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET,
-				       "%s\n", error->message);
-				g_error_free (error);
-			}
-
- 			_lm_sock_shutdown (socket->fd);
- 			_lm_sock_close (socket->fd);
-
-			(socket->connect_func) (socket, FALSE, 
-						socket->user_data);
+		if (!_lm_socket_ssl_init (socket, FALSE))
 			return;
-		}
-	
-#ifdef HAVE_GNUTLS
-		_lm_sock_set_blocking (socket->fd, FALSE); 
-#endif
 	}
 
 	socket->watch_in = 
@@ -936,7 +962,7 @@ lm_socket_create (GMainContext      *context,
 
 #ifndef HAVE_ASYNCNS
 	unsigned char    srv_ans[SRV_LEN];
-	int              err;
+	int              len;
 #endif
 	
 	g_return_val_if_fail (server != NULL, NULL);
@@ -950,6 +976,7 @@ lm_socket_create (GMainContext      *context,
 	socket->ref_count = 1;
 
 	socket->connection = connection;
+	socket->domain = g_strdup (server);
 	socket->server = g_strdup (server);
 	socket->port = port;
 	socket->use_srv = use_srv;
@@ -991,8 +1018,8 @@ lm_socket_create (GMainContext      *context,
 #else
 		res_init ();
 
-		err = res_query (srv, C_IN, T_SRV, srv_ans, SRV_LEN);
-		_lm_socket_create_phase1 (socket, (err) ? NULL : srv_ans, err);
+		len = res_query (srv, C_IN, T_SRV, srv_ans, SRV_LEN);
+		_lm_socket_create_phase1 (socket, (len < 1) ? NULL : srv_ans, len);
 		g_free (srv);
 #endif
 	} else {

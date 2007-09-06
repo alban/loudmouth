@@ -159,6 +159,10 @@ gboolean      lm_connection_send_raw          (LmConnection       *connection,
 LmConnectionState lm_connection_get_state     (LmConnection       *connection);
 LmConnection* lm_connection_ref               (LmConnection       *connection);
 void          lm_connection_unref             (LmConnection       *connection);
+void          lm_connection_use_starttls (LmConnection *connection,
+		   			  gboolean require,
+					  LmSSLFunction ssl_fail_cb,
+					  gpointer user_data);
 
 G_END_DECLS
 
