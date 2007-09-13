@@ -760,18 +760,11 @@ void _asyncns_cancel (LmSocket *socket)
 {
 	if (socket == NULL)
 		return;
+
 	if (socket->asyncns_ctx) {
-		if (socket->watch_resolv) {
-			g_source_destroy (socket->watch_resolv);
-			socket->watch_resolv = NULL;
-		}
-		if (socket->resolv_channel) {
-			g_io_channel_close (socket->resolv_channel);
-			socket->resolv_channel = NULL;
-		}
+		assert (socket->resolv_query != NULL);
 		asyncns_cancel (socket->asyncns_ctx, socket->resolv_query);
-		asyncns_free (socket->asyncns_ctx);
-		socket->asyncns_ctx = NULL;
+		_asyncns_done (socket);
 	}
 }
 
@@ -807,15 +800,22 @@ _asyncns_prep (LmSocket *socket, GError **error)
 static void
 _asyncns_done (LmSocket *socket)
 {
-	if (socket->resolv_channel == NULL)
-		return;
+	if (socket->resolv_channel != NULL) {
+		g_io_channel_unref (socket->resolv_channel);
+		socket->resolv_channel = NULL;
+	}
+ 
+	if (socket->watch_resolv) {
+		g_source_destroy(socket->watch_resolv);
+		socket->watch_resolv = NULL;
+	}
 
-	g_io_channel_unref (socket->resolv_channel);
-	socket->resolv_channel = NULL;
-	asyncns_free (socket->asyncns_ctx);
-	socket->asyncns_ctx = NULL;
-	socket->watch_resolv = NULL;
-	socket->resolv_query = NULL;
+	if (socket->asyncns_ctx) {
+		asyncns_free (socket->asyncns_ctx);
+		socket->asyncns_ctx = NULL;
+	}
+
+ 	socket->resolv_query = NULL;
 }
 
 static gboolean
