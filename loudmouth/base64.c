@@ -99,9 +99,6 @@ gchar *_lm_base64_encode (const gchar *txt, gsize n)
     {
       guint c1, c2, c3, c4;
 
-      if (i > 0 && (i * 4) % 76 == 0)
-          g_string_append_c (tmp, '\n');
-
       switch (i + 3 - len)
         {
         case 1:
