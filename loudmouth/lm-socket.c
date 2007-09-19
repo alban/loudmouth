@@ -295,6 +295,7 @@ static gboolean
 _lm_socket_ssl_init (LmSocket *socket, gboolean delayed)
 {
 	GError *error = NULL;
+	const gchar *ssl_verify_domain = NULL;
 
 	lm_verbose ("Setting up SSL...\n");
 
@@ -305,7 +306,15 @@ _lm_socket_ssl_init (LmSocket *socket, gboolean delayed)
 	_lm_sock_set_blocking (socket->fd, TRUE);
 #endif
 
-	if (!_lm_ssl_begin (socket->ssl, socket->fd, socket->domain, &error)) {
+	/* If we're using StartTLS, the correct thing is to verify against
+	 * the domain. If we're using old SSL, we should verify against the
+	 * hostname. */
+	if (delayed)
+		ssl_verify_domain = socket->domain;
+	else
+		ssl_verify_domain = socket->server;
+	
+	if (!_lm_ssl_begin (socket->ssl, socket->fd, ssl_verify_domain, &error)) {
 		lm_verbose ("Could not begin SSL\n");
 
 		if (error) {
@@ -317,8 +326,8 @@ _lm_socket_ssl_init (LmSocket *socket, gboolean delayed)
 		_lm_sock_shutdown (socket->fd);
 		_lm_sock_close (socket->fd);
 
-                if (!delayed)
-                        (socket->connect_func) (socket, FALSE, socket->user_data);
+		if (!delayed)
+			(socket->connect_func) (socket, FALSE, socket->user_data);
 
 		return FALSE;
 	}
