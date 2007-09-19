@@ -771,7 +771,7 @@ void _asyncns_cancel (LmSocket *socket)
 		return;
 
 	if (socket->asyncns_ctx) {
-		assert (socket->resolv_query != NULL);
+		g_assert (socket->resolv_query != NULL);
 		asyncns_cancel (socket->asyncns_ctx, socket->resolv_query);
 		_asyncns_done (socket);
 	}
