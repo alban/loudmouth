@@ -421,7 +421,7 @@ connection_message_queue_cb (LmMessageQueue *queue, LmConnection *connection)
 static gboolean
 connection_do_open (LmConnection *connection, GError **error) 
 {
-	gchar *domain;
+	gchar *domain = NULL;
 
 	if (lm_connection_is_open (connection)) {
 		g_set_error (error,
@@ -460,6 +460,8 @@ connection_do_open (LmConnection *connection, GError **error)
 					       connection->ssl,
 					       connection->proxy,
 					       error);
+
+	g_free (domain);
 
 	if (!connection->socket) {
 		return FALSE;
