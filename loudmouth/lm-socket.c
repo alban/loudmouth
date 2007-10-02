@@ -792,8 +792,9 @@ void _asyncns_cancel (LmSocket *socket)
 		return;
 
 	if (socket->asyncns_ctx) {
-		g_assert (socket->resolv_query != NULL);
-		asyncns_cancel (socket->asyncns_ctx, socket->resolv_query);
+		if (socket->resolv_query)
+			asyncns_cancel (socket->asyncns_ctx, socket->resolv_query);
+
 		_asyncns_done (socket);
 	}
 }
@@ -847,11 +848,13 @@ _lm_socket_resolver_done (GSource *source,
 	switch ((guint) asyncns_getuserdata (socket->asyncns_ctx, socket->resolv_query)) {
 	case PHASE_1:
 		err = asyncns_res_done (socket->asyncns_ctx, socket->resolv_query, &srv_ans);
+		socket->resolv_query = NULL;
 		_lm_socket_create_phase1 (socket, (err) ? NULL : srv_ans, err);
 		return TRUE;
 		break;
 	case PHASE_2:
 		err = asyncns_getaddrinfo_done (socket->asyncns_ctx, socket->resolv_query, &ans);
+		socket->resolv_query = NULL;
 		_lm_socket_create_phase2 (socket, (err) ? NULL : ans);
 		_asyncns_done (socket);
 		return FALSE;
