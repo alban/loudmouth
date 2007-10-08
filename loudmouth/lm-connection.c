@@ -391,6 +391,11 @@ connection_send (LmConnection  *connection,
 		connection_do_close (connection);
 		connection_signal_disconnect (connection, 
 					      LM_DISCONNECT_REASON_ERROR);
+
+		g_set_error (error,
+			     LM_ERROR,
+			     LM_ERROR_CONNECTION_FAILED,
+			     "Server closed the connection");
 		return FALSE;
 	}
 
