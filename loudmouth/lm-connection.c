@@ -736,9 +736,11 @@ connection_signal_disconnect (LmConnection       *connection,
 	if (connection->disconnect_cb && connection->disconnect_cb->func) {
 		LmCallback *cb = connection->disconnect_cb;
 		
+		lm_connection_ref (connection);
 		(* ((LmDisconnectFunction) cb->func)) (connection,
 						       reason,
 						       cb->user_data);
+		lm_connection_unref (connection);
 	}
 }
 
