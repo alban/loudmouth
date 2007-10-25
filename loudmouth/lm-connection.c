@@ -2025,20 +2025,3 @@ lm_connection_unref (LmConnection *connection)
 		connection_free (connection);
 	}
 }
-
-/*
- * lm_connection_use_startls:
- * @connection: Connection to use STARTTLS on
- */
-void
-lm_connection_use_starttls (LmConnection *connection,
-			    gboolean require,
-			    LmSSLFunction ssl_fail_cb,
-			    gpointer user_data)
-{
-	connection->use_starttls = TRUE;
-	connection->ssl_fail_cb = ssl_fail_cb;
-	connection->ssl_fail_cb_data = user_data;
-	connection->require_starttls = require;
-}
-
