@@ -255,20 +255,24 @@ connection_handle_message (LmConnection *connection, LmMessage *m)
 		goto out;
 	}
 	
-	id = lm_message_node_get_attribute (m->node, "id");
-	
-	if (id) {
-		handler = g_hash_table_lookup (connection->id_handlers, id);
-		if (handler) {
-			result = _lm_message_handler_handle_message (handler, 
-								     connection,
-								     m);
-			g_hash_table_remove (connection->id_handlers, id);
+	if ((lm_message_get_sub_type (m) == LM_MESSAGE_SUB_TYPE_ERROR) ||
+	    (lm_message_get_sub_type (m) == LM_MESSAGE_SUB_TYPE_RESULT)) {
+		id = lm_message_node_get_attribute (m->node, "id");
+
+		if (id) {
+			handler = g_hash_table_lookup (connection->id_handlers, id);
+			if (handler) {
+				result = _lm_message_handler_handle_message (handler,
+									     connection,
+									     m);
+				g_hash_table_remove (connection->id_handlers,
+						    id);
+			}
 		}
-	}
-	
-	if (result == LM_HANDLER_RESULT_REMOVE_MESSAGE) {
-		goto out;
+
+		if (result == LM_HANDLER_RESULT_REMOVE_MESSAGE) {
+			goto out;
+		}
 	}
 
 	for (l = connection->handlers[lm_message_get_type (m)]; 
