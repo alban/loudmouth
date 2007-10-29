@@ -1,6 +1,6 @@
-AC_INIT(Loudmouth, 1.3.1, loudmouth)
+AC_INIT(Loudmouth, 1.3.2, loudmouth)
 AC_PREREQ(2.59)
-AC_COPYRIGHT([Copyright (C) 2003-2007 Imendio AB])
+AC_COPYRIGHT([Copyright (C) 2003-2007 Imendio, Collabora])
 
 AC_CONFIG_SRCDIR(loudmouth/loudmouth.h)
 AM_CONFIG_HEADER(config.h)
@@ -38,6 +38,13 @@ AC_ISC_POSIX
 AC_HEADER_STDC
 AC_LIBTOOL_WIN32_DLL
 AM_PROG_LIBTOOL
+
+LT_CURRENT=1
+LT_REVISION=0
+LT_AGE=1
+AC_SUBST([LT_CURRENT])
+AC_SUBST([LT_REVISION])
+AC_SUBST([LT_AGE])
 
 AM_PATH_GLIB_2_0
 
@@ -261,8 +268,8 @@ loudmouth.spec])
 dnl ==========================================================================
 echo "
 
-        Loudmouth $VERSION from Imendio, Collabora
-	=====================================
+	Loudmouth $VERSION from Imendio, Collabora
+	==========================================
 
 	prefix:                   ${prefix}
 	compiler:                 ${CC}

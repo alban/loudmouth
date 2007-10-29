@@ -78,6 +78,7 @@ libloudmouth_1_la_LIBADD = 		\
 	$(LIBIDN_LIBS) \
 	-lresolv
 
+libloudmouth_1_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
 libloudmouthincludedir = $(includedir)/loudmouth-1.0/loudmouth
 
 # an explicit dependency here so alm generated files get built
