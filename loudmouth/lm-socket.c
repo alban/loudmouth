@@ -849,7 +849,7 @@ _lm_socket_resolver_done (GSource *source,
 	case PHASE_1:
 		err = asyncns_res_done (socket->asyncns_ctx, socket->resolv_query, &srv_ans);
 		socket->resolv_query = NULL;
-		_lm_socket_create_phase1 (socket, (err) ? NULL : srv_ans, err);
+		_lm_socket_create_phase1 (socket, (err <= 0) ? NULL : srv_ans, err);
 		return TRUE;
 		break;
 	case PHASE_2:
