@@ -58,6 +58,7 @@ struct _LmSocket {
 	gboolean      blocking;
 
 	LmSSL        *ssl;
+	gboolean      ssl_started;
 	LmProxy      *proxy;
 
 	GIOChannel   *io_channel;
@@ -139,7 +140,7 @@ lm_socket_do_write (LmSocket *socket, const gchar *buf, gint len)
 {
 	gint b_written;
 
-	if (socket->ssl) {
+	if (socket->ssl_started) {
 		b_written = _lm_ssl_send (socket->ssl, buf, len);
 	} else {
 		GIOStatus io_status = G_IO_STATUS_AGAIN;
@@ -174,7 +175,7 @@ socket_read_incoming (LmSocket *socket,
 
 	*hangup = FALSE;
 
-	if (socket->ssl) {
+	if (socket->ssl_started) {
 		status = _lm_ssl_read (socket->ssl, 
 				       buf, buf_size - 1, bytes_read);
 	} else {
@@ -336,13 +337,15 @@ _lm_socket_ssl_init (LmSocket *socket, gboolean delayed)
 	_lm_sock_set_blocking (socket->fd, FALSE); 
 #endif
 
+	socket->ssl_started = TRUE;
+
   return TRUE;
 }
 
 gboolean
 lm_socket_starttls (LmSocket *socket)
 {
-	g_return_val_if_fail (lm_ssl_get_use_starttls (socket->ssl) == FALSE, FALSE);
+	g_return_val_if_fail (lm_ssl_get_use_starttls (socket->ssl) == TRUE, FALSE);
 
 	return _lm_socket_ssl_init (socket, TRUE);
 }
@@ -376,7 +379,7 @@ _lm_socket_succeeded (LmConnectData *connect_data)
 	g_free (connect_data);
 
 	/* old-style ssl should be started immediately */
-	if (socket->ssl) {
+	if (socket->ssl && (lm_ssl_get_use_starttls (socket->ssl) == FALSE)) {
 		if (!_lm_socket_ssl_init (socket, FALSE))
 			return;
 	}
@@ -994,6 +997,7 @@ lm_socket_create (GMainContext      *context,
 	socket->port = port;
 	socket->cancel_open = FALSE;
 	socket->ssl = ssl;
+	socket->ssl_started = FALSE;
 	socket->proxy = NULL;
 	socket->blocking = blocking;
 	socket->data_func = data_func;
@@ -1008,11 +1012,6 @@ lm_socket_create (GMainContext      *context,
 	if (proxy) {
 		socket->proxy = lm_proxy_ref (proxy);
 	}
-
-	if (socket->ssl && !lm_ssl_get_use_starttls (socket->ssl)) {
-		_lm_ssl_initialize (socket->ssl);
-	}
-
 
 	if (!server) {
 		char          *srv;
