@@ -321,6 +321,12 @@ connection_send_keep_alive (LmConnection *connection)
 static void
 connection_start_keep_alive (LmConnection *connection)
 {
+	/* try using TCP keepalives if possible */
+	if ((connection->keep_alive_rate > 0) &&
+		lm_socket_set_keepalive (connection->socket,
+			connection->keep_alive_rate))
+		return;
+
 	if (connection->keep_alive_source) {
 		connection_stop_keep_alive (connection);
 	}

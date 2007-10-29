@@ -289,3 +289,34 @@ _lm_sock_addrinfo_get_error_str (int err)
 
 	return _("The remote address could not be obtained ");
 }
+
+#ifdef USE_TCP_KEEPALIVES
+gboolean
+_lm_sock_set_keepalive (LmSocketT sock, int delay)
+{
+	int opt;
+
+	opt = 1;
+	if (setsockopt (sock, SOL_SOCKET, SO_KEEPALIVE, &opt, sizeof (opt)) < 0) {
+		return FALSE;
+	}
+
+	opt = 3; /* 3 keepalives before considering connection dead */
+	if (setsockopt (sock, IPPROTO_TCP, TCP_KEEPCNT, &opt, sizeof (opt)) < 0) {
+		return FALSE;
+	}
+
+	opt = 30; /* start keepalives after 30s idle time */
+	if (setsockopt (sock, IPPROTO_TCP, TCP_KEEPIDLE, &opt, sizeof (opt)) < 0) {
+		return FALSE;
+	}
+
+	opt = 30; /* send keepalive every 30s */
+	if (setsockopt (sock, IPPROTO_TCP, TCP_KEEPINTVL, &opt, sizeof (opt)) < 0) {
+		return FALSE;
+	}
+
+	return TRUE;
+}
+#endif /* USE_TCP_KEEPALIVES */
+

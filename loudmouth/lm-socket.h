@@ -70,6 +70,7 @@ void        lm_socket_unref               (LmSocket       *socket);
 void	    _asyncns_cancel               (LmSocket *socket);
 #endif
 gboolean    lm_socket_starttls            (LmSocket *socket);
+gboolean    lm_socket_set_keepalive       (LmSocket *socket, int delay);
 
 #endif /* __LM_SOCKET_H__ */
 

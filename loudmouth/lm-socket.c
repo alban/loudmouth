@@ -1119,3 +1119,13 @@ lm_socket_unref (LmSocket *socket)
 	}
 }
 
+gboolean
+lm_socket_set_keepalive (LmSocket *socket, int delay)
+{
+#ifdef USE_TCP_KEEPALIVES
+	return _lm_sock_set_keepalive (socket->fd, delay);
+#else
+	return FALSE;
+#endif /* USE_TCP_KEEPALIVES */
+}
+
