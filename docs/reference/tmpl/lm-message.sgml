@@ -42,6 +42,8 @@ Describes what type of message a message is. This maps directly to top level ele
 @LM_MESSAGE_TYPE_SUCCESS: 
 @LM_MESSAGE_TYPE_FAILURE: 
 @LM_MESSAGE_TYPE_STREAM_ERROR: a stream:error element
+@LM_MESSAGE_TYPE_PROCEED: 
+@LM_MESSAGE_TYPE_STARTTLS: 
 @LM_MESSAGE_TYPE_UNKNOWN: incoming message is of some unknown type.
 
 <!-- ##### ENUM LmMessageSubType ##### -->

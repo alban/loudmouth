@@ -65,6 +65,13 @@ gboolean              lm_ssl_is_supported    (void);
 
 const gchar *         lm_ssl_get_fingerprint (LmSSL          *ssl);
 
+void                  lm_ssl_use_starttls    (LmSSL *ssl,
+					      gboolean use_starttls,
+					      gboolean require);
+
+gboolean              lm_ssl_get_use_starttls (LmSSL *ssl);
+
+gboolean              lm_ssl_get_require_starttls (LmSSL *ssl);
 
 LmSSL *               lm_ssl_ref             (LmSSL          *ssl);
 void                  lm_ssl_unref           (LmSSL          *ssl);

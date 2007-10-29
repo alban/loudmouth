@@ -32,6 +32,8 @@ struct _LmSSLBase {
 	GDestroyNotify  data_notify;
 	gchar          *expected_fingerprint;
 	char            fingerprint[20];
+	gboolean        use_starttls;
+	gboolean        require_starttls;
 
 	gint            ref_count;
 };
