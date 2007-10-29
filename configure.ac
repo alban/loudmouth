@@ -185,6 +185,38 @@ fi
 AM_CONDITIONAL(USE_OPENSSL, test x$enable_ssl = xOpenSSL)
 AM_CONDITIONAL(USE_GNUTLS, test x$enable_ssl = xGnuTLS)
 
+dnl +-------------------------------------------------------------------+
+dnl | Checking for libasyncns                                           |
+dnl +-------------------------------------------------------------------+
+AC_ARG_WITH(asyncns, [  --with-asyncns=yes/no  define whether to use libasyncns, default=no],
+            ac_asyncns=$withval,
+            ac_asyncns=no
+            )
+
+enable_asyncns=no
+if test x$ac_asyncns != xno; then
+	enable_asyncns=yes
+	AC_DEFINE(HAVE_ASYNCNS, 1, [Whether to use libasyncns])
+else
+	echo "Not using asynchronous dns lookups"
+fi
+
+dnl +-------------------------------------------------------------------+
+dnl | Checking for Linux TCP/IP stack                                   |
+dnl +-------------------------------------------------------------------+
+AC_CHECK_DECL(TCP_KEEPCNT, [ac_use_keepalives=yes], [ac_use_keepalives=no], [
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
+])
+
+use_keepalives=no
+if test x$ac_use_keepalives != xno; then
+	use_keepalives=yes
+	AC_DEFINE(USE_TCP_KEEPALIVES, 1, [Whether to use Linux TCP keepalives])
+fi
+
 dnl +-------------+
 dnl | Build Flags |--------------------------------------------
 dnl +-------------+
@@ -229,17 +261,19 @@ loudmouth.spec])
 dnl ==========================================================================
 echo "
 
-        Loudmouth $VERSION from Imendio AB
+        Loudmouth $VERSION from Imendio, Collabora
 	=====================================
 
-        prefix:                   ${prefix}
-        compiler:                 ${CC}
+	prefix:                   ${prefix}
+	compiler:                 ${CC}
 	Have IDN support:         ${have_idn}
-        Enable SSL                ${enable_ssl}
-        Enable Debug:             ${enable_debug}
+	Enable SSL:               ${enable_ssl}
+	Asynchronous DNS:         ${enable_asyncns}
+	Linux TCP keepalives:     ${use_keepalives}
+	Enable Debug:             ${enable_debug}
 	Enable Unit Tests:        ${have_check}
 	Enable Documentation      ${enable_gtk_doc}
-	
-        Now type 'make' to build Loudmouth
+
+	Now type 'make' to build Loudmouth
 "
 

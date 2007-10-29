@@ -29,6 +29,9 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <fcntl.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
 #define LM_SHUTDOWN SHUT_RDWR
 
 #else  /* G_OS_WIN32 */
