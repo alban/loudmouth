@@ -932,7 +932,7 @@ _lm_connection_starttls_cb (LmMessageHandler *handler,
 			    LmMessage *message,
 			    gpointer user_data)
 {
-	if (lm_socket_starttls (connection->socket, connection->ssl)) {
+	if (lm_socket_starttls (connection->socket)) {
 		connection_send_stream_header (connection);
 	} else {
 		connection_do_close (connection);

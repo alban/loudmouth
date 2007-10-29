@@ -340,13 +340,10 @@ _lm_socket_ssl_init (LmSocket *socket, gboolean delayed)
 }
 
 gboolean
-lm_socket_starttls (LmSocket *socket, LmSSL *ssl)
+lm_socket_starttls (LmSocket *socket)
 {
-	/* no-op if we're using old-style ssl (so ssl is set up already) */
-	if (socket->ssl)
-		return TRUE;
+	g_return_val_if_fail (lm_ssl_get_use_starttls (socket->ssl) == FALSE, FALSE);
 
-	socket->ssl = ssl;
 	return _lm_socket_ssl_init (socket, TRUE);
 }
 
@@ -996,7 +993,7 @@ lm_socket_create (GMainContext      *context,
 	socket->server = g_strdup (server);
 	socket->port = port;
 	socket->cancel_open = FALSE;
-	socket->ssl = NULL;
+	socket->ssl = ssl;
 	socket->proxy = NULL;
 	socket->blocking = blocking;
 	socket->data_func = data_func;
@@ -1012,8 +1009,7 @@ lm_socket_create (GMainContext      *context,
 		socket->proxy = lm_proxy_ref (proxy);
 	}
 
-	if (ssl) {
-		socket->ssl = lm_ssl_ref (ssl);
+	if (socket->ssl && !lm_ssl_get_use_starttls (socket->ssl)) {
 		_lm_ssl_initialize (socket->ssl);
 	}
 

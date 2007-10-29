@@ -69,7 +69,7 @@ void        lm_socket_unref               (LmSocket       *socket);
 #ifdef HAVE_ASYNCNS
 void	    _asyncns_cancel               (LmSocket *socket);
 #endif
-gboolean    lm_socket_starttls            (LmSocket *socket, LmSSL *ssl);
+gboolean    lm_socket_starttls            (LmSocket *socket);
 
 #endif /* __LM_SOCKET_H__ */
 
