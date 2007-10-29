@@ -116,6 +116,7 @@ void          lm_connection_set_server        (LmConnection       *connection,
 void          lm_connection_set_jid           (LmConnection       *connection,
 					       const gchar        *jid);
 const gchar * lm_connection_get_jid           (LmConnection       *connection);
+const gchar * lm_connection_get_effective_jid (LmConnection       *connection);
 
 guint         lm_connection_get_port          (LmConnection       *connection);
 void          lm_connection_set_port          (LmConnection       *connection,

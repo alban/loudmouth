@@ -58,6 +58,7 @@ struct _LmConnection {
 	GMainContext *context;
 	gchar        *server;
 	gchar        *jid;
+	gchar        *effective_jid;
 	guint         port;
 	gboolean      use_srv;
 
@@ -183,6 +184,7 @@ connection_free (LmConnection *connection)
 
 	g_free (connection->server);
 	g_free (connection->jid);
+	g_free (connection->effective_jid);
 	g_free (connection->stream_id);
 	g_free (connection->resource);
 
@@ -903,6 +905,7 @@ connection_bind_reply (LmMessageHandler *handler,
 {
 	LmMessage        *m;
 	LmMessageNode    *session_node;
+	LmMessageNode    *jid_node;
 	int               result;
 	LmMessageSubType  type;
 
@@ -914,6 +917,14 @@ connection_bind_reply (LmMessageHandler *handler,
 		
 		return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 	}
+
+	/* use whatever server returns as our effective jid */
+	jid_node = lm_message_node_find_child (message->node, "jid");
+	if (jid_node) {
+		connection->effective_jid = g_strdup
+			(lm_message_node_get_value (jid_node));
+	}
+
 
 	m = lm_message_new_with_sub_type (NULL,
 					  LM_MESSAGE_TYPE_IQ, 
@@ -1062,6 +1073,7 @@ lm_connection_new (const gchar *server)
 	connection->context           = NULL;
 	connection->port              = LM_CONNECTION_DEFAULT_PORT;
 	connection->jid               = NULL;
+	connection->effective_jid     = NULL;
 	connection->ssl               = NULL;
 	connection->proxy             = NULL;
 	connection->disconnect_cb     = NULL;
@@ -1573,6 +1585,25 @@ lm_connection_get_jid (LmConnection *connection)
 	g_return_val_if_fail (connection != NULL, NULL);
 
 	return connection->jid;
+}
+
+/**
+ * lm_connection_get_effective_jid:
+ * @connection: an #LmConnection
+ * 
+ * Returns the jid that server set for us after resource binding.
+ *
+ * Return value: the jid
+ **/
+const gchar *
+lm_connection_get_effective_jid (LmConnection *connection)
+{
+	g_return_val_if_fail (connection != NULL, NULL);
+
+	if (connection->effective_jid)
+		return connection->effective_jid;
+	else
+		return connection->jid;
 }
 
 /**
