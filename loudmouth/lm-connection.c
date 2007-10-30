@@ -145,6 +145,8 @@ connection_auth_reply                            (LmMessageHandler *handler,
 
 static void      connection_stream_received      (LmConnection    *connection, 
 						  LmMessage       *m);
+static void      connection_stream_error         (LmConnection    *connection, 
+						  LmMessage       *m);
 
 static gint      connection_handler_compare_func (HandlerData     *a,
 						  HandlerData     *b);
@@ -254,6 +256,11 @@ connection_handle_message (LmConnection *connection, LmMessage *m)
 
 	if (lm_message_get_type (m) == LM_MESSAGE_TYPE_STREAM) {
 		connection_stream_received (connection, m);
+		goto out;
+	}
+
+	if (lm_message_get_type (m) == LM_MESSAGE_TYPE_STREAM_ERROR) {
+		connection_stream_error (connection, m);
 		goto out;
 	}
 	
@@ -734,6 +741,41 @@ connection_stream_received (LmConnection *connection, LmMessage *m)
 		}
 		_lm_utils_free_callback (cb);
 	}
+}
+
+static void
+connection_stream_error (LmConnection *connection, LmMessage *m)
+{
+	LmMessageNode *node;
+	LmDisconnectReason reason;
+
+	g_return_if_fail (connection != NULL);
+	g_return_if_fail (m != NULL);
+
+	node = m->node;
+
+	/* Resource conflict */
+	node = lm_message_node_get_child (node, "conflict");
+	if (node) {
+		lm_verbose ("Stream error: Conflict (resource connected elsewhere)\n");
+		reason = LM_DISCONNECT_REASON_RESOURCE_CONFLICT;
+		return;
+	}
+
+	/* XML is crack */
+	node = lm_message_node_get_child (node, "xml-not-well-formed");
+	if (node) {
+		lm_verbose ("Stream error: XML not well formed\n");
+		reason = LM_DISCONNECT_REASON_INVALID_XML;
+		return;
+	}
+
+	lm_verbose ("Stream error: Unrecognised error\n");
+	reason = LM_DISCONNECT_REASON_ERROR;
+	connection->stream_id = g_strdup (lm_message_node_get_attribute (m->node,
+									 "id"));;
+	connection_do_close (connection);
+	connection_signal_disconnect (connection, reason);
 }
 
 static gint
