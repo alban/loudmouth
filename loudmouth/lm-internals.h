@@ -108,6 +108,7 @@ void             _lm_sock_get_error               (LmSocketT               sock,
 						   socklen_t             *len);
 const gchar *    _lm_sock_get_error_str           (int                    err);
 const gchar *    _lm_sock_addrinfo_get_error_str  (int                    err);
+gchar       *    _lm_sock_get_local_host          (LmSocketT              sock);
 
 #ifdef USE_TCP_KEEPALIVES
 gboolean         _lm_sock_set_keepalive (LmSocketT sock, int delay);

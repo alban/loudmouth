@@ -160,8 +160,10 @@ gboolean      lm_connection_send_raw          (LmConnection       *connection,
 					       const gchar        *str,
 					       GError            **error);
 LmConnectionState lm_connection_get_state     (LmConnection       *connection);
+gchar *       lm_connection_get_local_host    (LmConnection       *connection);
 LmConnection* lm_connection_ref               (LmConnection       *connection);
 void          lm_connection_unref             (LmConnection       *connection);
+
 
 G_END_DECLS
 

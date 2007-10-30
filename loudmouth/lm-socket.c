@@ -1096,6 +1096,12 @@ lm_socket_close (LmSocket *socket)
 	}
 }
 
+gchar *
+lm_socket_get_local_host (LmSocket *socket)
+{
+	return _lm_sock_get_local_host (socket->fd);
+}
+
 LmSocket *
 lm_socket_ref (LmSocket *socket)
 {

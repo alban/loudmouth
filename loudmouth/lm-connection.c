@@ -2066,6 +2066,20 @@ lm_connection_get_state (LmConnection *connection)
 }
 
 /**
+ * lm_connection_get_client_host:
+ * @connection: An #LmConnection
+ *
+ * Returns the local host name of the connection.
+ *
+ * Return value: A newly allocated string representing the local host name.
+ **/
+gchar *
+lm_connection_get_local_host (LmConnection *connection)
+{
+	return lm_socket_get_local_host (connection->socket);
+}
+
+/**
  * lm_connection_ref:
  * @connection: Connection to add a reference to.
  * 
