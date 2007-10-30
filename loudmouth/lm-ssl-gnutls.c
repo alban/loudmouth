@@ -38,6 +38,7 @@ struct _LmSSL {
 
 	gnutls_session                 gnutls_session;
 	gnutls_certificate_credentials gnutls_xcred;
+	gboolean                       started;
 };
 
 static gboolean       ssl_verify_certificate    (LmSSL       *ssl,
@@ -231,7 +232,9 @@ _lm_ssl_begin (LmSSL *ssl, gint fd, const gchar *server, GError **error)
 
 		return FALSE;
 	}
-	
+
+	ssl->started = TRUE;
+
 	return TRUE;
 }
 
@@ -283,6 +286,9 @@ _lm_ssl_send (LmSSL *ssl, const gchar *str, gint len)
 void 
 _lm_ssl_close (LmSSL *ssl)
 {
+	if (!ssl->started)
+		return;
+
 	gnutls_deinit (ssl->gnutls_session);
 	gnutls_certificate_free_credentials (ssl->gnutls_xcred);
 	gnutls_global_deinit ();

@@ -406,9 +406,11 @@ _lm_ssl_send (LmSSL *ssl, const gchar *str, gint len)
 void 
 _lm_ssl_close (LmSSL *ssl)
 {
-	SSL_shutdown(ssl->ssl);
-	SSL_free(ssl->ssl);
-	ssl->ssl = NULL;
+	if (ssl->ssl != NULL) {
+		SSL_shutdown(ssl->ssl);
+		SSL_free(ssl->ssl);
+		ssl->ssl = NULL;
+	}
 }
 
 void
