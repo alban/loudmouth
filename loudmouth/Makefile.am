@@ -78,10 +78,16 @@ libloudmouth_1_la_LIBADD = 		\
 	$(LIBIDN_LIBS) \
 	-lresolv
 
-libloudmouth_1_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
+libloudmouth_1_la_LDFLAGS = \
+	-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) \
+	-export-symbols loudmouth.sym
 libloudmouthincludedir = $(includedir)/loudmouth-1.0/loudmouth
 
 # an explicit dependency here so alm generated files get built
 $(OBJECTS): $(built_sources)
 
-EXTRA_DIST = lm-ssl-gnutls.c lm-ssl-openssl.c
+EXTRA_DIST = \
+	lm-ssl-gnutls.c \
+	lm-ssl-openssl.c \
+	loudmouth.sym
+
