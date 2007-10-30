@@ -963,6 +963,7 @@ connection_bind_reply (LmMessageHandler *handler,
 	/* use whatever server returns as our effective jid */
 	jid_node = lm_message_node_find_child (message->node, "jid");
 	if (jid_node) {
+		g_free (connection->effective_jid);
 		connection->effective_jid = g_strdup
 			(lm_message_node_get_value (jid_node));
 	}
@@ -1381,13 +1382,15 @@ lm_connection_authenticate (LmConnection      *connection,
 						      user_data, 
 						      notify);
 
+	connection->resource = g_strdup (resource);
+	connection->effective_jid = g_strdup_printf ("%s/%s", 
+		connection->jid, connection->resource);
+
 	if (connection->use_xmpp) {
 		lm_sasl_authenticate (connection->sasl,
 				      username, password,
 				      connection->server,
 				      connection_sasl_auth_finished);
-
-		connection->resource = g_strdup (resource);
 
 		connection->features_cb  =
 			lm_message_handler_new (connection_features_cb,
@@ -1630,22 +1633,20 @@ lm_connection_get_jid (LmConnection *connection)
 }
 
 /**
- * lm_connection_get_effective_jid:
+ * lm_connection_get_full_jid:
  * @connection: an #LmConnection
  * 
- * Returns the jid that server set for us after resource binding.
+ * Returns the full jid that server set for us after
+ * resource binding, complete with the resource.
  *
  * Return value: the jid
  **/
-const gchar *
-lm_connection_get_effective_jid (LmConnection *connection)
+gchar *
+lm_connection_get_full_jid (LmConnection *connection)
 {
 	g_return_val_if_fail (connection != NULL, NULL);
 
-	if (connection->effective_jid)
-		return connection->effective_jid;
-	else
-		return connection->jid;
+	return connection->effective_jid;
 }
 
 /**
