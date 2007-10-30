@@ -1,6 +1,10 @@
 AC_INIT(Loudmouth, 1.3.2, loudmouth)
 AC_PREREQ(2.59)
-AC_COPYRIGHT([Copyright (C) 2003-2007 Imendio, Collabora])
+AC_COPYRIGHT([
+	Copyright (C) 2003-2007 Imendio AB
+	Copyright (C) 2007 Collabora Ltd
+	Copyright (C) 2007 Nokia Corporation
+])
 
 AC_CONFIG_SRCDIR(loudmouth/loudmouth.h)
 AM_CONFIG_HEADER(config.h)
@@ -268,8 +272,8 @@ loudmouth.spec])
 dnl ==========================================================================
 echo "
 
-	Loudmouth $VERSION from Imendio, Collabora
-	==========================================
+	Loudmouth $VERSION from Imendio AB, Collabora Ltd, Nokia Corporation
+	====================================================================
 
 	prefix:                   ${prefix}
 	compiler:                 ${CC}
