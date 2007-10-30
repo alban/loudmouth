@@ -321,6 +321,13 @@ _lm_ssl_begin (LmSSL *ssl, gint fd, const gchar *server, GError **error)
 	gint ssl_ret;
 	GIOStatus status;
 
+	if (!ssl->ssl_ctx) {
+		g_set_error (error,
+			     LM_ERROR, LM_ERROR_CONNECTION_OPEN,
+			     "No SSL Context for OpenSSL");
+		return FALSE;
+	}
+
 	ssl->ssl = SSL_new(ssl->ssl_ctx);
 	if (ssl->ssl == NULL) {
 		g_warning ("SSL_new() == NULL");
