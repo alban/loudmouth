@@ -309,12 +309,12 @@ _lm_sock_set_keepalive (LmSocketT sock, int delay)
 		return FALSE;
 	}
 
-	opt = 30; /* start keepalives after 30s idle time */
+	opt = delay;
 	if (setsockopt (sock, IPPROTO_TCP, TCP_KEEPIDLE, &opt, sizeof (opt)) < 0) {
 		return FALSE;
 	}
 
-	opt = 30; /* send keepalive every 30s */
+	opt = delay; 
 	if (setsockopt (sock, IPPROTO_TCP, TCP_KEEPINTVL, &opt, sizeof (opt)) < 0) {
 		return FALSE;
 	}
