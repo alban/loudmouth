@@ -145,6 +145,8 @@ connection_auth_reply                            (LmMessageHandler *handler,
 
 static void      connection_stream_received      (LmConnection    *connection, 
 						  LmMessage       *m);
+static void      connection_stream_error         (LmConnection    *connection, 
+						  LmMessage       *m);
 
 static gint      connection_handler_compare_func (HandlerData     *a,
 						  HandlerData     *b);
@@ -256,7 +258,7 @@ connection_handle_message (LmConnection *connection, LmMessage *m)
 		connection_stream_received (connection, m);
 		goto out;
 	}
-	
+
 	if ((lm_message_get_sub_type (m) == LM_MESSAGE_SUB_TYPE_ERROR) ||
 	    (lm_message_get_sub_type (m) == LM_MESSAGE_SUB_TYPE_RESULT)) {
 		id = lm_message_node_get_attribute (m->node, "id");
@@ -287,6 +289,11 @@ connection_handle_message (LmConnection *connection, LmMessage *m)
 							     m);
 	}
 
+	if (lm_message_get_type (m) == LM_MESSAGE_TYPE_STREAM_ERROR) {
+		connection_stream_error (connection, m);
+		goto out;
+	}
+	
 out:
 	lm_connection_unref (connection);
 	
@@ -736,6 +743,41 @@ connection_stream_received (LmConnection *connection, LmMessage *m)
 	}
 }
 
+static void
+connection_stream_error (LmConnection *connection, LmMessage *m)
+{
+	LmMessageNode *node;
+	LmDisconnectReason reason;
+
+	g_return_if_fail (connection != NULL);
+	g_return_if_fail (m != NULL);
+
+	node = m->node;
+
+	/* Resource conflict */
+	node = lm_message_node_get_child (node, "conflict");
+	if (node) {
+		lm_verbose ("Stream error: Conflict (resource connected elsewhere)\n");
+		reason = LM_DISCONNECT_REASON_RESOURCE_CONFLICT;
+		return;
+	}
+
+	/* XML is crack */
+	node = lm_message_node_get_child (node, "xml-not-well-formed");
+	if (node) {
+		lm_verbose ("Stream error: XML not well formed\n");
+		reason = LM_DISCONNECT_REASON_INVALID_XML;
+		return;
+	}
+
+	lm_verbose ("Stream error: Unrecognised error\n");
+	reason = LM_DISCONNECT_REASON_ERROR;
+	connection->stream_id = g_strdup (lm_message_node_get_attribute (m->node,
+									 "id"));;
+	connection_do_close (connection);
+	connection_signal_disconnect (connection, reason);
+}
+
 static gint
 connection_handler_compare_func (HandlerData *a, HandlerData *b)
 {
@@ -921,6 +963,7 @@ connection_bind_reply (LmMessageHandler *handler,
 	/* use whatever server returns as our effective jid */
 	jid_node = lm_message_node_find_child (message->node, "jid");
 	if (jid_node) {
+		g_free (connection->effective_jid);
 		connection->effective_jid = g_strdup
 			(lm_message_node_get_value (jid_node));
 	}
@@ -1339,13 +1382,15 @@ lm_connection_authenticate (LmConnection      *connection,
 						      user_data, 
 						      notify);
 
+	connection->resource = g_strdup (resource);
+	connection->effective_jid = g_strdup_printf ("%s/%s", 
+		connection->jid, connection->resource);
+
 	if (connection->use_xmpp) {
 		lm_sasl_authenticate (connection->sasl,
 				      username, password,
 				      connection->server,
 				      connection_sasl_auth_finished);
-
-		connection->resource = g_strdup (resource);
 
 		connection->features_cb  =
 			lm_message_handler_new (connection_features_cb,
@@ -1588,22 +1633,20 @@ lm_connection_get_jid (LmConnection *connection)
 }
 
 /**
- * lm_connection_get_effective_jid:
+ * lm_connection_get_full_jid:
  * @connection: an #LmConnection
  * 
- * Returns the jid that server set for us after resource binding.
+ * Returns the full jid that server set for us after
+ * resource binding, complete with the resource.
  *
  * Return value: the jid
  **/
-const gchar *
-lm_connection_get_effective_jid (LmConnection *connection)
+gchar *
+lm_connection_get_full_jid (LmConnection *connection)
 {
 	g_return_val_if_fail (connection != NULL, NULL);
 
-	if (connection->effective_jid)
-		return connection->effective_jid;
-	else
-		return connection->jid;
+	return connection->effective_jid;
 }
 
 /**
@@ -2020,6 +2063,20 @@ lm_connection_get_state (LmConnection *connection)
 			      LM_CONNECTION_STATE_CLOSED);
 
 	return connection->state;
+}
+
+/**
+ * lm_connection_get_client_host:
+ * @connection: An #LmConnection
+ *
+ * Returns the local host name of the connection.
+ *
+ * Return value: A newly allocated string representing the local host name.
+ **/
+gchar *
+lm_connection_get_local_host (LmConnection *connection)
+{
+	return lm_socket_get_local_host (connection->socket);
 }
 
 /**
