@@ -2,8 +2,9 @@ lm_connection_authenticate
 lm_connection_authenticate_and_block
 lm_connection_cancel_open
 lm_connection_close
-lm_connection_get_effective_jid
+lm_connection_get_full_jid
 lm_connection_get_jid
+lm_connection_get_local_host
 lm_connection_get_port
 lm_connection_get_proxy
 lm_connection_get_server
