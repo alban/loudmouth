@@ -80,7 +80,7 @@ libloudmouth_1_la_LIBADD = 		\
 
 libloudmouth_1_la_LDFLAGS = \
 	-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) \
-	-export-symbols loudmouth.sym
+	-export-symbols $(srcdir)/loudmouth.sym
 libloudmouthincludedir = $(includedir)/loudmouth-1.0/loudmouth
 
 # an explicit dependency here so alm generated files get built
