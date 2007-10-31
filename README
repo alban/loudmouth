@@ -23,6 +23,10 @@ ftp://ftp.gnome.org/pub/GNOME/sources/gtk-doc/1.0
 If you want SSL-support you'll also need:
 GnuTLS >= 1.2.0 with libtasn support.
 
+If you want to run the unit tests, you'll also need:
+Check
+http://check.sourceforge.net/
+
 Building:
 =========
 
