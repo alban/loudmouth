@@ -403,10 +403,6 @@ connection_send (LmConnection  *connection,
 	b_written = lm_socket_do_write (connection->socket, str, len);
 
 	if (b_written < 0) {
-		connection_do_close (connection);
-		connection_signal_disconnect (connection, 
-					      LM_DISCONNECT_REASON_ERROR);
-
 		g_set_error (error,
 			     LM_ERROR,
 			     LM_ERROR_CONNECTION_FAILED,
