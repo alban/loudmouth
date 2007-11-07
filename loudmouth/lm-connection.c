@@ -78,6 +78,7 @@ struct _LmConnection {
 	gchar        *resource;
 	LmMessageHandler *features_cb;
 	LmMessageHandler *starttls_cb;
+	gboolean      tls_started;
 
 	/* Communication */
 	guint         open_id;
@@ -994,6 +995,7 @@ _lm_connection_starttls_cb (LmMessageHandler *handler,
 {
 	if (lm_socket_starttls (connection->socket)) {
 		connection_send_stream_header (connection);
+		connection->tls_started = TRUE;
 	} else {
 		connection_do_close (connection);
 		connection_signal_disconnect (connection, 
@@ -1028,7 +1030,8 @@ connection_features_cb (LmMessageHandler *handler,
 			lm_message_unref (msg);
 
 			return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-		} else if (lm_ssl_get_require_starttls (connection->ssl)) {
+		} else if (!connection->tls_started &&
+				lm_ssl_get_require_starttls (connection->ssl)) {
 			/* If there were no starttls features present and we require it, this is
 			 * the place to scream. */
 
@@ -1124,6 +1127,7 @@ lm_connection_new (const gchar *server)
 	connection->keep_alive_rate   = 0;
 	connection->socket            = NULL;
 	connection->use_xmpp          = FALSE;
+	connection->tls_started       = FALSE;
 	
 	connection->id_handlers = g_hash_table_new_full (g_str_hash, 
 							 g_str_equal,
