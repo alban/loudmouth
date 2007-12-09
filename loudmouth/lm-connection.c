@@ -751,7 +751,8 @@ connection_stream_received (LmConnection *connection, LmMessage *m)
 			    connection->stream_id);
 	}
 	
-	connection->state = LM_CONNECTION_STATE_OPEN;
+	if (connection->state < LM_CONNECTION_STATE_OPEN)
+		connection->state = LM_CONNECTION_STATE_OPEN;
 	
 	/* Check to see if the stream is correctly set up */
 	result = TRUE;
@@ -1454,59 +1455,28 @@ lm_connection_authenticate_and_block (LmConnection  *connection,
 				      const gchar   *resource,
 				      GError       **error)
 {
-	LmMessage        *m;
-	LmMessage        *result;
-	LmMessageSubType  type;
-		
-	g_return_val_if_fail (connection != NULL, FALSE);
-	g_return_val_if_fail (username != NULL, FALSE);
-	g_return_val_if_fail (password != NULL, FALSE);
-	g_return_val_if_fail (resource != NULL, FALSE);
+	gboolean          result;
 
-	if (!lm_connection_is_open (connection)) {
-		g_set_error (error,
-			     LM_ERROR,
-			     LM_ERROR_CONNECTION_NOT_OPEN,
-			     "Connection is not open, call lm_connection_open() first");
-		return FALSE;
+	result = lm_connection_authenticate (connection, username, password,
+		resource, NULL, NULL, NULL, error);
+
+	if (!result)
+		return result;
+
+	while (lm_connection_get_state (connection) == LM_CONNECTION_STATE_AUTHENTICATING) {
+		if (g_main_context_pending (connection->context)) {
+			g_main_context_iteration (connection->context, TRUE);
+		} else {
+			/* Sleep for 1 millisecond */
+			g_usleep (1000);
+		}
 	}
 
-	connection->state = LM_CONNECTION_STATE_AUTHENTICATING;
-
-	m = connection_create_auth_req_msg (username);
-	result = lm_connection_send_with_reply_and_block (connection, m, error);
-	lm_message_unref (m);
-
-	if (!result) {
-		connection->state = LM_CONNECTION_STATE_OPEN;
-		return FALSE;
-	}
-
-	m = connection_create_auth_msg (connection,
-					username, 
-					password,
-					resource,
-					connection_check_auth_type (result));
-	lm_message_unref (result);
-
-	result = lm_connection_send_with_reply_and_block (connection, m, error);
-	lm_message_unref (m);
-
-	if (!result) {
-		connection->state = LM_CONNECTION_STATE_OPEN;
-		return FALSE;
-	}
-
-	type = lm_message_get_sub_type (result);
-	lm_message_unref (result);
-	
-	switch (type) {
-	case LM_MESSAGE_SUB_TYPE_RESULT:
-		connection->state = LM_CONNECTION_STATE_AUTHENTICATED;
+	switch (lm_connection_get_state (connection)) {
+	case LM_CONNECTION_STATE_AUTHENTICATED:
 		return TRUE;
 		break;
-	case LM_MESSAGE_SUB_TYPE_ERROR:
-		connection->state = LM_CONNECTION_STATE_OPEN;
+	case LM_CONNECTION_STATE_OPEN:
 		g_set_error (error,
 			     LM_ERROR,
 			     LM_ERROR_AUTH_FAILED,
