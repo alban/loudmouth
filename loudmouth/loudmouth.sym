@@ -84,3 +84,17 @@ lm_ssl_ref
 lm_ssl_unref
 lm_ssl_use_starttls
 lm_utils_get_localtime
+lm_sha_hash
+_lm_sock_close
+_lm_sock_connect
+_lm_sock_get_error
+_lm_sock_get_last_error
+_lm_sock_is_blocking_error
+_lm_sock_is_blocking_success
+_lm_sock_library_init
+_lm_sock_makesocket
+_lm_sock_set_blocking
+_lm_sock_shutdown
+_lm_utils_free_callback
+_lm_utils_hostname_to_punycode
+_lm_utils_new_callback
