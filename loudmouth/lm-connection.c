@@ -691,6 +691,24 @@ connection_auth_reply (LmMessageHandler *handler,
 }
 
 
+static LmHandlerResult
+_lm_connection_starttls_cb (LmMessageHandler *handler,
+			    LmConnection *connection,
+			    LmMessage *message,
+			    gpointer user_data)
+{
+	if (lm_socket_starttls (connection->socket)) {
+		connection->tls_started = TRUE;
+		connection_send_stream_header (connection);
+	} else {
+		connection_do_close (connection);
+		connection_signal_disconnect (connection, 
+					      LM_DISCONNECT_REASON_ERROR);
+	}
+
+	return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
 static void
 connection_stream_received (LmConnection *connection, LmMessage *m)
 {
@@ -714,6 +732,20 @@ connection_stream_received (LmConnection *connection, LmMessage *m)
 		 * one sasl mechanism */
 		if (!connection->sasl)
 			connection->sasl = lm_sasl_new(connection);
+
+		/* if we'd like to use tls and we didn't already start
+		 * it, prepare for it now */
+		if (connection->ssl &&
+				lm_ssl_get_use_starttls (connection->ssl) &&
+				!connection->starttls_cb) {
+			connection->starttls_cb  =
+				lm_message_handler_new (_lm_connection_starttls_cb,
+					NULL, NULL);
+			lm_connection_register_message_handler (connection,
+				connection->starttls_cb,
+				LM_MESSAGE_TYPE_PROCEED,
+				LM_HANDLER_PRIORITY_FIRST);
+		}
 	} else {
 		lm_verbose ("Old Jabber stream received: %s\n", 
 			    connection->stream_id);
@@ -983,24 +1015,6 @@ connection_bind_reply (LmMessageHandler *handler,
 
 	/* We may finally tell the client they're authorized */
 	connection_call_auth_cb (connection, TRUE);
-
-	return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-}
-
-static LmHandlerResult
-_lm_connection_starttls_cb (LmMessageHandler *handler,
-			    LmConnection *connection,
-			    LmMessage *message,
-			    gpointer user_data)
-{
-	if (lm_socket_starttls (connection->socket)) {
-		connection_send_stream_header (connection);
-		connection->tls_started = TRUE;
-	} else {
-		connection_do_close (connection);
-		connection_signal_disconnect (connection, 
-					      LM_DISCONNECT_REASON_ERROR);
-	}
 
 	return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
@@ -1399,16 +1413,6 @@ lm_connection_authenticate (LmConnection      *connection,
 			connection->features_cb,
 			LM_MESSAGE_TYPE_STREAM_FEATURES,
 			LM_HANDLER_PRIORITY_FIRST);
-
-		if (connection->ssl && lm_ssl_get_use_starttls (connection->ssl)) {
-			connection->starttls_cb  =
-				lm_message_handler_new (_lm_connection_starttls_cb,
-					NULL, NULL);
-			lm_connection_register_message_handler (connection,
-				connection->starttls_cb,
-				LM_MESSAGE_TYPE_PROCEED,
-				LM_HANDLER_PRIORITY_FIRST);
-		}
 
 		return TRUE;
 	}
