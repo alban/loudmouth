@@ -510,6 +510,11 @@ connection_do_close (LmConnection *connection)
 	if (connection->ssl) {
 		_lm_ssl_close (connection->ssl);
 	}
+
+	if (connection->sasl) {
+		lm_sasl_free (connection->sasl);
+		connection->sasl = NULL;
+	}
 }
 
 typedef struct {
