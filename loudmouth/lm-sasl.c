@@ -750,7 +750,7 @@ lm_sasl_new (LmConnection *connection)
 	lm_connection_register_message_handler (connection,
 						sasl->features_cb,
 						LM_MESSAGE_TYPE_STREAM_FEATURES,
-						LM_HANDLER_PRIORITY_FIRST);
+						LM_HANDLER_PRIORITY_LAST);
 	return sasl;
 }
 
