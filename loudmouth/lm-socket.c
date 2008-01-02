@@ -891,7 +891,7 @@ _lm_socket_create_phase1 (LmSocket *socket,
 		if (result == TRUE) {
 			g_free (socket->server);
 			socket->server = new_server;
-			if (!socket->port) socket->port = new_port;
+			socket->port = new_port;
 		}
 	}
 
