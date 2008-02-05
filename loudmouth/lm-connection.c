@@ -777,7 +777,7 @@ connection_stream_received (LmConnection *connection, LmMessage *m)
 static void
 connection_stream_error (LmConnection *connection, LmMessage *m)
 {
-	LmMessageNode *node;
+	LmMessageNode *node, *reason_node;
 	LmDisconnectReason reason;
 
 	g_return_if_fail (connection != NULL);
@@ -786,16 +786,16 @@ connection_stream_error (LmConnection *connection, LmMessage *m)
 	node = m->node;
 
 	/* Resource conflict */
-	node = lm_message_node_get_child (node, "conflict");
-	if (node) {
+	reason_node = lm_message_node_get_child (node, "conflict");
+	if (reason_node) {
 		lm_verbose ("Stream error: Conflict (resource connected elsewhere)\n");
 		reason = LM_DISCONNECT_REASON_RESOURCE_CONFLICT;
 		return;
 	}
 
 	/* XML is crack */
-	node = lm_message_node_get_child (node, "xml-not-well-formed");
-	if (node) {
+	reason_node = lm_message_node_get_child (node, "xml-not-well-formed");
+	if (reason_node) {
 		lm_verbose ("Stream error: XML not well formed\n");
 		reason = LM_DISCONNECT_REASON_INVALID_XML;
 		return;
