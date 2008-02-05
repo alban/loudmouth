@@ -485,10 +485,12 @@ socket_connect_cb (GIOChannel   *source,
 			g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET,
 			       "Connection failed.\n");
 
-			_lm_socket_failed_with_error (connect_data, err);
-
-			socket->watch_connect = NULL;
-			return FALSE;
+			/* error condition, but might be possible to recover
+			 * from it (by connecting to the next host) */
+			if (!_lm_socket_failed_with_error (connect_data, err)) {
+				socket->watch_connect = NULL;
+				return FALSE;
+			}
 		}
 	}
 
