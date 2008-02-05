@@ -449,11 +449,7 @@ connection_do_open (LmConnection *connection, GError **error)
 	}
 
 	if (!connection_get_server_from_jid (connection->jid, &domain)) {
-		g_set_error (error,
-			LM_ERROR,
-			LM_ERROR_CONNECTION_FAILED,
-			"You need to either set server hostname or jid");
-		return FALSE;
+		domain = g_strdup (connection->server);
 	}
 
 	lm_message_queue_attach (connection->queue, connection->context);
