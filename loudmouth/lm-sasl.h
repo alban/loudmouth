@@ -46,6 +46,10 @@ void lm_sasl_authenticate (LmSASL *sasl,
 
 void lm_sasl_free (LmSASL *sasl);
 
+void
+lm_sasl_get_auth_params (LmSASL *sasl, const gchar **username,
+	const gchar **password);
+
 G_END_DECLS
 
 #endif /* __LM_SASL_H__ */
