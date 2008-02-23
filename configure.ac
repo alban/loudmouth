@@ -272,8 +272,8 @@ loudmouth.spec])
 dnl ==========================================================================
 echo "
 
-	Loudmouth $VERSION from Imendio AB, Collabora Ltd, Nokia Corporation
-	====================================================================
+	Loudmouth $VERSION
+	==================
 
 	prefix:                   ${prefix}
 	compiler:                 ${CC}
