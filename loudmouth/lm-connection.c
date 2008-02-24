@@ -26,6 +26,12 @@
 #include <sys/stat.h> 
 #include <sys/types.h>
 #include <fcntl.h>
+
+/* Needed on Mac OS X */
+#if HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+
 #include <arpa/nameser.h>
 #include <resolv.h>
 

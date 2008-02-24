@@ -24,6 +24,17 @@
 
 #include <string.h>
 #include <sys/types.h>
+
+/* Needed on Mac OS X */
+#if HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+
+/* Needed on Mac OS X */
+#if HAVE_ARPA_NAMESER_COMPAT_H
+#include <arpa/nameser_compat.h>
+#endif
+
 #include <arpa/nameser.h>
 #include <resolv.h>
 
