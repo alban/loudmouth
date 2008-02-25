@@ -990,7 +990,7 @@ connection_bind_reply (LmMessageHandler *handler,
 
 	type = lm_message_get_sub_type (message);
 	if (type == LM_MESSAGE_SUB_TYPE_ERROR) {
-		g_debug ("%s: error while binding to resource", G_STRFUNC);
+		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SASL, "%s: error while binding to resource", G_STRFUNC);
 	
 		connection_call_auth_cb (connection, FALSE);
 		
@@ -1058,7 +1058,7 @@ connection_features_cb (LmMessageHandler *handler,
 			/* If there were no starttls features present and we require it, this is
 			 * the place to scream. */
 
-			g_debug ("%s: required StartTLS feature not supported by server", G_STRFUNC);
+			g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SASL, "%s: required StartTLS feature not supported by server", G_STRFUNC);
 			connection_do_close (connection);
 			connection_signal_disconnect (connection,
 				LM_DISCONNECT_REASON_ERROR);
@@ -1099,14 +1099,15 @@ connection_features_cb (LmMessageHandler *handler,
 		lm_message_unref (bind_msg);
 
 		if (result < 0) {
-			g_debug ("%s: can't send resource binding request", G_STRFUNC);
+			g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SASL, 
+			       "%s: can't send resource binding request", G_STRFUNC);
 			connection_do_close (connection);
 		}
 	}
 
 	old_auth = lm_message_node_find_child (message->node, "auth");
 	if (connection->use_sasl && old_auth) {
-		g_debug ("Server uses XEP-0078 (jabber iq auth) instead of SASL");
+		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SASL, "Server uses XEP-0078 (jabber iq auth) instead of SASL");
 		/* So the server is XMPP1.0, but doesn't support SASL and uses
 		 * obsolete XEP-0078 instead. Let's cope. */
 
