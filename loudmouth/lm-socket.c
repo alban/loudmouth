@@ -436,7 +436,7 @@ _lm_socket_failed_with_error (LmConnectData *connect_data, int error)
 	       "Connection failed: %s (error %d)\n",
 	       _lm_sock_get_error_str (error), error);
 	
-	socket = connect_data->socket;
+	socket = lm_socket_ref (connect_data->socket);
 
 	connect_data->current_addr = connect_data->current_addr->ai_next;
 	
@@ -464,6 +464,8 @@ _lm_socket_failed_with_error (LmConnectData *connect_data, int error)
 		return socket_do_connect (connect_data);
 	}
 
+	lm_socket_unref(socket);
+
 	return FALSE;
 }
 
@@ -483,9 +485,10 @@ socket_connect_cb (GIOChannel   *source,
 	struct addrinfo *addr;
 	int              err;
 	socklen_t        len;
-	LmSocketT         fd; 
+	LmSocketT        fd;
+	gboolean         result = FALSE;
 
-	socket = connect_data->socket;
+	socket = lm_socket_ref (connect_data->socket);
 	addr = connect_data->current_addr;
 	fd = g_io_channel_unix_get_fd (source);
 
@@ -500,7 +503,7 @@ socket_connect_cb (GIOChannel   *source,
 			 * from it (by connecting to the next host) */
 			if (!_lm_socket_failed_with_error (connect_data, err)) {
 				socket->watch_connect = NULL;
-				return FALSE;
+				goto out;
 			}
 		}
 	}
@@ -531,7 +534,7 @@ socket_connect_cb (GIOChannel   *source,
 				_lm_socket_failed_with_error (connect_data, err);
 
 				socket->watch_connect = NULL;
-				return FALSE;
+				goto out;
 			}
 		} 
 	} else {		
@@ -541,7 +544,13 @@ socket_connect_cb (GIOChannel   *source,
 		
 		_lm_socket_succeeded (connect_data);
 	}
- 	return TRUE; 
+
+	result = TRUE;
+
+ out:
+	lm_socket_unref(socket);
+	
+ 	return result; 
 }
 
 static gboolean
@@ -848,35 +857,40 @@ _lm_socket_resolver_done (GSource *source,
     			  GIOCondition condition,
 			  gpointer data)
 {
-	LmSocket	*socket = (LmSocket *) data;
+	LmSocket	*socket = lm_socket_ref ((LmSocket *) data);
 	struct addrinfo	*ans;
 	unsigned char   *srv_ans;
 	int 		 err;
+	gboolean         result = FALSE;
 
 	/* process pending data */
 	asyncns_wait (socket->asyncns_ctx, FALSE);
 
 	if (!asyncns_isdone (socket->asyncns_ctx, socket->resolv_query)) {
-		return TRUE;
+		result = TRUE;
+	} else {
+		switch ((guint) asyncns_getuserdata (socket->asyncns_ctx, socket->resolv_query)) {
+		case PHASE_1:
+			err = asyncns_res_done (socket->asyncns_ctx, socket->resolv_query, &srv_ans);
+			socket->resolv_query = NULL;
+			_lm_socket_create_phase1 (socket, (err <= 0) ? NULL : srv_ans, err);
+			result = TRUE;
+			break;
+		case PHASE_2:
+			err = asyncns_getaddrinfo_done (socket->asyncns_ctx, socket->resolv_query, &ans);
+			socket->resolv_query = NULL;
+			_lm_socket_create_phase2 (socket, (err) ? NULL : ans);
+			_asyncns_done (socket);
+			break;
+		default:
+			g_assert_not_reached();
+			break;
+		}
 	}
 
-	switch ((guint) asyncns_getuserdata (socket->asyncns_ctx, socket->resolv_query)) {
-	case PHASE_1:
-		err = asyncns_res_done (socket->asyncns_ctx, socket->resolv_query, &srv_ans);
-		socket->resolv_query = NULL;
-		_lm_socket_create_phase1 (socket, (err <= 0) ? NULL : srv_ans, err);
-		return TRUE;
-		break;
-	case PHASE_2:
-		err = asyncns_getaddrinfo_done (socket->asyncns_ctx, socket->resolv_query, &ans);
-		socket->resolv_query = NULL;
-		_lm_socket_create_phase2 (socket, (err) ? NULL : ans);
-		_asyncns_done (socket);
-		return FALSE;
-	}
-
-	g_assert_not_reached ();
-	return FALSE;
+	lm_socket_unref(socket);
+	
+	return result;
 }
 
 #endif
