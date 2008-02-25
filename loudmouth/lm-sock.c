@@ -279,9 +279,14 @@ _lm_sock_addrinfo_get_error_str (int err)
 	case EAI_FAIL:     
 		return _("The nameserver encountered errors "
 			 "looking up this address");
+	/* EAI_NODATA is apparently missing on FreeBSD. On recent GNU libc,
+	 * it requires _GNU_SOURCE to be defined; in the unlikely case that
+	 * that GNU libc returns this value we'll return the default message */
+#ifdef EAI_NODATA
 	case EAI_NODATA:   
 		return _("The remote host exists but no address "
 			 "is available");
+#endif
 	case EAI_NONAME:   
 		return _("The remote address is unknown");
 	case EAI_FAMILY:
