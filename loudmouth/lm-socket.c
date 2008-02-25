@@ -340,9 +340,10 @@ _lm_socket_ssl_init (LmSocket *socket, gboolean delayed)
 		_lm_sock_shutdown (socket->fd);
 		_lm_sock_close (socket->fd);
 
-		if (!delayed)
+		if (!delayed && socket->connect_func) {
 			(socket->connect_func) (socket, FALSE, socket->user_data);
-
+		}
+		
 		return FALSE;
 	}
 
@@ -380,7 +381,9 @@ _lm_socket_succeeded (LmConnectData *connect_data)
 	/* Need some way to report error/success */
 	if (socket->cancel_open) {
 		lm_verbose ("Cancelling connection...\n");
-		(socket->connect_func) (socket, FALSE, socket->user_data);
+		if (socket->connect_func) {
+			(socket->connect_func) (socket, FALSE, socket->user_data);
+		}
 		return;
 	}
 	
@@ -393,8 +396,9 @@ _lm_socket_succeeded (LmConnectData *connect_data)
 
 	/* old-style ssl should be started immediately */
 	if (socket->ssl && (lm_ssl_get_use_starttls (socket->ssl) == FALSE)) {
-		if (!_lm_socket_ssl_init (socket, FALSE))
+		if (!_lm_socket_ssl_init (socket, FALSE)) {
 			return;
+		}
 	}
 
 	socket->watch_in = 
@@ -424,7 +428,9 @@ _lm_socket_succeeded (LmConnectData *connect_data)
 				      socket);
 #endif
 
-	(socket->connect_func) (socket, TRUE, socket->user_data);
+	if (socket->connect_func) {
+		(socket->connect_func) (socket, TRUE, socket->user_data);
+	}
 }
 
 gboolean 
@@ -451,7 +457,9 @@ _lm_socket_failed_with_error (LmConnectData *connect_data, int error)
 	}
 	
 	if (connect_data->current_addr == NULL) {
-		(socket->connect_func) (socket, FALSE, socket->user_data);
+		if (socket->connect_func) {
+			(socket->connect_func) (socket, FALSE, socket->user_data);
+		}
 		
 		 /* if the user callback called connection_close(), this is already freed */
 		if (socket->connect_data != NULL) {
@@ -966,8 +974,9 @@ _lm_socket_create_phase1 (LmSocket *socket,
 #else
 	err = getaddrinfo (remote_addr, NULL, &req, &ans);
 	_lm_socket_create_phase2 (socket, (err) ? NULL : ans);
-	if (err != 0)
+	if (err != 0) {
 		return;
+	}
 #endif
 }
 
@@ -976,7 +985,9 @@ _lm_socket_create_phase2 (LmSocket *socket, struct addrinfo *ans)
 {
 	if (ans == NULL) {
 		lm_verbose ("error while resolving, bailing out\n");
-		(socket->connect_func) (socket, FALSE, socket->user_data);
+		if (socket->connect_func) {
+			(socket->connect_func) (socket, FALSE, socket->user_data);
+		}
 		g_free (socket->connect_data);
 		socket->connect_data = NULL;
 		return;
@@ -1029,10 +1040,6 @@ lm_socket_create (GMainContext      *context,
 	socket->ssl_started = FALSE;
 	socket->proxy = NULL;
 	socket->blocking = blocking;
-	socket->data_func = data_func;
-	socket->closed_func = closed_func;
-	socket->connect_func = connect_func;
-	socket->user_data = user_data;
 
 	if (context) {
 		socket->context = g_main_context_ref (context);
@@ -1066,6 +1073,29 @@ lm_socket_create (GMainContext      *context,
 		_lm_socket_create_phase1 (socket, NULL, 0);
 	}
 
+	if (socket->connect_data == NULL) {
+		/* Open failed synchronously, probably a DNS lookup problem */
+		lm_socket_unref(socket);
+		
+		g_set_error (error,
+			     LM_ERROR,                 
+			     LM_ERROR_CONNECTION_FAILED,   
+			     "Failed to resolve server");
+		
+		return NULL;
+	}
+		
+
+	/* If the connection fails synchronously, we don't want to call the
+	 * connect_func to indicate an error, we return an error indication
+	 * instead. So, we delay saving the functions until after we know
+	 * we are going to return success.
+	 */
+	socket->data_func = data_func;
+	socket->closed_func = closed_func;
+	socket->connect_func = connect_func;
+	socket->user_data = user_data;
+	
 	return socket;
 }
 

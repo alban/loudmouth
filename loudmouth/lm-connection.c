@@ -458,13 +458,8 @@ connection_do_open (LmConnection *connection, GError **error)
 		domain = g_strdup (connection->server);
 	}
 
-	lm_message_queue_attach (connection->queue, connection->context);
-	
 	lm_verbose ("Connecting to: %s:%d\n", 
 		    connection->server, connection->port);
-
-	connection->state = LM_CONNECTION_STATE_OPENING;
-	connection->async_connect_waiting = FALSE;
 
 	connection->socket = lm_socket_create (connection->context,
 					       (IncomingDataFunc) connection_incoming_data,
@@ -485,6 +480,11 @@ connection_do_open (LmConnection *connection, GError **error)
 	if (!connection->socket) {
 		return FALSE;
 	}
+
+	lm_message_queue_attach (connection->queue, connection->context);
+	
+	connection->state = LM_CONNECTION_STATE_OPENING;
+	connection->async_connect_waiting = FALSE;
 
 	return TRUE;
 }
