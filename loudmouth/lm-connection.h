@@ -164,6 +164,11 @@ gchar *       lm_connection_get_local_host    (LmConnection       *connection);
 LmConnection* lm_connection_ref               (LmConnection       *connection);
 void          lm_connection_unref             (LmConnection       *connection);
 
+gboolean
+_lm_connection_old_auth (LmConnection *connection, const gchar *username,
+			 const gchar *password, const gchar *resource,
+			 GError **errror);
+
 
 G_END_DECLS
 

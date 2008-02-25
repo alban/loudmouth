@@ -79,7 +79,7 @@ struct _LmConnection {
 	GSList       *handlers[LM_MESSAGE_TYPE_UNKNOWN];
 
 	/* XMPP1.0 stuff (SASL, resource binding, StartTLS) */
-	gboolean      use_xmpp;
+	gboolean      use_sasl;
 	LmSASL       *sasl;
 	gchar        *resource;
 	LmMessageHandler *features_cb;
@@ -455,11 +455,7 @@ connection_do_open (LmConnection *connection, GError **error)
 	}
 
 	if (!connection_get_server_from_jid (connection->jid, &domain)) {
-		g_set_error (error,
-			LM_ERROR,
-			LM_ERROR_CONNECTION_FAILED,
-			"You need to either set server hostname or jid");
-		return FALSE;
+		domain = g_strdup (connection->server);
 	}
 
 	lm_message_queue_attach (connection->queue, connection->context);
@@ -737,7 +733,7 @@ connection_stream_received (LmConnection *connection, LmMessage *m)
 		lm_verbose ("XMPP 1.0 stream received: %s\n",
 			    connection->stream_id);
 
-		connection->use_xmpp = TRUE;
+		connection->use_sasl = TRUE;
 		
 		/* stream is started multiple times, but we only want
 		 * one sasl mechanism */
@@ -787,7 +783,7 @@ connection_stream_received (LmConnection *connection, LmMessage *m)
 static void
 connection_stream_error (LmConnection *connection, LmMessage *m)
 {
-	LmMessageNode *node;
+	LmMessageNode *node, *reason_node;
 	LmDisconnectReason reason;
 
 	g_return_if_fail (connection != NULL);
@@ -796,16 +792,16 @@ connection_stream_error (LmConnection *connection, LmMessage *m)
 	node = m->node;
 
 	/* Resource conflict */
-	node = lm_message_node_get_child (node, "conflict");
-	if (node) {
+	reason_node = lm_message_node_get_child (node, "conflict");
+	if (reason_node) {
 		lm_verbose ("Stream error: Conflict (resource connected elsewhere)\n");
 		reason = LM_DISCONNECT_REASON_RESOURCE_CONFLICT;
 		return;
 	}
 
 	/* XML is crack */
-	node = lm_message_node_get_child (node, "xml-not-well-formed");
-	if (node) {
+	reason_node = lm_message_node_get_child (node, "xml-not-well-formed");
+	if (reason_node) {
 		lm_verbose ("Stream error: XML not well formed\n");
 		reason = LM_DISCONNECT_REASON_INVALID_XML;
 		return;
@@ -1039,6 +1035,7 @@ connection_features_cb (LmMessageHandler *handler,
 {
 	LmMessageNode *bind_node;
 	LmMessageNode    *starttls_node;
+	LmMessageNode *old_auth;
 	
 	starttls_node = lm_message_node_find_child (message->node, "starttls");
 	if (connection->ssl && lm_ssl_get_use_starttls (connection->ssl)) {
@@ -1107,6 +1104,33 @@ connection_features_cb (LmMessageHandler *handler,
 		}
 	}
 
+	old_auth = lm_message_node_find_child (message->node, "auth");
+	if (connection->use_sasl && old_auth) {
+		g_debug ("Server uses XEP-0078 (jabber iq auth) instead of SASL");
+		/* So the server is XMPP1.0, but doesn't support SASL and uses
+		 * obsolete XEP-0078 instead. Let's cope. */
+
+		connection->use_sasl = FALSE;
+
+		if (connection->sasl) {
+			const gchar *user, *pass;
+
+			lm_sasl_get_auth_params (connection->sasl, &user, &pass);
+			if (user && pass) {
+				GError *error = NULL;
+				_lm_connection_old_auth (connection, user, pass,
+					connection->resource, &error);
+
+				if (error)
+					g_error_free (error);
+
+			}
+
+			lm_sasl_free (connection->sasl);
+			connection->sasl = NULL;
+		}
+	}
+
 	return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
 
@@ -1152,7 +1176,7 @@ lm_connection_new (const gchar *server)
 	connection->keep_alive_source = NULL;
 	connection->keep_alive_rate   = 0;
 	connection->socket            = NULL;
-	connection->use_xmpp          = FALSE;
+	connection->use_sasl          = FALSE;
 	connection->tls_started       = FALSE;
 	
 	connection->id_handlers = g_hash_table_new_full (g_str_hash, 
@@ -1384,11 +1408,6 @@ lm_connection_authenticate (LmConnection      *connection,
 			    GDestroyNotify     notify,
 			    GError           **error)
 {
-	LmMessage        *m;
-	LmMessageHandler *handler;
-	gboolean          result;
-	AuthReqData      *data;
-	
 	g_return_val_if_fail (connection != NULL, FALSE);
 	g_return_val_if_fail (username != NULL, FALSE);
 	g_return_val_if_fail (password != NULL, FALSE);
@@ -1412,7 +1431,7 @@ lm_connection_authenticate (LmConnection      *connection,
 	connection->effective_jid = g_strdup_printf ("%s/%s", 
 		connection->jid, connection->resource);
 
-	if (connection->use_xmpp) {
+	if (connection->use_sasl) {
 		lm_sasl_authenticate (connection->sasl,
 				      username, password,
 				      connection->server,
@@ -1428,6 +1447,20 @@ lm_connection_authenticate (LmConnection      *connection,
 
 		return TRUE;
 	}
+
+	return _lm_connection_old_auth (connection, username, password,
+		resource, error);
+}
+
+gboolean
+_lm_connection_old_auth (LmConnection *connection, const gchar *username,
+	const gchar *password, const gchar *resource, GError **error)
+{
+	LmMessage        *m;
+	AuthReqData      *data;
+	LmMessageHandler *handler;
+	gboolean          result;
+	
 
 	m = connection_create_auth_req_msg (username);
 		

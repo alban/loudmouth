@@ -834,3 +834,11 @@ lm_sasl_free (LmSASL *sasl)
 }
 
 
+void
+lm_sasl_get_auth_params (LmSASL *sasl, const gchar **username,
+	const gchar **password)
+{
+	*username = sasl->username;
+	*password = sasl->password;
+}
+
