@@ -354,7 +354,7 @@ connection_start_keep_alive (LmConnection *connection)
 	if (connection->keep_alive_rate > 0) {
 		connection->keep_alive_source =
 			lm_misc_add_timeout (connection->context,
-					     connection->keep_alive_rate,
+					     connection->keep_alive_rate * 1000,
 					     (GSourceFunc) connection_send_keep_alive,
 					     connection);
 	}
@@ -1559,7 +1559,7 @@ lm_connection_set_keep_alive_rate (LmConnection *connection, guint rate)
 		return;
 	}
 
-	connection->keep_alive_rate = rate * 1000;
+	connection->keep_alive_rate = rate;
 	
 	if (lm_connection_is_open (connection)) {
 		connection_start_keep_alive (connection);
