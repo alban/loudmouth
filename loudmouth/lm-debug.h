@@ -69,11 +69,7 @@ lm_verbose (const gchar *format, ...)
 #  endif
 #endif
 
-#if LM_NO_DEBUG
-#  define lm_debug_init() {};
-#else
 void lm_debug_init (void);
-#endif
 
 #endif /* __LM_DEBUG_H__ */
 

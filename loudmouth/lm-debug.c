@@ -85,5 +85,13 @@ lm_debug_init (void)
 
 	initialized = TRUE;
 }
+
+#else  /* LM_NO_DEBUG */
+
+void 
+lm_debug_init (void)
+{
+}
+
 #endif /* LM_NO_DEBUG */
 
