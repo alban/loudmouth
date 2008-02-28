@@ -344,8 +344,9 @@ connection_start_keep_alive (LmConnection *connection)
 	/* try using TCP keepalives if possible */
 	if ((connection->keep_alive_rate > 0) &&
 		lm_socket_set_keepalive (connection->socket,
-			connection->keep_alive_rate))
+			connection->keep_alive_rate)) {
 		return;
+	}
 
 	if (connection->keep_alive_source) {
 		connection_stop_keep_alive (connection);
@@ -458,8 +459,7 @@ connection_do_open (LmConnection *connection, GError **error)
 		domain = g_strdup (connection->server);
 	}
 
-	lm_verbose ("Connecting to: %s:%d\n", 
-		    connection->server, connection->port);
+	lm_verbose ("Connecting to: %s:%d\n", connection->server, connection->port);
 
 	connection->socket = lm_socket_create (connection->context,
 					       (IncomingDataFunc) connection_incoming_data,
@@ -526,7 +526,8 @@ typedef struct {
 } AuthReqData;
 
 static void 
-auth_req_data_free (AuthReqData *data) {
+auth_req_data_free (AuthReqData *data) 
+{
 	g_free (data->username);
 	g_free (data->password);
 	g_free (data->resource);
@@ -758,8 +759,9 @@ connection_stream_received (LmConnection *connection, LmMessage *m)
 			    connection->stream_id);
 	}
 	
-	if (connection->state < LM_CONNECTION_STATE_OPEN)
+	if (connection->state < LM_CONNECTION_STATE_OPEN) {
 		connection->state = LM_CONNECTION_STATE_OPEN;
+	}
 	
 	/* Check to see if the stream is correctly set up */
 	result = TRUE;
@@ -774,7 +776,6 @@ connection_stream_received (LmConnection *connection, LmMessage *m)
 		if (cb->func) {
 		        (* ((LmResultFunction) cb->func)) (connection, result,
 			        			   cb->user_data);
-
 		}
 		_lm_utils_free_callback (cb);
 	}
@@ -1125,9 +1126,9 @@ connection_features_cb (LmMessageHandler *handler,
 				_lm_connection_old_auth (connection, user, pass,
 					connection->resource, &error);
 
-				if (error)
+				if (error) {
 					g_error_free (error);
-
+				}
 			}
 
 			lm_sasl_free (connection->sasl);
