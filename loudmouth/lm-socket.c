@@ -124,6 +124,7 @@ static gboolean     socket_parse_srv_response (unsigned char  *srv,
 					       int             srv_len, 
 					       gchar         **out_server, 
 					       guint          *out_port);
+static void         socket_close_io_channel   (GIOChannel     *io_channel);
 
 static void
 socket_free (LmSocket *socket)
@@ -452,8 +453,7 @@ _lm_socket_failed_with_error (LmConnectData *connect_data, int error)
 	}
 
 	if (connect_data->io_channel != NULL) {
-		g_io_channel_unref (connect_data->io_channel);
-		/* FIXME: need to check for last unref and close the socket */
+		socket_close_io_channel (connect_data->io_channel);
 	}
 	
 	if (connect_data->current_addr == NULL) {
@@ -780,6 +780,21 @@ socket_parse_srv_response (unsigned char  *srv,
 		return TRUE;
 	} 
 	return FALSE;
+}
+
+static void
+socket_close_io_channel (GIOChannel *io_channel)
+{
+	gint fd;
+
+	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
+	       "Freeing up IOChannel and file descriptor\n");
+
+	fd = g_io_channel_unix_get_fd (io_channel);
+
+	g_io_channel_unref (io_channel);
+
+	_lm_sock_close (fd);
 }
 
 static void
@@ -1148,9 +1163,9 @@ lm_socket_close (LmSocket *socket)
 			socket->watch_out = NULL;
 		}
 
-		g_io_channel_unref (socket->io_channel);
-		socket->io_channel = NULL;
+		socket_close_io_channel (socket->io_channel);
 
+		socket->io_channel = NULL;
 		socket->fd = -1;
 	}
 }
