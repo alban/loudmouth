@@ -35,13 +35,13 @@ Describes what type of message a message is. This maps directly to top level ele
 @LM_MESSAGE_TYPE_PRESENCE: a presence element, <presence/>
 @LM_MESSAGE_TYPE_IQ: an info/query element, <iq/>
 @LM_MESSAGE_TYPE_STREAM: the stream:stream element, you probably don't need to create a message of this type.
+@LM_MESSAGE_TYPE_STREAM_ERROR: a stream:error element
 @LM_MESSAGE_TYPE_STREAM_FEATURES: 
 @LM_MESSAGE_TYPE_AUTH: 
 @LM_MESSAGE_TYPE_CHALLENGE: 
 @LM_MESSAGE_TYPE_RESPONSE: 
 @LM_MESSAGE_TYPE_SUCCESS: 
 @LM_MESSAGE_TYPE_FAILURE: 
-@LM_MESSAGE_TYPE_STREAM_ERROR: a stream:error element
 @LM_MESSAGE_TYPE_PROCEED: 
 @LM_MESSAGE_TYPE_STARTTLS: 
 @LM_MESSAGE_TYPE_UNKNOWN: incoming message is of some unknown type.
