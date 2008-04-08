@@ -1,5 +1,7 @@
 #include "rloudmouth.h"
 
+VALUE conn_set_server (VALUE self, VALUE server);
+
 void
 conn_mark (LmConnection *self)
 {
@@ -20,18 +22,13 @@ conn_allocate(VALUE klass)
 }
 
 VALUE
-conn_initialize(VALUE self, VALUE server, VALUE context)
+conn_initialize (VALUE self, VALUE server, VALUE context)
 {
 	LmConnection *conn;
 
 	Data_Get_Struct (self, LmConnection, conn);
 
-	if (!rb_respond_to (server, rb_intern ("to_s"))) {
-		rb_raise (rb_eArgError, "server should respond to to_s");
-	} else {
-		VALUE str_val = rb_funcall (server, rb_intern ("to_s"), 0);
-		lm_connection_set_server (conn, StringValuePtr (str_val));
-	}
+	conn_set_server (self, server);
 
 	/* Set context */
 
@@ -140,6 +137,31 @@ conn_is_authenticated (VALUE self)
 	return GBOOL2RVAL (lm_connection_is_authenticated (conn));
 }
 
+VALUE
+conn_get_server (VALUE self)
+{
+	LmConnection *conn;
+
+	Data_Get_Struct (self, LmConnection, conn);
+
+	return rb_str_new2 (lm_connection_get_server (conn));
+}
+
+VALUE
+conn_set_server (VALUE self, VALUE server)
+{
+	LmConnection *conn;
+
+	Data_Get_Struct (self, LmConnection, conn);
+
+	if (!rb_respond_to (server, rb_intern ("to_s"))) {
+		rb_raise (rb_eArgError, "server should respond to to_s");
+	} else {
+		VALUE str_val = rb_funcall (server, rb_intern ("to_s"), 0);
+		lm_connection_set_server (conn, StringValuePtr (str_val));
+	}
+}
+
 void
 Init_lm_connection (VALUE lm_mLM)
 {
@@ -156,6 +178,8 @@ Init_lm_connection (VALUE lm_mLM)
 	rb_define_method (lm_mConnection, "authenticate", conn_auth, -1);
 	rb_define_method (lm_mConnection, "keep_alive_rate=", conn_set_keep_alive_rate, 1);
 	/* rb_define_method (lm_mConnection, "keep_alive_rate", conn_get_keep_alive_rate, 0); */
-	rb_define_method (lm_mConnection, "open?", conn_is_open, -1);
-	rb_define_method (lm_mConnection, "authenticated?", conn_is_authenticated, -1);
+	rb_define_method (lm_mConnection, "open?", conn_is_open, 0);
+	rb_define_method (lm_mConnection, "authenticated?", conn_is_authenticated, 0);
+	rb_define_method (lm_mConnection, "server", conn_get_server, 0);
+	rb_define_method (lm_mConnection, "server=", conn_set_server, 1);
 }
