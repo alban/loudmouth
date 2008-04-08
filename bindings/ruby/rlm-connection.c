@@ -120,6 +120,16 @@ conn_get_keep_alive_rate (VALUE self)
 	LmConnection *connection;
 } */
 
+VALUE
+conn_is_open (VALUE self)
+{
+	LmConnection *conn;
+
+	Data_Get_Struct (self, LmConnection, conn);
+	
+	return GBOOL2RVAL (lm_connection_is_open (conn));
+}
+
 void
 Init_lm_connection (VALUE lm_mLM)
 {
@@ -136,4 +146,5 @@ Init_lm_connection (VALUE lm_mLM)
 	rb_define_method (lm_mConnection, "authenticate", conn_auth, -1);
 	rb_define_method (lm_mConnection, "keep_alive_rate=", conn_set_keep_alive_rate, 1);
 	/* rb_define_method (lm_mConnection, "keep_alive_rate", conn_get_keep_alive_rate, 0); */
+	rb_define_method (lm_mConnection, "open?", conn_is_open, -1);
 }
