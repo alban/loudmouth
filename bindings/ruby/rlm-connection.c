@@ -160,6 +160,8 @@ conn_set_server (VALUE self, VALUE server)
 		VALUE str_val = rb_funcall (server, rb_intern ("to_s"), 0);
 		lm_connection_set_server (conn, StringValuePtr (str_val));
 	}
+
+	return Qnil;
 }
 
 VALUE
@@ -185,6 +187,30 @@ conn_set_jid (VALUE self, VALUE jid)
 		VALUE str_val = rb_funcall (jid, rb_intern ("to_s"), 0);
 		lm_connection_set_jid (conn, StringValuePtr (str_val));
 	}
+
+	return Qnil;
+}
+
+VALUE
+conn_get_port (VALUE self)
+{
+	LmConnection *conn;
+
+	Data_Get_Struct (self, LmConnection, conn);
+
+	return UINT2NUM (lm_connection_get_port (conn));
+}
+
+VALUE
+conn_set_port (VALUE self, VALUE port)
+{
+	LmConnection *conn;
+
+	Data_Get_Struct (self, LmConnection, conn);
+
+	lm_connection_set_port (conn, NUM2UINT (port));
+
+	return Qnil;
 }
 
 void
@@ -209,4 +235,6 @@ Init_lm_connection (VALUE lm_mLM)
 	rb_define_method (lm_mConnection, "server=", conn_set_server, 1);
 	rb_define_method (lm_mConnection, "jid", conn_get_jid, 0);
 	rb_define_method (lm_mConnection, "jid=", conn_set_jid, 1);
+	rb_define_method (lm_mConnection, "port", conn_get_port, 0);
+	rb_define_method (lm_mConnection, "port=", conn_set_port, 1);
 }
