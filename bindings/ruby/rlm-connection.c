@@ -213,6 +213,17 @@ conn_set_port (VALUE self, VALUE port)
 	return Qnil;
 }
 
+VALUE
+conn_get_state (VALUE self)
+{
+	LmConnection *conn;
+
+	Data_Get_Struct (self, LmConnection, conn);
+
+	/* TODO: FIXME */
+	return Qnil;
+}
+
 void
 Init_lm_connection (VALUE lm_mLM)
 {
@@ -237,4 +248,20 @@ Init_lm_connection (VALUE lm_mLM)
 	rb_define_method (lm_mConnection, "jid=", conn_set_jid, 1);
 	rb_define_method (lm_mConnection, "port", conn_get_port, 0);
 	rb_define_method (lm_mConnection, "port=", conn_set_port, 1);
+
+	/*
+	rb_define_method (lm_mConnection, "ssl", conn_get_ssl, 0);
+	rb_define_method (lm_mConnection, "ssl=", conn_set_ssl, 1);
+	rb_define_method (lm_mConnection, "proxy", conn_get_proxy, 0);
+	rb_define_method (lm_mConnection, "proxy=", conn_set_proxy, 1);
+	*/
+
+	/* Use one send message and check if there is a block passed? */
+	/*
+	rb_define_method (lm_mConnection, "send", conn_send, 1);
+	rb_define_method (lm_mConnection, "send_with_reply", conn_send_with_reply, -1);
+	rb_define_method (lm_mConnection, "send_raw", conn_send_raw, 1);
+	*/
+
+	rb_define_method (lm_mConnection, "state", conn_get_state, 0);
 }
