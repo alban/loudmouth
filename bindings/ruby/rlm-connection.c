@@ -49,18 +49,56 @@ VALUE
 conn_open (int argc, VALUE *argv, VALUE self)
 {
 	LmConnection *conn;
-	VALUE         ret_val;
 	VALUE         func;
 
 	Data_Get_Struct (self, LmConnection, conn);
 
-	rb_scan_args (argc, argv, "&", &func);
+	rb_scan_args (argc, argv, "0&", &func);
 	if (NIL_P (func)) {
 		func = rb_block_proc ();
 	}
 
 	return GBOOL2RVAL (lm_connection_open (conn, open_callback, 
 					       (gpointer) func, NULL, NULL));
+}
+
+VALUE
+conn_close (VALUE self)
+{
+	LmConnection *conn;
+
+	Data_Get_Struct (self, LmConnection, conn);
+
+	return GBOOL2RVAL (lm_connection_close (conn, NULL));
+}
+
+static void
+auth_callback (LmConnection *conn, gboolean success, gpointer user_data)
+{
+	rb_funcall((VALUE)user_data, rb_intern ("call"), 1,
+		   GBOOL2RVAL (success));
+}
+
+VALUE
+conn_auth (int argc, VALUE *argv, VALUE self)
+{
+	LmConnection *conn;
+	VALUE         name, password, resource, func; 
+
+	Data_Get_Struct (self, LmConnection, conn);
+
+	rb_scan_args (argc, argv, "21&", &name, &password, &resource, &func);
+	if (NIL_P (func)) {
+		func = rb_block_proc ();
+	}
+
+	return GBOOL2RVAL (lm_connection_authenticate (conn, 
+						       StringValuePtr (name),
+						       StringValuePtr (password), 
+						       StringValuePtr (resource),
+						       auth_callback,
+						       (gpointer) func, NULL,
+						       NULL));
 }
 
 void
@@ -74,5 +112,7 @@ Init_lm_connection (VALUE lm_mLM)
 	rb_define_alloc_func (lm_mConnection, conn_allocate);
 
 	rb_define_method (lm_mConnection, "initialize", conn_initialize, 1);
-	rb_define_method (lm_mConnection, "open", conn_open, 1);
+	rb_define_method (lm_mConnection, "open", conn_open, -1);
+	rb_define_method (lm_mConnection, "close", conn_close, 0);
+	rb_define_method (lm_mConnection, "authenticate", conn_auth, -1);
 }
