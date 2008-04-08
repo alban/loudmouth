@@ -162,6 +162,31 @@ conn_set_server (VALUE self, VALUE server)
 	}
 }
 
+VALUE
+conn_get_jid (VALUE self)
+{
+	LmConnection *conn;
+
+	Data_Get_Struct (self, LmConnection, conn);
+
+	return rb_str_new2 (lm_connection_get_jid (conn));
+}
+
+VALUE
+conn_set_jid (VALUE self, VALUE jid)
+{
+	LmConnection *conn;
+
+	Data_Get_Struct (self, LmConnection, conn);
+
+	if (!rb_respond_to (jid, rb_intern ("to_s"))) {
+		rb_raise (rb_eArgError, "jid should respond to to_s");
+	} else {
+		VALUE str_val = rb_funcall (jid, rb_intern ("to_s"), 0);
+		lm_connection_set_jid (conn, StringValuePtr (str_val));
+	}
+}
+
 void
 Init_lm_connection (VALUE lm_mLM)
 {
@@ -182,4 +207,6 @@ Init_lm_connection (VALUE lm_mLM)
 	rb_define_method (lm_mConnection, "authenticated?", conn_is_authenticated, 0);
 	rb_define_method (lm_mConnection, "server", conn_get_server, 0);
 	rb_define_method (lm_mConnection, "server=", conn_set_server, 1);
+	rb_define_method (lm_mConnection, "jid", conn_get_jid, 0);
+	rb_define_method (lm_mConnection, "jid=", conn_set_jid, 1);
 }
