@@ -20,7 +20,7 @@ conn_allocate(VALUE klass)
 }
 
 VALUE
-conn_initialize(VALUE self, VALUE server)
+conn_initialize(VALUE self, VALUE server, VALUE context)
 {
 	LmConnection *conn;
 
@@ -33,13 +33,34 @@ conn_initialize(VALUE self, VALUE server)
 		lm_connection_set_server (conn, StringValuePtr (str_val));
 	}
 
+	/* Set context */
+
 	return self;
 }
 
-VALUE
-conn_open (VALUE block)
+static void
+open_callback (LmConnection *conn, gboolean success, gpointer user_data)
 {
-	return Qtrue;
+	rb_funcall((VALUE)user_data, rb_intern ("call"), 1,
+		   GBOOL2RVAL (success));
+}
+
+VALUE
+conn_open (int argc, VALUE *argv, VALUE self)
+{
+	LmConnection *conn;
+	VALUE         ret_val;
+	VALUE         func;
+
+	Data_Get_Struct (self, LmConnection, conn);
+
+	rb_scan_args (argc, argv, "&", &func);
+	if (NIL_P (func)) {
+		func = rb_block_proc ();
+	}
+
+	return GBOOL2RVAL (lm_connection_open (conn, open_callback, 
+					       (gpointer) func, NULL, NULL));
 }
 
 void
@@ -51,6 +72,7 @@ Init_lm_connection (VALUE lm_mLM)
 						rb_cObject);
 
 	rb_define_alloc_func (lm_mConnection, conn_allocate);
+
 	rb_define_method (lm_mConnection, "initialize", conn_initialize, 1);
 	rb_define_method (lm_mConnection, "open", conn_open, 1);
 }

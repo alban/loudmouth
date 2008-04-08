@@ -5,8 +5,11 @@
 #include <loudmouth/loudmouth.h> 
 #include <glib.h>
 
-extern void Init_loudmouth     (void);
-extern void Init_lm_connection (VALUE lm_mLM);
+#define GBOOL2RVAL(x) (x == TRUE ? Qtrue : Qfalse)
+
+extern void Init_loudmouth          (void);
+extern void Init_lm_connection      (VALUE lm_mLM);
+extern void Init_lm_message         (VALUE lm_mLM);
 
 #endif /* __RLM_H__ */
 
