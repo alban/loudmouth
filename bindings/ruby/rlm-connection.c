@@ -101,6 +101,25 @@ conn_auth (int argc, VALUE *argv, VALUE self)
 						       NULL));
 }
 
+VALUE
+conn_set_keep_alive_rate (VALUE self, VALUE rate)
+{
+	LmConnection *conn;
+
+	Data_Get_Struct (self, LmConnection, conn);
+
+	lm_connection_set_keep_alive_rate (conn, NUM2UINT (rate));
+
+	return Qnil;
+}
+
+/*
+ * VALUE
+conn_get_keep_alive_rate (VALUE self)
+{
+	LmConnection *connection;
+} */
+
 void
 Init_lm_connection (VALUE lm_mLM)
 {
@@ -115,4 +134,6 @@ Init_lm_connection (VALUE lm_mLM)
 	rb_define_method (lm_mConnection, "open", conn_open, -1);
 	rb_define_method (lm_mConnection, "close", conn_close, 0);
 	rb_define_method (lm_mConnection, "authenticate", conn_auth, -1);
+	rb_define_method (lm_mConnection, "keep_alive_rate=", conn_set_keep_alive_rate, 1);
+	/* rb_define_method (lm_mConnection, "keep_alive_rate", conn_get_keep_alive_rate, 0); */
 }
