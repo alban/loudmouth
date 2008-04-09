@@ -1,45 +1,42 @@
 #include "rloudmouth.h"
+#include "rblm-private.h"
 
 /* How to handle type, sub_type and root node*/
 
-typedef struct {
-	LmMessage *message;
-} MsgWrapper;
+VALUE lm_cMessage;
 
-void
-msg_wrapper_mark (MsgWrapper *wrapper)
+static LmMessage *
+rb_lm_message_from_ruby_object (VALUE obj)
 {
-	/* Do nothing here */
+	LmMessage *m;
+
+	if (!rb_lm__is_kind_of (obj, lm_cMessage)) {
+		rb_raise (rb_eTypeError, "not a LmMessage");
+	}
+
+	Data_Get_Struct (obj, LmMessage, m);
+
+	return m;
 }
 
 void
-msg_wrapper_free (MsgWrapper *wrapper)
+msg_free (LmMessage *m)
 {
-	if (wrapper->message) {
-		lm_message_unref (wrapper->message);
-	}
-
-	g_slice_free (MsgWrapper, wrapper);
+	lm_message_unref (m);
 }
 
 VALUE
 msg_allocate (VALUE klass)
 {
-	MsgWrapper *wrapper;
-
-	wrapper = g_slice_new0 (MsgWrapper);
-
-	Data_Wrap_Struct (klass, msg_wrapper_mark, msg_wrapper_free, wrapper);
+	return Data_Wrap_Struct (klass, NULL, msg_free, NULL);
 }
 
 VALUE
 msg_initialize (int argc, VALUE *argv, VALUE self)
 {
-	MsgWrapper *wrapper;
+	LmMessage  *m;
 	VALUE       to, type, sub_type;
 	char       *to_str = NULL;
-
-	Data_Get_Struct (self, MsgWrapper, wrapper);
 
 	rb_scan_args (argc, argv, "21", &to, &type, &sub_type);
 
@@ -55,13 +52,14 @@ msg_initialize (int argc, VALUE *argv, VALUE self)
 
 	if (NIL_P (sub_type)) {
 		/* Without sub_type */
-		wrapper->message = lm_message_new (to_str, NUM2INT (type));
+		m = lm_message_new (to_str, NUM2INT (type));
 	} else {
-		wrapper->message = 
-			lm_message_new_with_sub_type (to_str,
-						      NUM2INT (type),
-						      NUM2INT (sub_type));
+		m = lm_message_new_with_sub_type (to_str,
+						  NUM2INT (type),
+						  NUM2INT (sub_type));
 	}
+
+	DATA_PTR (self) = m;
 
 	return self;
 }
@@ -69,21 +67,17 @@ msg_initialize (int argc, VALUE *argv, VALUE self)
 VALUE
 msg_get_type (VALUE self)
 {
-	MsgWrapper *wrapper;
+	LmMessage *m = rb_lm_message_from_ruby_object (self);
 
-	Data_Get_Struct (self, MsgWrapper, wrapper);
-
-	return INT2NUM (lm_message_get_type (wrapper->message));
+	return INT2NUM (lm_message_get_type (m));
 }
 
 VALUE
 msg_get_sub_type (VALUE self)
 {
-	MsgWrapper *wrapper;
+	LmMessage *m = rb_lm_message_from_ruby_object (self);
 
-	Data_Get_Struct (self, MsgWrapper, wrapper);
-
-	return INT2NUM (lm_message_get_sub_type (wrapper->message));
+	return INT2NUM (lm_message_get_sub_type (m));
 }
 
 VALUE
@@ -93,21 +87,9 @@ msg_get_root_node (VALUE self)
 	return Qnil;
 }
 
-LmMessage *
-rlm_message_from_value (VALUE self)
-{
-	MsgWrapper *wrapper;
-
-	Data_Get_Struct (self, MsgWrapper, wrapper);
-
-	return wrapper->message;
-}
-
 extern void 
 Init_lm_message (VALUE lm_mLM)
 {
-	VALUE lm_cMessage;
-
 	lm_cMessage = rb_define_class_under (lm_mLM, "Message", rb_cObject);
 
 	rb_define_alloc_func (lm_cMessage, msg_allocate);

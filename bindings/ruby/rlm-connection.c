@@ -1,6 +1,22 @@
 #include "rloudmouth.h"
 
+VALUE lm_cConnection;
+
 VALUE conn_set_server (VALUE self, VALUE server);
+
+static LmConnection *
+rb_lm_connection_from_ruby_object (VALUE obj)
+{
+	LmConnection *conn;
+
+	if (!rb_lm__is_kind_of (obj, lm_cConnection)) {
+		rb_raise (rb_eTypeError, "not a LmConnection");
+	}
+
+	Data_Get_Struct (obj, LmConnection, conn);
+
+	return conn;
+}
 
 void
 conn_mark (LmConnection *self)
@@ -45,10 +61,8 @@ open_callback (LmConnection *conn, gboolean success, gpointer user_data)
 VALUE
 conn_open (int argc, VALUE *argv, VALUE self)
 {
-	LmConnection *conn;
+	LmConnection *conn = rb_lm_connection_from_ruby_object (self);
 	VALUE         func;
-
-	Data_Get_Struct (self, LmConnection, conn);
 
 	rb_scan_args (argc, argv, "0&", &func);
 	if (NIL_P (func)) {
@@ -62,9 +76,7 @@ conn_open (int argc, VALUE *argv, VALUE self)
 VALUE
 conn_close (VALUE self)
 {
-	LmConnection *conn;
-
-	Data_Get_Struct (self, LmConnection, conn);
+	LmConnection *conn = rb_lm_connection_from_ruby_object (self);
 
 	return GBOOL2RVAL (lm_connection_close (conn, NULL));
 }
@@ -79,10 +91,8 @@ auth_callback (LmConnection *conn, gboolean success, gpointer user_data)
 VALUE
 conn_auth (int argc, VALUE *argv, VALUE self)
 {
-	LmConnection *conn;
+	LmConnection *conn = rb_lm_connection_from_ruby_object (self);
 	VALUE         name, password, resource, func; 
-
-	Data_Get_Struct (self, LmConnection, conn);
 
 	rb_scan_args (argc, argv, "21&", &name, &password, &resource, &func);
 	if (NIL_P (func)) {
@@ -101,9 +111,7 @@ conn_auth (int argc, VALUE *argv, VALUE self)
 VALUE
 conn_set_keep_alive_rate (VALUE self, VALUE rate)
 {
-	LmConnection *conn;
-
-	Data_Get_Struct (self, LmConnection, conn);
+	LmConnection *conn = rb_lm_connection_from_ruby_object (self);
 
 	lm_connection_set_keep_alive_rate (conn, NUM2UINT (rate));
 
@@ -120,29 +128,23 @@ conn_get_keep_alive_rate (VALUE self)
 VALUE
 conn_is_open (VALUE self)
 {
-	LmConnection *conn;
+	LmConnection *conn = rb_lm_connection_from_ruby_object (self);
 
-	Data_Get_Struct (self, LmConnection, conn);
-	
 	return GBOOL2RVAL (lm_connection_is_open (conn));
 }
 
 VALUE
 conn_is_authenticated (VALUE self)
 {
-	LmConnection *conn;
+	LmConnection *conn = rb_lm_connection_from_ruby_object (self);
 
-	Data_Get_Struct (self, LmConnection, conn);
-	
 	return GBOOL2RVAL (lm_connection_is_authenticated (conn));
 }
 
 VALUE
 conn_get_server (VALUE self)
 {
-	LmConnection *conn;
-
-	Data_Get_Struct (self, LmConnection, conn);
+	LmConnection *conn = rb_lm_connection_from_ruby_object (self);
 
 	return rb_str_new2 (lm_connection_get_server (conn));
 }
@@ -150,9 +152,7 @@ conn_get_server (VALUE self)
 VALUE
 conn_set_server (VALUE self, VALUE server)
 {
-	LmConnection *conn;
-
-	Data_Get_Struct (self, LmConnection, conn);
+	LmConnection *conn = rb_lm_connection_from_ruby_object (self);
 
 	if (!rb_respond_to (server, rb_intern ("to_s"))) {
 		rb_raise (rb_eArgError, "server should respond to to_s");
@@ -167,9 +167,7 @@ conn_set_server (VALUE self, VALUE server)
 VALUE
 conn_get_jid (VALUE self)
 {
-	LmConnection *conn;
-
-	Data_Get_Struct (self, LmConnection, conn);
+	LmConnection *conn = rb_lm_connection_from_ruby_object (self);
 
 	return rb_str_new2 (lm_connection_get_jid (conn));
 }
@@ -177,9 +175,7 @@ conn_get_jid (VALUE self)
 VALUE
 conn_set_jid (VALUE self, VALUE jid)
 {
-	LmConnection *conn;
-
-	Data_Get_Struct (self, LmConnection, conn);
+	LmConnection *conn = rb_lm_connection_from_ruby_object (self);
 
 	if (!rb_respond_to (jid, rb_intern ("to_s"))) {
 		rb_raise (rb_eArgError, "jid should respond to to_s");
@@ -194,9 +190,7 @@ conn_set_jid (VALUE self, VALUE jid)
 VALUE
 conn_get_port (VALUE self)
 {
-	LmConnection *conn;
-
-	Data_Get_Struct (self, LmConnection, conn);
+	LmConnection *conn = rb_lm_connection_from_ruby_object (self);
 
 	return UINT2NUM (lm_connection_get_port (conn));
 }
@@ -204,9 +198,7 @@ conn_get_port (VALUE self)
 VALUE
 conn_set_port (VALUE self, VALUE port)
 {
-	LmConnection *conn;
-
-	Data_Get_Struct (self, LmConnection, conn);
+	LmConnection *conn = rb_lm_connection_from_ruby_object (self);
 
 	lm_connection_set_port (conn, NUM2UINT (port));
 
@@ -216,9 +208,7 @@ conn_set_port (VALUE self, VALUE port)
 VALUE
 conn_get_state (VALUE self)
 {
-	LmConnection *conn;
-
-	Data_Get_Struct (self, LmConnection, conn);
+	LmConnection *conn = rb_lm_connection_from_ruby_object (self);
 
 	/* TODO: FIXME */
 	return Qnil;
@@ -227,8 +217,6 @@ conn_get_state (VALUE self)
 void
 Init_lm_connection (VALUE lm_mLM)
 {
-	VALUE lm_cConnection;
-	
 	lm_cConnection = rb_define_class_under (lm_mLM, "Connection", 
 						rb_cObject);
 
