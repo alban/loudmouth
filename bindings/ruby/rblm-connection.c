@@ -20,11 +20,6 @@ rb_lm_connection_from_ruby_object (VALUE obj)
 }
 
 void
-conn_mark (LmConnection *self)
-{
-}
-
-void
 conn_free (LmConnection *self)
 {
 	lm_connection_unref (self);
@@ -33,21 +28,28 @@ conn_free (LmConnection *self)
 VALUE
 conn_allocate(VALUE klass)
 {
-	LmConnection *conn = lm_connection_new (NULL);
-
-	return Data_Wrap_Struct (klass, conn_mark, conn_free, conn);
+	return Data_Wrap_Struct (klass, NULL, conn_free, NULL);
 }
 
 VALUE
 conn_initialize (VALUE self, VALUE server, VALUE context)
 {
 	LmConnection *conn;
+	char         *srv_str = NULL;
 
-	Data_Get_Struct (self, LmConnection, conn);
+	if (NIL_P (context)) {
+		GMainContext *ctx = NULL;
+		/* FIXME: read out the context from context */
+		conn = lm_connection_new_with_context (NULL, ctx);
+	} else {
+		conn = lm_connection_new (NULL);
+	}
 
-	conn_set_server (self, server);
+	DATA_PTR (self) = conn;
 
-	/* Set context */
+	if (!NIL_P (server)) {
+		conn_set_server (self, server);
+	}
 
 	return self;
 }
