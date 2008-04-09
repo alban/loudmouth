@@ -5,6 +5,75 @@ VALUE lm_mMessageSubType;
 VALUE lm_mDisconnectReason;
 VALUE lm_mConnectionState;
 
+LmConnectionState
+rb_lm_connection_state_from_ruby_object (VALUE obj)
+{
+	LmConnectionState state;
+
+	state = FIX2INT (obj);
+	if (state < LM_CONNECTION_STATE_CLOSED ||
+	    state > LM_CONNECTION_STATE_AUTHENTICATED) {
+		rb_raise (rb_eArgError,
+			  "invalid LmConnectionState: %d (expected %d <= LmConnectionState <= %d)",
+			  state, LM_CONNECTION_STATE_CLOSED, 
+			  LM_CONNECTION_STATE_AUTHENTICATED);
+	}
+
+	return state;
+}
+
+LmDisconnectReason
+rb_lm_disconnect_reason_from_ruby_object (VALUE obj)
+{
+	LmDisconnectReason reason;
+
+	reason = FIX2INT (obj);
+	if (reason < LM_DISCONNECT_REASON_OK ||
+	    reason > LM_DISCONNECT_REASON_UNKNOWN) {
+		rb_raise (rb_eArgError,
+			  "invalid LmDisconnectReason: %d (expected %d <= LmDisconnectReason <= %d)",
+			  reason, 
+			  LM_DISCONNECT_REASON_OK, 
+			  LM_DISCONNECT_REASON_UNKNOWN);
+	}
+
+	return reason;
+}
+
+LmMessageType
+rb_lm_message_type_from_ruby_object (VALUE obj)
+{
+	LmMessageType type;
+
+	type = FIX2INT (obj);
+	if (type < LM_MESSAGE_TYPE_MESSAGE ||
+	    type > LM_MESSAGE_TYPE_IQ) {
+		rb_raise (rb_eArgError,
+			  "invalid LmMessageType: %d (expected %d <= LmMessageType <= %d)",
+			  type, LM_MESSAGE_TYPE_MESSAGE,
+			  LM_MESSAGE_TYPE_IQ);
+	}
+
+	return type;
+}
+
+LmMessageSubType
+rb_lm_message_sub_type_from_ruby_object (VALUE obj)
+{
+	LmMessageSubType type;
+
+	type = FIX2INT (obj);
+	if (type < LM_MESSAGE_SUB_TYPE_AVAILABLE ||
+	    type > LM_MESSAGE_SUB_TYPE_ERROR) {
+		rb_raise (rb_eArgError,
+			  "invalid LmMessageSubType: %d (expected %d <= LmMessageSubType <= %d)",
+			  type, LM_MESSAGE_SUB_TYPE_AVAILABLE,
+			  LM_MESSAGE_SUB_TYPE_ERROR);
+	}
+
+	return type;
+}
+
 void 
 Init_lm_constants (VALUE lm_mLM)
 {
