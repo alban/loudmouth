@@ -8,5 +8,6 @@ Init_loudmouth (void)
 	lm_mLM = rb_define_module ("LM");
 
 	Init_lm_connection (lm_mLM);
+	Init_lm_message (lm_mLM);
 }
 

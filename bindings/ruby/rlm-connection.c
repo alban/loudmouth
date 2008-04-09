@@ -227,41 +227,41 @@ conn_get_state (VALUE self)
 void
 Init_lm_connection (VALUE lm_mLM)
 {
-	VALUE lm_mConnection;
+	VALUE lm_cConnection;
 	
-	lm_mConnection = rb_define_class_under (lm_mLM, "Connection", 
+	lm_cConnection = rb_define_class_under (lm_mLM, "Connection", 
 						rb_cObject);
 
-	rb_define_alloc_func (lm_mConnection, conn_allocate);
+	rb_define_alloc_func (lm_cConnection, conn_allocate);
 
-	rb_define_method (lm_mConnection, "initialize", conn_initialize, 1);
-	rb_define_method (lm_mConnection, "open", conn_open, -1);
-	rb_define_method (lm_mConnection, "close", conn_close, 0);
-	rb_define_method (lm_mConnection, "authenticate", conn_auth, -1);
-	rb_define_method (lm_mConnection, "keep_alive_rate=", conn_set_keep_alive_rate, 1);
-	/* rb_define_method (lm_mConnection, "keep_alive_rate", conn_get_keep_alive_rate, 0); */
-	rb_define_method (lm_mConnection, "open?", conn_is_open, 0);
-	rb_define_method (lm_mConnection, "authenticated?", conn_is_authenticated, 0);
-	rb_define_method (lm_mConnection, "server", conn_get_server, 0);
-	rb_define_method (lm_mConnection, "server=", conn_set_server, 1);
-	rb_define_method (lm_mConnection, "jid", conn_get_jid, 0);
-	rb_define_method (lm_mConnection, "jid=", conn_set_jid, 1);
-	rb_define_method (lm_mConnection, "port", conn_get_port, 0);
-	rb_define_method (lm_mConnection, "port=", conn_set_port, 1);
+	rb_define_method (lm_cConnection, "initialize", conn_initialize, 1);
+	rb_define_method (lm_cConnection, "open", conn_open, -1);
+	rb_define_method (lm_cConnection, "close", conn_close, 0);
+	rb_define_method (lm_cConnection, "authenticate", conn_auth, -1);
+	rb_define_method (lm_cConnection, "keep_alive_rate=", conn_set_keep_alive_rate, 1);
+	/* rb_define_method (lm_cConnection, "keep_alive_rate", conn_get_keep_alive_rate, 0); */
+	rb_define_method (lm_cConnection, "open?", conn_is_open, 0);
+	rb_define_method (lm_cConnection, "authenticated?", conn_is_authenticated, 0);
+	rb_define_method (lm_cConnection, "server", conn_get_server, 0);
+	rb_define_method (lm_cConnection, "server=", conn_set_server, 1);
+	rb_define_method (lm_cConnection, "jid", conn_get_jid, 0);
+	rb_define_method (lm_cConnection, "jid=", conn_set_jid, 1);
+	rb_define_method (lm_cConnection, "port", conn_get_port, 0);
+	rb_define_method (lm_cConnection, "port=", conn_set_port, 1);
 
 	/*
-	rb_define_method (lm_mConnection, "ssl", conn_get_ssl, 0);
-	rb_define_method (lm_mConnection, "ssl=", conn_set_ssl, 1);
-	rb_define_method (lm_mConnection, "proxy", conn_get_proxy, 0);
-	rb_define_method (lm_mConnection, "proxy=", conn_set_proxy, 1);
+	rb_define_method (lm_cConnection, "ssl", conn_get_ssl, 0);
+	rb_define_method (lm_cConnection, "ssl=", conn_set_ssl, 1);
+	rb_define_method (lm_cConnection, "proxy", conn_get_proxy, 0);
+	rb_define_method (lm_cConnection, "proxy=", conn_set_proxy, 1);
 	*/
 
 	/* Use one send message and check if there is a block passed? */
 	/*
-	rb_define_method (lm_mConnection, "send", conn_send, 1);
-	rb_define_method (lm_mConnection, "send_with_reply", conn_send_with_reply, -1);
-	rb_define_method (lm_mConnection, "send_raw", conn_send_raw, 1);
+	rb_define_method (lm_cConnection, "send", conn_send, 1);
+	rb_define_method (lm_cConnection, "send_with_reply", conn_send_with_reply, -1);
+	rb_define_method (lm_cConnection, "send_raw", conn_send_raw, 1);
 	*/
 
-	rb_define_method (lm_mConnection, "state", conn_get_state, 0);
+	rb_define_method (lm_cConnection, "state", conn_get_state, 0);
 }
