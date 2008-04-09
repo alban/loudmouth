@@ -1,4 +1,5 @@
-#include "rloudmouth.h"
+#include "rblm.h"
+#include "rblm-private.h"
 
 VALUE lm_cConnection;
 
