@@ -52,11 +52,11 @@ msg_initialize (int argc, VALUE *argv, VALUE self)
 
 	if (NIL_P (sub_type)) {
 		/* Without sub_type */
-		m = lm_message_new (to_str, NUM2INT (type));
+		m = lm_message_new (to_str, FIX2INT (type));
 	} else {
 		m = lm_message_new_with_sub_type (to_str,
-						  NUM2INT (type),
-						  NUM2INT (sub_type));
+						  FIX2INT (type),
+						  FIX2INT (sub_type));
 	}
 
 	DATA_PTR (self) = m;
@@ -69,7 +69,7 @@ msg_get_type (VALUE self)
 {
 	LmMessage *m = rb_lm_message_from_ruby_object (self);
 
-	return INT2NUM (lm_message_get_type (m));
+	return INT2FIX (lm_message_get_type (m));
 }
 
 VALUE
@@ -77,7 +77,7 @@ msg_get_sub_type (VALUE self)
 {
 	LmMessage *m = rb_lm_message_from_ruby_object (self);
 
-	return INT2NUM (lm_message_get_sub_type (m));
+	return INT2FIX (lm_message_get_sub_type (m));
 }
 
 VALUE

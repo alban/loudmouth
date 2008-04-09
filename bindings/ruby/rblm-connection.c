@@ -213,8 +213,7 @@ conn_get_state (VALUE self)
 {
 	LmConnection *conn = rb_lm_connection_from_ruby_object (self);
 
-	/* TODO: FIXME */
-	return Qnil;
+	return INT2FIX (lm_connection_get_state (conn));
 }
 
 void
