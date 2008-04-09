@@ -1,5 +1,7 @@
 #include "rloudmouth.h"
 
+/* How to handle type, sub_type and root node*/
+
 typedef struct {
 	LmMessage *message;
 } MsgWrapper;
