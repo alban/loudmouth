@@ -10,6 +10,8 @@ extern void Init_lm_connection      (VALUE lm_mLM);
 extern void Init_lm_message         (VALUE lm_mLM);
 extern void Init_lm_message_node    (VALUE lm_mLM);
 extern void Init_lm_constants       (VALUE lm_mLM);
+extern void Init_lm_ssl             (VALUE lm_mLM);
+extern void Init_lm_proxy           (VALUE lm_mLM);
 
 #endif /* __RLM_H__ */
 
