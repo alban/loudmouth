@@ -56,6 +56,54 @@ msg_node_set_value (VALUE self, VALUE value)
 	lm_message_node_set_value (node, value_str);
 }
 
+VALUE
+msg_node_add_child (int argc, VALUE *argv, VALUE self)
+{
+	return Qnil;
+}
+
+VALUE
+msg_node_get_attribute (VALUE self, VALUE attr)
+{
+	return Qnil;
+}
+
+VALUE
+msg_node_set_attribute (VALUE self, VALUE attr, VALUE value)
+{
+	return Qnil;
+}
+
+VALUE 
+msg_node_get_child (VALUE self, VALUE name)
+{
+	return Qnil;
+}
+
+VALUE
+msg_node_find_child (VALUE self, VALUE name)
+{
+	return Qnil;
+}
+
+VALUE
+msg_node_get_is_raw_mode (VALUE self)
+{
+	return Qnil;
+}
+
+VALUE
+msg_node_set_is_raw_mode (VALUE self, VALUE raw_mode)
+{
+	return Qnil;
+}
+
+VALUE
+msg_node_to_string (VALUE self)
+{
+	return Qnil;
+}
+
 extern void 
 Init_lm_message_node (VALUE lm_mLM)
 {
@@ -67,4 +115,14 @@ Init_lm_message_node (VALUE lm_mLM)
 	rb_define_method (lm_cMessageNode, "value", msg_node_get_value, 0);
 	rb_define_method (lm_cMessageNode, "value=", msg_node_set_value, 1);
 
+	rb_define_method (lm_cMessageNode, "add_child", msg_node_add_child, -1);
+	rb_define_method (lm_cMessageNode, "get_attribute", msg_node_get_attribute, 1);
+	rb_define_method (lm_cMessageNode, "set_attribute", msg_node_set_attribute, 2);
+	rb_define_method (lm_cMessageNode, "get_child", msg_node_get_child, 1);
+	rb_define_method (lm_cMessageNode, "find_child", msg_node_find_child, 1);
+
+	rb_define_method (lm_cMessageNode, "raw_mode", msg_node_get_is_raw_mode, 0);
+	rb_define_method (lm_cMessageNode, "raw_mode=", msg_node_set_is_raw_mode, 1);
+
+	rb_define_method (lm_cMessageNode, "to_s", msg_node_to_string, 0);
 }	
