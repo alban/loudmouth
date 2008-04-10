@@ -4,6 +4,7 @@ VALUE lm_mMessageType;
 VALUE lm_mMessageSubType;
 VALUE lm_mDisconnectReason;
 VALUE lm_mConnectionState;
+VALUE lm_mProxyType;
 
 LmConnectionState
 rb_lm_connection_state_from_ruby_object (VALUE obj)
@@ -69,6 +70,21 @@ rb_lm_message_sub_type_from_ruby_object (VALUE obj)
 			  "invalid LmMessageSubType: %d (expected %d <= LmMessageSubType <= %d)",
 			  type, LM_MESSAGE_SUB_TYPE_AVAILABLE,
 			  LM_MESSAGE_SUB_TYPE_ERROR);
+	}
+
+	return type;
+}
+
+LmProxyType
+rb_lm_proxy_type_from_ruby_object (VALUE obj)
+{
+	LmProxyType type;
+
+	type = FIX2INT (obj);
+	if (type < LM_PROXY_TYPE_NONE || type > LM_PROXY_TYPE_HTTP) {
+		rb_raise (rb_eArgError,
+			  "invalid LmProxyType: %d (expected %d <= LmProxyType <= %d)",
+			  type, LM_PROXY_TYPE_NONE, LM_PROXY_TYPE_HTTP);
 	}
 
 	return type;
@@ -152,4 +168,11 @@ Init_lm_constants (VALUE lm_mLM)
 	rb_define_const (lm_mConnectionState, "AUTHENTICATED",
 			 INT2FIX (LM_CONNECTION_STATE_AUTHENTICATED));
 
+	/* LmProxyType */
+	lm_mProxyType = rb_define_module_under (lm_mLM, "ProxyType");
+
+	rb_define_const (lm_mProxyType, "NONE",
+			 INT2FIX (LM_PROXY_TYPE_NONE));
+	rb_define_const (lm_mProxyType, "HTTP",
+			 INT2FIX (LM_PROXY_TYPE_HTTP));
 }
