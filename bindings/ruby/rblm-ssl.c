@@ -28,6 +28,12 @@ ssl_allocate (VALUE klass)
 	return Data_Wrap_Struct (klass, NULL, ssl_free, NULL);
 }
 
+static VALUE
+ssl_is_supported (VALUE self)
+{
+	return GBOOL2RVAL (lm_ssl_is_supported ());
+}
+
 static LmSSLResponse
 ssl_func_callback (LmSSL       *ssl,
 		   LmSSLStatus  status,
@@ -45,7 +51,7 @@ ssl_func_callback (LmSSL       *ssl,
 	return rb_lm_ssl_response_from_ruby_object (response);
 }
 
-VALUE
+static VALUE
 ssl_initialize (int argc, VALUE *argv, VALUE self)
 {
 	LmSSL    *ssl;
@@ -80,6 +86,58 @@ ssl_initialize (int argc, VALUE *argv, VALUE self)
 	return self;
 }
 
+static VALUE
+ssl_get_fingerprint (VALUE self)
+{
+	LmSSL *ssl = rb_lm_ssl_from_ruby_object (self);
+
+	if (lm_ssl_get_fingerprint (ssl)) {
+		return rb_str_new2 (lm_ssl_get_fingerprint (ssl));
+	}
+
+	return Qnil;
+}
+
+static VALUE
+ssl_get_use_starttls (VALUE self)
+{
+	LmSSL *ssl = rb_lm_ssl_from_ruby_object (self);
+
+	return GBOOL2RVAL (lm_ssl_get_use_starttls (ssl));
+}
+
+static VALUE
+ssl_set_use_starttls (VALUE self, VALUE use)
+{
+	LmSSL *ssl = rb_lm_ssl_from_ruby_object (self);
+
+	lm_ssl_use_starttls (ssl,
+			     RVAL2GBOOL (use),
+			     lm_ssl_get_require_starttls (ssl));
+
+	return Qnil;
+}
+
+static VALUE
+ssl_get_require_starttls (VALUE self)
+{
+	LmSSL *ssl = rb_lm_ssl_from_ruby_object (self);
+
+	return GBOOL2RVAL (lm_ssl_get_require_starttls (ssl));
+}
+
+static VALUE
+ssl_set_require_starttls (VALUE self, VALUE require)
+{
+	LmSSL *ssl = rb_lm_ssl_from_ruby_object (self);
+
+	lm_ssl_use_starttls (ssl,
+			     lm_ssl_get_use_starttls (ssl),
+			     RVAL2GBOOL (require));
+
+	return Qnil;
+}
+
 extern void
 Init_lm_ssl (VALUE lm_mLM)
 {
@@ -87,6 +145,14 @@ Init_lm_ssl (VALUE lm_mLM)
 
 	rb_define_alloc_func (lm_cSSL, ssl_allocate);
 
+	rb_define_singleton_method (lm_cSSL, "supported?", 
+				    ssl_is_supported, 0);
+
 	rb_define_method (lm_cSSL, "initialize", ssl_initialize, -1);
+	rb_define_method (lm_cSSL, "fingerprint", ssl_get_fingerprint, 0);
+	rb_define_method (lm_cSSL, "use_starttls", ssl_get_use_starttls, 0);
+	rb_define_method (lm_cSSL, "use_starttls=", ssl_set_use_starttls, 1);
+	rb_define_method (lm_cSSL, "require_starttls", ssl_get_require_starttls, 0);
+	rb_define_method (lm_cSSL, "require_starttls=", ssl_set_require_starttls, 1);
 }
 
