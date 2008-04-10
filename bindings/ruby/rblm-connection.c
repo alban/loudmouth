@@ -289,6 +289,40 @@ conn_get_state (VALUE self)
 	return INT2FIX (lm_connection_get_state (conn));
 }
 
+static LmHandlerResult
+msg_handler_cb (LmMessageHandler *handler,
+		LmConnection     *connection,
+		LmMessage        *message,
+		gpointer          user_data)
+{
+	rb_funcall ((VALUE)user_data, rb_intern ("call"), 1, 
+		    LMMESSAGE2RVAL (message));
+
+	return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+VALUE
+conn_add_msg_handler (int argc, VALUE *argv, VALUE self)
+{
+	LmConnection     *conn = rb_lm_connection_from_ruby_object (self);
+	VALUE             type, func;
+	LmMessageHandler *handler;
+
+	rb_scan_args (argc, argv, "1&", &type, &func);
+	if (NIL_P (func)) {
+		func = rb_block_proc ();
+	}
+
+	handler = lm_message_handler_new (msg_handler_cb, (gpointer) func, NULL);
+
+	lm_connection_register_message_handler (conn, handler,
+						rb_lm_message_type_from_ruby_object (type),
+						LM_HANDLER_PRIORITY_NORMAL);
+	lm_message_handler_unref (handler);
+
+	return Qnil;
+}
+
 void
 Init_lm_connection (VALUE lm_mLM)
 {
@@ -326,4 +360,5 @@ Init_lm_connection (VALUE lm_mLM)
 	*/
 
 	rb_define_method (lm_cConnection, "state", conn_get_state, 0);
+	rb_define_method (lm_cConnection, "add_message_handler", conn_add_msg_handler, -1);
 }

@@ -26,6 +26,18 @@ msg_free (LmMessage *m)
 }
 
 VALUE
+rb_lm_message_to_ruby_object (LmMessage *m)
+{
+	if (m) {
+		lm_message_ref (m);
+		return Data_Wrap_Struct (lm_cMessage, NULL,
+					 msg_free, m);
+	} else {
+		return Qnil;
+	}
+}
+
+VALUE
 msg_allocate (VALUE klass)
 {
 	return Data_Wrap_Struct (klass, NULL, msg_free, NULL);
