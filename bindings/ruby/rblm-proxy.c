@@ -8,7 +8,7 @@ rb_lm_proxy_from_ruby_object (VALUE obj)
 	LmProxy *proxy;
 
 	if (!rb_lm__is_kind_of (obj, lm_cProxy)) {
-		rb_raise (rb_eTypeError, "no a LmProxy");
+		rb_raise (rb_eTypeError, "not a LmProxy");
 	}
 
 	Data_Get_Struct (obj, LmProxy, proxy);

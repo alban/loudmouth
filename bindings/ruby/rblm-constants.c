@@ -108,6 +108,40 @@ rb_lm_certificate_status_from_ruby_object (VALUE obj)
 	return status;
 }
 
+LmSSLStatus 
+rb_lm_ssl_status_from_ruby_object (VALUE obj)
+{
+	LmSSLStatus status;
+
+	status = FIX2INT (obj);
+	if (status < LM_SSL_STATUS_NO_CERT_FOUND || 
+	    status > LM_SSL_STATUS_GENERIC_ERROR) {
+		rb_raise (rb_eArgError, 
+			  "invalid LmSSLStatus: %d (expected %d <= LmSSLStatus <= %d)",
+			  status, LM_SSL_STATUS_NO_CERT_FOUND, 
+			  LM_SSL_STATUS_GENERIC_ERROR);
+	}
+
+	return status;
+}
+
+LmSSLResponse
+rb_lm_ssl_response_from_ruby_object (VALUE obj)
+{
+	LmSSLResponse response;
+	
+	response = FIX2INT (obj);
+	if (response < LM_SSL_RESPONSE_CONTINUE || 
+	    response < LM_SSL_RESPONSE_STOP) {
+		rb_raise (rb_eArgError,
+			  "invalid LmSSLResponse: %d (expected %d <= LmSSLResponse <= %d)",
+			  response,
+			  LM_SSL_RESPONSE_CONTINUE, LM_SSL_RESPONSE_STOP);
+	}
+
+	return response;
+}
+
 void 
 Init_lm_constants (VALUE lm_mLM)
 {
