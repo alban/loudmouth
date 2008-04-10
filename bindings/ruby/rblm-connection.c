@@ -5,6 +5,27 @@ VALUE lm_cConnection;
 
 VALUE conn_set_server (VALUE self, VALUE server);
 
+/* -- START of GMainContext hack -- 
+ * This is a hack to get the GMainContext from a ruby VALUE, this will break if
+ * internals change in Ruby/GLib.
+ */
+typedef struct {
+    gpointer boxed;
+    gboolean own;
+    gsize    type;
+} boxed_holder;
+
+static GMainContext *
+rb_lm_hack_get_main_context_from_rval (VALUE ctx_rval)
+{
+	boxed_holder *holder;
+
+	Data_Get_Struct (ctx_rval, boxed_holder, holder);
+
+	return holder->boxed;
+}
+/* -- END of GMainContext hack -- */
+
 LmConnection *
 rb_lm_connection_from_ruby_object (VALUE obj)
 {
@@ -32,14 +53,19 @@ conn_allocate (VALUE klass)
 }
 
 VALUE
-conn_initialize (VALUE self, VALUE server, VALUE context)
+conn_initialize (int argc, VALUE *argv, VALUE self)
 {
 	LmConnection *conn;
 	char         *srv_str = NULL;
+	VALUE         server, context;
 
-	if (NIL_P (context)) {
-		GMainContext *ctx = NULL;
-		/* FIXME: read out the context from context */
+	rb_scan_args (argc, argv, "02", &server, &context);
+
+	if (!NIL_P (context)) {
+		GMainContext *ctx;
+
+		ctx = rb_lm_hack_get_main_context_from_rval (context);
+
 		conn = lm_connection_new_with_context (NULL, ctx);
 	} else {
 		conn = lm_connection_new (NULL);
@@ -271,7 +297,7 @@ Init_lm_connection (VALUE lm_mLM)
 
 	rb_define_alloc_func (lm_cConnection, conn_allocate);
 
-	rb_define_method (lm_cConnection, "initialize", conn_initialize, 1);
+	rb_define_method (lm_cConnection, "initialize", conn_initialize, -1);
 	rb_define_method (lm_cConnection, "open", conn_open, -1);
 	rb_define_method (lm_cConnection, "close", conn_close, 0);
 	rb_define_method (lm_cConnection, "authenticate", conn_auth, -1);
