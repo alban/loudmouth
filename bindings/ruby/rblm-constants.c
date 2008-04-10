@@ -5,6 +5,9 @@ VALUE lm_mMessageSubType;
 VALUE lm_mDisconnectReason;
 VALUE lm_mConnectionState;
 VALUE lm_mProxyType;
+VALUE lm_mCertificateStatus;
+VALUE lm_mSSLStatus;
+VALUE lm_mSSLResponse;
 
 LmConnectionState
 rb_lm_connection_state_from_ruby_object (VALUE obj)
@@ -88,6 +91,21 @@ rb_lm_proxy_type_from_ruby_object (VALUE obj)
 	}
 
 	return type;
+}
+
+LmCertificateStatus
+rb_lm_certificate_status_from_ruby_object (VALUE obj)
+{
+	LmCertificateStatus status;
+
+	status = FIX2INT (obj);
+	if (status < LM_CERT_INVALID || status > LM_CERT_REVOKED) {
+		rb_raise (rb_eArgError,
+			  "invalid LmCertificateStatus: %d (expected %d <= LmCertificateStatus <= %d)",
+			  status, LM_CERT_INVALID, LM_CERT_REVOKED);
+	}
+
+	return status;
 }
 
 void 
@@ -175,4 +193,40 @@ Init_lm_constants (VALUE lm_mLM)
 			 INT2FIX (LM_PROXY_TYPE_NONE));
 	rb_define_const (lm_mProxyType, "HTTP",
 			 INT2FIX (LM_PROXY_TYPE_HTTP));
+
+	/* LmCertificateStatus */
+	lm_mCertificateStatus = rb_define_module_under (lm_mLM, 
+							"CertificateStatus");
+	rb_define_const (lm_mCertificateStatus, "INVALID",
+			 INT2FIX (LM_CERT_INVALID));
+	rb_define_const (lm_mCertificateStatus, "ISSUER_NOT_FOUND",
+			 INT2FIX (LM_CERT_ISSUER_NOT_FOUND));
+	rb_define_const (lm_mCertificateStatus, "REVOKED",
+			 INT2FIX (LM_CERT_REVOKED));
+
+	/* LmSSLStatus */
+	lm_mSSLStatus = rb_define_module_under (lm_mLM, "SSLStatus");
+
+	rb_define_const (lm_mSSLStatus, "NO_CERT_FOUND",
+			 INT2FIX (LM_SSL_STATUS_NO_CERT_FOUND));
+	rb_define_const (lm_mSSLStatus, "UNTRUSTED_CERT",
+			 INT2FIX (LM_SSL_STATUS_UNTRUSTED_CERT));
+	rb_define_const (lm_mSSLStatus, "CERT_EXPIRED",
+			 INT2FIX (LM_SSL_STATUS_CERT_EXPIRED));
+	rb_define_const (lm_mSSLStatus, "CERT_NOT_ACTIVATED",
+			 INT2FIX (LM_SSL_STATUS_CERT_NOT_ACTIVATED));
+	rb_define_const (lm_mSSLStatus, "CERT_HOSTNAME_MISMATCH",
+			 INT2FIX (LM_SSL_STATUS_CERT_HOSTNAME_MISMATCH));
+	rb_define_const (lm_mSSLStatus, "CERT_FINGERPRINT_MISMATCH",
+			 INT2FIX (LM_SSL_STATUS_CERT_FINGERPRINT_MISMATCH));
+	rb_define_const (lm_mSSLStatus, "GENERIC_ERROR",
+			 INT2FIX (LM_SSL_STATUS_GENERIC_ERROR));
+
+	/* LmSSLResponse */
+	lm_mSSLResponse = rb_define_module_under (lm_mLM, "SSLResponse");
+
+	rb_define_const (lm_mSSLResponse, "CONTINUE",
+			 INT2FIX (LM_SSL_RESPONSE_CONTINUE));
+	rb_define_const (lm_mSSLResponse, "STOP",
+			 INT2FIX (LM_SSL_RESPONSE_STOP));
 }
