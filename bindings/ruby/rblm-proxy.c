@@ -75,6 +75,30 @@ proxy_set_type (VALUE self, VALUE type)
 	return Qnil;
 }
 
+VALUE
+proxy_get_server (VALUE self)
+{
+	LmProxy *proxy = rb_lm_proxy_from_ruby_object (self);
+
+	return rb_str_new2 (lm_proxy_get_server (proxy));
+}
+
+VALUE
+proxy_set_server (VALUE self, VALUE server)
+{
+	LmProxy *proxy = rb_lm_proxy_from_ruby_object (self);
+	VALUE    str_val;
+
+	if (!rb_respond_to (server, rb_intern ("to_s"))) {
+		rb_raise (rb_eArgError, "server should respond to to_s");
+	} 
+
+	str_val = rb_funcall (server, rb_intern ("to_s"), 0);
+	lm_proxy_set_server (proxy, StringValuePtr (str_val));
+
+	return Qnil;
+}
+
 extern void
 Init_lm_proxy (VALUE lm_mLM)
 {
@@ -85,5 +109,7 @@ Init_lm_proxy (VALUE lm_mLM)
 	rb_define_method (lm_cProxy, "initialize", proxy_initialize, -1);
 	rb_define_method (lm_cProxy, "type", proxy_get_type, 0);
 	rb_define_method (lm_cProxy, "type=", proxy_set_type, 1);
+	rb_define_method (lm_cProxy, "server", proxy_get_server, 0);
+	rb_define_method (lm_cProxy, "server=", proxy_set_server, 1);
 }
 
