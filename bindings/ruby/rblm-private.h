@@ -9,7 +9,11 @@
 #define GBOOL2RVAL(x) (x == TRUE ? Qtrue : Qfalse)
 #define RVAL2GBOOL(x) RTEST(x)
 
+#define LMMESSAGENODE2RVAL(x) (rb_lm_message_node_to_ruby_object(x))
+
 gboolean            rb_lm__is_kind_of (VALUE object, VALUE klass);
+
+VALUE               rb_lm_message_node_to_ruby_object (LmMessageNode *node);
 
 LmConnectionState   rb_lm_connection_state_from_ruby_object   (VALUE obj);
 LmDisconnectReason  rb_lm_disconnect_reason_from_ruby_object  (VALUE obj);

@@ -83,8 +83,9 @@ msg_get_sub_type (VALUE self)
 VALUE
 msg_get_root_node (VALUE self)
 {
-	/* How to? */
-	return Qnil;
+	LmMessage *m = rb_lm_message_from_ruby_object (self);
+
+	return LMMESSAGENODE2RVAL (m->node);
 }
 
 extern void 

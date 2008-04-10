@@ -1,4 +1,5 @@
 #include <rblm.h>
+#include <rblm-private.h>
 
 VALUE lm_cMessageNode;
 
@@ -20,6 +21,18 @@ void
 msg_node_free (LmMessageNode *node)
 {
 	lm_message_node_unref (node);
+}
+
+VALUE
+rb_lm_message_node_to_ruby_object (LmMessageNode *node)
+{
+	if (node) {
+		lm_message_node_ref (node);
+		return Data_Wrap_Struct (lm_cMessageNode, NULL, 
+					 msg_node_free, node);
+	} else {
+		return Qnil;
+	}
 }
 
 VALUE
@@ -67,66 +80,130 @@ msg_node_set_value (VALUE self, VALUE value)
 VALUE
 msg_node_add_child (int argc, VALUE *argv, VALUE self)
 {
-	return Qnil;
+	LmMessageNode *node = rb_lm_message_node_from_ruby_object (self);
+	LmMessageNode *child;
+	VALUE          name, value;
+	char          *value_str = NULL;
+	
+	rb_scan_args (argc, argv, "11", &name, &value);
+
+	if (!NIL_P (value)) {
+		value_str = StringValuePtr (value);
+	}
+
+	child = lm_message_node_add_child (node, StringValuePtr (name),
+					   value_str);
+
+	return LMMESSAGENODE2RVAL (child);
 }
 
 VALUE
 msg_node_get_attribute (VALUE self, VALUE attr)
 {
+	LmMessageNode *node = rb_lm_message_node_from_ruby_object (self);
+
+	if (lm_message_node_get_attribute (node, StringValuePtr (attr))) {
+	    return rb_str_new2 (lm_message_node_get_attribute (node, 
+							       StringValuePtr (attr)));
+	}
+
 	return Qnil;
 }
 
 VALUE
 msg_node_set_attribute (VALUE self, VALUE attr, VALUE value)
 {
+	LmMessageNode *node = rb_lm_message_node_from_ruby_object (self);
+	char          *value_str = NULL;
+
+	if (!NIL_P (value)) {
+		value_str = StringValuePtr (value);
+	}
+	
+	lm_message_node_set_attribute (node, StringValuePtr (attr), value_str);
+	 
 	return Qnil;
 }
 
 VALUE 
 msg_node_get_child (VALUE self, VALUE name)
 {
-	return Qnil;
+	LmMessageNode *node = rb_lm_message_node_from_ruby_object (self);
+	LmMessageNode *child;
+
+	child = lm_message_node_get_child (node, StringValuePtr (name));
+	
+	return LMMESSAGENODE2RVAL (child);
 }
 
 VALUE
 msg_node_find_child (VALUE self, VALUE name)
 {
-	return Qnil;
+	LmMessageNode *node = rb_lm_message_node_from_ruby_object (self);
+	LmMessageNode *child;
+
+	child = lm_message_node_find_child (node, StringValuePtr (name));
+
+	return LMMESSAGENODE2RVAL (child);
 }
 
 VALUE
 msg_node_get_is_raw_mode (VALUE self)
 {
-	return Qnil;
+	LmMessageNode *node = rb_lm_message_node_from_ruby_object (self);
+
+	return GBOOL2RVAL (lm_message_node_get_raw_mode (node));
 }
 
 VALUE
 msg_node_set_is_raw_mode (VALUE self, VALUE raw_mode)
 {
+	LmMessageNode *node = rb_lm_message_node_from_ruby_object (self);
+
+	lm_message_node_set_raw_mode (node, RVAL2GBOOL (raw_mode));
+
 	return Qnil;
 }
 
 VALUE
 msg_node_to_string (VALUE self)
 {
-	return Qnil;
+	LmMessageNode *node = rb_lm_message_node_from_ruby_object (self);
+
+	return rb_str_new2 (lm_message_node_to_string (node));
 }
 
 VALUE
 msg_node_get_next (VALUE self)
-{}
+{
+	LmMessageNode *node = rb_lm_message_node_from_ruby_object (self);
+
+	return LMMESSAGENODE2RVAL (node->next);
+}
 
 VALUE
 msg_node_get_prev (VALUE self)
-{}
+{
+	LmMessageNode *node = rb_lm_message_node_from_ruby_object (self);
+
+	return LMMESSAGENODE2RVAL (node->prev);
+}
 
 VALUE
 msg_node_get_parent (VALUE self)
-{}
+{
+	LmMessageNode *node = rb_lm_message_node_from_ruby_object (self);
+
+	return LMMESSAGENODE2RVAL (node->parent);
+}
 
 VALUE 
 msg_node_get_children (VALUE self)
-{}
+{
+	LmMessageNode *node = rb_lm_message_node_from_ruby_object (self);
+
+	return LMMESSAGENODE2RVAL (node->children);
+}
 
 extern void 
 Init_lm_message_node (VALUE lm_mLM)
