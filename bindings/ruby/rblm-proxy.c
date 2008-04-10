@@ -80,7 +80,11 @@ proxy_get_server (VALUE self)
 {
 	LmProxy *proxy = rb_lm_proxy_from_ruby_object (self);
 
-	return rb_str_new2 (lm_proxy_get_server (proxy));
+	if (lm_proxy_get_server (proxy)) {
+		return rb_str_new2 (lm_proxy_get_server (proxy));
+	}
+
+	return Qnil;
 }
 
 VALUE
@@ -99,6 +103,53 @@ proxy_set_server (VALUE self, VALUE server)
 	return Qnil;
 }
 
+VALUE 
+proxy_get_port (VALUE self)
+{
+	LmProxy *proxy = rb_lm_proxy_from_ruby_object (self);
+
+	return UINT2NUM (lm_proxy_get_port (proxy));
+}
+
+VALUE
+proxy_set_port (VALUE self, VALUE port)
+{
+	LmProxy *proxy = rb_lm_proxy_from_ruby_object (self);
+
+	lm_proxy_set_port (proxy, NUM2UINT (port));
+
+	return Qnil;
+}
+
+VALUE
+proxy_get_username (VALUE self)
+{
+	LmProxy *proxy = rb_lm_proxy_from_ruby_object (self);
+
+	if (lm_proxy_get_username (proxy)) {
+		return rb_str_new2 (lm_proxy_get_username (proxy));
+	}
+
+	return Qnil;
+}
+
+VALUE
+proxy_set_username (VALUE self, VALUE username)
+{
+	LmProxy *proxy = rb_lm_proxy_from_ruby_object (self);
+	VALUE    str_val;
+
+	if (!rb_respond_to (username, rb_intern ("to_s"))) {
+		rb_raise (rb_eArgError, "username should respond to to_s");
+	} 
+
+	str_val = rb_funcall (username, rb_intern ("to_s"), 0);
+	lm_proxy_set_username (proxy, StringValuePtr (str_val));
+
+	return Qnil;
+}
+
+
 extern void
 Init_lm_proxy (VALUE lm_mLM)
 {
@@ -111,5 +162,9 @@ Init_lm_proxy (VALUE lm_mLM)
 	rb_define_method (lm_cProxy, "type=", proxy_set_type, 1);
 	rb_define_method (lm_cProxy, "server", proxy_get_server, 0);
 	rb_define_method (lm_cProxy, "server=", proxy_set_server, 1);
+	rb_define_method (lm_cProxy, "port", proxy_get_port, 0);
+	rb_define_method (lm_cProxy, "port=", proxy_set_port, 1);
+	rb_define_method (lm_cProxy, "username", proxy_get_username, 0);
+	rb_define_method (lm_cProxy, "username=", proxy_set_username, 1);
 }
 
