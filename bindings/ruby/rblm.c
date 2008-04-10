@@ -9,6 +9,7 @@ Init_loudmouth (void)
 
 	Init_lm_connection (lm_mLM);
 	Init_lm_message (lm_mLM);
+	Init_lm_message_node (lm_mLM);
 	Init_lm_constants (lm_mLM);
 }
 
