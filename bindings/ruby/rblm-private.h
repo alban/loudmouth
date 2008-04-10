@@ -4,6 +4,7 @@
 
 #include <glib.h>
 #include <ruby.h>
+#include <loudmouth/loudmouth.h>
 
 #define GBOOL2RVAL(x) (x == TRUE ? Qtrue : Qfalse)
 #define RVAL2GBOOL(x) RTEST(x)

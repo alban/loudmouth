@@ -1,4 +1,5 @@
 #include "rblm.h"
+#include "rblm-private.h"
 
 VALUE lm_cSSL;
 
