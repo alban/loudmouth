@@ -57,6 +57,24 @@ proxy_initialize (int argc, VALUE *argv, VALUE self)
 	return self;
 }
 
+VALUE
+proxy_get_type (VALUE self)
+{
+	LmProxy *proxy = rb_lm_proxy_from_ruby_object (self);
+
+	return INT2FIX (lm_proxy_get_type (proxy));
+}
+
+VALUE
+proxy_set_type (VALUE self, VALUE type)
+{
+	LmProxy *proxy = rb_lm_proxy_from_ruby_object (self);
+
+	lm_proxy_set_type (proxy, FIX2INT (type));
+
+	return Qnil;
+}
+
 extern void
 Init_lm_proxy (VALUE lm_mLM)
 {
@@ -65,5 +83,7 @@ Init_lm_proxy (VALUE lm_mLM)
 	rb_define_alloc_func (lm_cProxy, proxy_allocate);
 
 	rb_define_method (lm_cProxy, "initialize", proxy_initialize, -1);
+	rb_define_method (lm_cProxy, "type", proxy_get_type, 0);
+	rb_define_method (lm_cProxy, "type=", proxy_set_type, 1);
 }
 
