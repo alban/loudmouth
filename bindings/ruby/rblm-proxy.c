@@ -23,6 +23,17 @@ proxy_free (LmProxy *proxy)
 }
 
 VALUE
+rb_lm_proxy_to_ruby_object (LmProxy *proxy)
+{
+	if (proxy) {
+		lm_proxy_ref (proxy);
+		return Data_Wrap_Struct (lm_cProxy, NULL, 
+					 proxy_free, proxy);
+	} else {
+		return Qnil;
+	}
+}
+VALUE
 proxy_allocate (VALUE klass)
 {
 	return Data_Wrap_Struct (klass, NULL, proxy_free, NULL);

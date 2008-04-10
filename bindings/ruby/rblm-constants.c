@@ -132,7 +132,7 @@ rb_lm_ssl_response_from_ruby_object (VALUE obj)
 	
 	response = FIX2INT (obj);
 	if (response < LM_SSL_RESPONSE_CONTINUE || 
-	    response < LM_SSL_RESPONSE_STOP) {
+	    response > LM_SSL_RESPONSE_STOP) {
 		rb_raise (rb_eArgError,
 			  "invalid LmSSLResponse: %d (expected %d <= LmSSLResponse <= %d)",
 			  response,

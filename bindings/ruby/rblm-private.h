@@ -10,10 +10,14 @@
 #define RVAL2GBOOL(x) RTEST(x)
 
 #define LMMESSAGENODE2RVAL(x) (rb_lm_message_node_to_ruby_object(x))
+#define LMSSL2RVAL(x) (rb_lm_ssl_to_ruby_object(x))
+#define LMPROXY2RVAL(x) (rb_lm_proxy_to_ruby_object(x))
 
 gboolean            rb_lm__is_kind_of (VALUE object, VALUE klass);
 
 VALUE               rb_lm_message_node_to_ruby_object (LmMessageNode *node);
+VALUE               rb_lm_ssl_to_ruby_object          (LmSSL         *ssl);
+VALUE               rb_lm_proxy_to_ruby_object        (LmProxy       *proxy);
 
 LmConnection *      rb_lm_connection_from_ruby_object         (VALUE obj);
 LmMessage *         rb_lm_message_from_ruby_object            (VALUE obj);

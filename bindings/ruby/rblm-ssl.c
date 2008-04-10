@@ -24,6 +24,18 @@ ssl_free (LmSSL *ssl)
 }
 
 VALUE
+rb_lm_ssl_to_ruby_object (LmSSL *ssl)
+{
+	if (ssl) {
+		lm_ssl_ref (ssl);
+		return Data_Wrap_Struct (lm_cSSL, NULL, 
+					 ssl_free, ssl);
+	} else {
+		return Qnil;
+	}
+}
+
+VALUE
 ssl_allocate (VALUE klass)
 {
 	return Data_Wrap_Struct (klass, NULL, ssl_free, NULL);

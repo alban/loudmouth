@@ -209,6 +209,44 @@ conn_set_port (VALUE self, VALUE port)
 }
 
 VALUE
+conn_get_ssl (VALUE self)
+{
+	LmConnection *conn = rb_lm_connection_from_ruby_object (self);
+
+	return LMSSL2RVAL (lm_connection_get_ssl (conn));
+}
+
+VALUE
+conn_set_ssl (VALUE self, VALUE ssl_rval)
+{
+	LmConnection *conn = rb_lm_connection_from_ruby_object (self);
+	LmSSL        *ssl  = rb_lm_ssl_from_ruby_object (ssl_rval);
+
+	lm_connection_set_ssl (conn, ssl);
+
+	return Qnil;
+}
+
+VALUE
+conn_get_proxy (VALUE self)
+{
+	LmConnection *conn = rb_lm_connection_from_ruby_object (self);
+
+	return LMPROXY2RVAL (lm_connection_get_proxy (conn));
+}
+
+VALUE
+conn_set_proxy (VALUE self, VALUE proxy_rval)
+{
+	LmConnection *conn = rb_lm_connection_from_ruby_object (self);
+	LmProxy      *proxy = rb_lm_proxy_from_ruby_object (proxy_rval);
+
+	lm_connection_set_proxy (conn, proxy);
+
+	return Qnil;
+}
+
+VALUE
 conn_send (VALUE self, VALUE msg)
 {
 	LmConnection *conn = rb_lm_connection_from_ruby_object (self);
@@ -248,12 +286,10 @@ Init_lm_connection (VALUE lm_mLM)
 	rb_define_method (lm_cConnection, "port", conn_get_port, 0);
 	rb_define_method (lm_cConnection, "port=", conn_set_port, 1);
 
-	/*
 	rb_define_method (lm_cConnection, "ssl", conn_get_ssl, 0);
 	rb_define_method (lm_cConnection, "ssl=", conn_set_ssl, 1);
 	rb_define_method (lm_cConnection, "proxy", conn_get_proxy, 0);
 	rb_define_method (lm_cConnection, "proxy=", conn_set_proxy, 1);
-	*/
 
 	/* Use one send message and check if there is a block passed? */
 	
