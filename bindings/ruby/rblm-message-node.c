@@ -29,6 +29,14 @@ msg_node_allocate (VALUE klass)
 }
 
 VALUE
+msg_node_get_name (VALUE self)
+{
+	LmMessageNode *node = rb_lm_message_node_from_ruby_object (self);
+
+	return rb_str_new2 (node->name);
+}
+
+VALUE
 msg_node_get_value (VALUE self)
 {
 	LmMessageNode *node = rb_lm_message_node_from_ruby_object (self);
@@ -104,6 +112,22 @@ msg_node_to_string (VALUE self)
 	return Qnil;
 }
 
+VALUE
+msg_node_get_next (VALUE self)
+{}
+
+VALUE
+msg_node_get_prev (VALUE self)
+{}
+
+VALUE
+msg_node_get_parent (VALUE self)
+{}
+
+VALUE 
+msg_node_get_children (VALUE self)
+{}
+
 extern void 
 Init_lm_message_node (VALUE lm_mLM)
 {
@@ -112,6 +136,7 @@ Init_lm_message_node (VALUE lm_mLM)
 
 	rb_define_alloc_func (lm_cMessageNode, msg_node_allocate);
 
+	rb_define_method (lm_cMessageNode, "name", msg_node_get_name, 0);
 	rb_define_method (lm_cMessageNode, "value", msg_node_get_value, 0);
 	rb_define_method (lm_cMessageNode, "value=", msg_node_set_value, 1);
 
@@ -125,4 +150,9 @@ Init_lm_message_node (VALUE lm_mLM)
 	rb_define_method (lm_cMessageNode, "raw_mode=", msg_node_set_is_raw_mode, 1);
 
 	rb_define_method (lm_cMessageNode, "to_s", msg_node_to_string, 0);
+
+	rb_define_method (lm_cMessageNode, "next", msg_node_get_next, 0);
+	rb_define_method (lm_cMessageNode, "prev", msg_node_get_prev, 0);
+	rb_define_method (lm_cMessageNode, "parent", msg_node_get_parent, 0);
+	rb_define_method (lm_cMessageNode, "children", msg_node_get_children, 0);
 }	
