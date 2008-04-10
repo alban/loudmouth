@@ -3,7 +3,7 @@
 
 VALUE lm_cMessageNode;
 
-static LmMessageNode *
+LmMessageNode *
 rb_lm_message_node_from_ruby_object (VALUE obj)
 {
 	LmMessageNode *node;
@@ -88,7 +88,12 @@ msg_node_add_child (int argc, VALUE *argv, VALUE self)
 	rb_scan_args (argc, argv, "11", &name, &value);
 
 	if (!NIL_P (value)) {
-		value_str = StringValuePtr (value);
+		if (!rb_respond_to (value, rb_intern ("to_s"))) {
+			rb_raise (rb_eArgError, "value should respond to to_s");
+		} else {
+			VALUE str_val = rb_funcall (value, rb_intern ("to_s"), 0);
+			value_str = StringValuePtr (str_val);
+		}
 	}
 
 	child = lm_message_node_add_child (node, StringValuePtr (name),

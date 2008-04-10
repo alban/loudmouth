@@ -2,7 +2,7 @@
 
 VALUE lm_cProxy;
 
-static LmProxy *
+LmProxy *
 rb_lm_proxy_from_ruby_object (VALUE obj)
 {
 	LmProxy *proxy;

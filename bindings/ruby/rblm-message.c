@@ -5,7 +5,7 @@
 
 VALUE lm_cMessage;
 
-static LmMessage *
+LmMessage *
 rb_lm_message_from_ruby_object (VALUE obj)
 {
 	LmMessage *m;
@@ -99,5 +99,7 @@ Init_lm_message (VALUE lm_mLM)
 	rb_define_method (lm_cMessage, "type", msg_get_type, 0);
 	rb_define_method (lm_cMessage, "sub_type", msg_get_sub_type, 0);
 	rb_define_method (lm_cMessage, "root_node", msg_get_root_node, 0);
+
+	rb_define_alias (lm_cMessage, "node", "root_node");
 }
 

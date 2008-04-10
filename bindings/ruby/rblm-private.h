@@ -15,6 +15,12 @@ gboolean            rb_lm__is_kind_of (VALUE object, VALUE klass);
 
 VALUE               rb_lm_message_node_to_ruby_object (LmMessageNode *node);
 
+LmConnection *      rb_lm_connection_from_ruby_object         (VALUE obj);
+LmMessage *         rb_lm_message_from_ruby_object            (VALUE obj);
+LmMessageNode *     rb_lm_message_node_from_ruby_object       (VALUE obj);
+LmSSL *             rb_lm_ssl_from_ruby_object                (VALUE obj);
+LmProxy *           rb_lm_proxy_from_ruby_object              (VALUE obj);
+
 LmConnectionState   rb_lm_connection_state_from_ruby_object   (VALUE obj);
 LmDisconnectReason  rb_lm_disconnect_reason_from_ruby_object  (VALUE obj);
 LmMessageType       rb_lm_message_type_from_ruby_object       (VALUE obj);

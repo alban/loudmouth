@@ -3,7 +3,7 @@
 
 VALUE lm_cSSL;
 
-static LmSSL *
+LmSSL *
 rb_lm_ssl_from_ruby_object (VALUE obj)
 {
 	LmSSL *ssl;

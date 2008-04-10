@@ -5,7 +5,7 @@ VALUE lm_cConnection;
 
 VALUE conn_set_server (VALUE self, VALUE server);
 
-static LmConnection *
+LmConnection *
 rb_lm_connection_from_ruby_object (VALUE obj)
 {
 	LmConnection *conn;
@@ -209,6 +209,15 @@ conn_set_port (VALUE self, VALUE port)
 }
 
 VALUE
+conn_send (VALUE self, VALUE msg)
+{
+	LmConnection *conn = rb_lm_connection_from_ruby_object (self);
+	LmMessage    *m = rb_lm_message_from_ruby_object (msg);
+
+	return GBOOL2RVAL (lm_connection_send (conn, m, NULL));
+}
+
+VALUE
 conn_get_state (VALUE self)
 {
 	LmConnection *conn = rb_lm_connection_from_ruby_object (self);
@@ -247,8 +256,9 @@ Init_lm_connection (VALUE lm_mLM)
 	*/
 
 	/* Use one send message and check if there is a block passed? */
-	/*
+	
 	rb_define_method (lm_cConnection, "send", conn_send, 1);
+	/*
 	rb_define_method (lm_cConnection, "send_with_reply", conn_send_with_reply, -1);
 	rb_define_method (lm_cConnection, "send_raw", conn_send_raw, 1);
 	*/
