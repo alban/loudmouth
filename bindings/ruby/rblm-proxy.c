@@ -149,6 +149,33 @@ proxy_set_username (VALUE self, VALUE username)
 	return Qnil;
 }
 
+VALUE
+proxy_get_password (VALUE self)
+{
+	LmProxy *proxy = rb_lm_proxy_from_ruby_object (self);
+
+	if (lm_proxy_get_password (proxy)) {
+		return rb_str_new2 (lm_proxy_get_password (proxy));
+	}
+
+	return Qnil;
+}
+
+VALUE
+proxy_set_password (VALUE self, VALUE password)
+{
+	LmProxy *proxy = rb_lm_proxy_from_ruby_object (self);
+	VALUE    str_val;
+
+	if (!rb_respond_to (password, rb_intern ("to_s"))) {
+		rb_raise (rb_eArgError, "password should respond to to_s");
+	} 
+
+	str_val = rb_funcall (password, rb_intern ("to_s"), 0);
+	lm_proxy_set_password (proxy, StringValuePtr (str_val));
+
+	return Qnil;
+}
 
 extern void
 Init_lm_proxy (VALUE lm_mLM)
@@ -166,5 +193,7 @@ Init_lm_proxy (VALUE lm_mLM)
 	rb_define_method (lm_cProxy, "port=", proxy_set_port, 1);
 	rb_define_method (lm_cProxy, "username", proxy_get_username, 0);
 	rb_define_method (lm_cProxy, "username=", proxy_set_username, 1);
+	rb_define_method (lm_cProxy, "password", proxy_get_password, 0);
+	rb_define_method (lm_cProxy, "password=", proxy_set_password, 1);
 }
 
