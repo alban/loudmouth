@@ -26,7 +26,7 @@ conn_free (LmConnection *self)
 }
 
 VALUE
-conn_allocate(VALUE klass)
+conn_allocate (VALUE klass)
 {
 	return Data_Wrap_Struct (klass, NULL, conn_free, NULL);
 }
