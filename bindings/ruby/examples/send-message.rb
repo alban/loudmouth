@@ -5,13 +5,13 @@ require 'loudmouth'
 require 'glib2'
 
 puts "Enter your JID: "
-jid = gets.strip
+jid = gets.chomp
 
 puts "Enter connect host: "
-host = gets.strip
+host = gets.chomp
 
 puts "Enter your password: "
-password = gets.strip
+password = gets.chomp
 
 if /(.+)@(.+)/ =~ jid
   login = $1
@@ -37,21 +37,22 @@ conn.open do |result|
       unless auth_result
         puts "Failed to authenticate"
       end
-      recipient = authenticated_cb(conn)
+      authenticated_cb(conn)
       main_loop.quit
     end
   else
     puts "Failed to connect"
+    main_loop.quit
   end
 end
 
 def authenticated_cb(conn)
   puts "Authenticated!"
   puts "Who do you want to message: "
-  recipient = gets.strip
+  recipient = gets.chomp
   
   puts "Enter message: "
-  body = gets.strip
+  body = gets.chomp
   
   m = LM::Message.new(recipient, LM::MessageType::MESSAGE)
   m.node.add_child('body', body)
@@ -59,9 +60,9 @@ def authenticated_cb(conn)
   conn.send(m)
   conn.close
   
-  recipient
+  puts "Message sent to #{recipient}"
 end
 
 main_loop.run
 
-puts "Message sent to #{recipient}"
+puts "Quitting"
