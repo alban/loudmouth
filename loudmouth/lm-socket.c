@@ -306,7 +306,8 @@ socket_error_event (GIOChannel   *source,
 	return TRUE;
 }
 
-static gboolean
+/* returns 0 on success, errcode otherwise */
+static int
 _lm_socket_ssl_init (LmSocket *socket, gboolean delayed)
 {
 	GError *error = NULL;
@@ -324,7 +325,13 @@ _lm_socket_ssl_init (LmSocket *socket, gboolean delayed)
 	else
 		ssl_verify_domain = socket->server;
 	
-	if (!_lm_ssl_begin (socket->ssl, socket->fd, ssl_verify_domain, &error)) {
+	ret = _lm_ssl_begin (socket->ssl, socket->fd, ssl_verify_domain, &error);
+
+  /* do not close the connection */
+  if (ret == -EAGAIN)
+    return ret;
+
+	if (ret != 0) {
 		lm_verbose ("Could not begin SSL\n");
 
 		if (error) {
@@ -340,15 +347,15 @@ _lm_socket_ssl_init (LmSocket *socket, gboolean delayed)
 			(socket->connect_func) (socket, FALSE, socket->user_data);
 		}
 		
-		return FALSE;
+		return ret;
 	}
 
 	socket->ssl_started = TRUE;
 
-  return TRUE;
+  return 0;
 }
 
-gboolean
+int
 lm_socket_starttls (LmSocket *socket)
 {
 	g_return_val_if_fail (lm_ssl_get_use_starttls (socket->ssl) == TRUE, FALSE);
@@ -388,7 +395,9 @@ _lm_socket_succeeded (LmConnectData *connect_data)
 
 	/* old-style ssl should be started immediately */
 	if (socket->ssl && (lm_ssl_get_use_starttls (socket->ssl) == FALSE)) {
-		if (!_lm_socket_ssl_init (socket, FALSE)) {
+    int ret;
+		ret = _lm_socket_ssl_init (socket, FALSE);
+		if (ret != 0 && ret != -EAGAIN) {
 			return;
 		}
 	}

@@ -191,7 +191,8 @@ _lm_ssl_initialize (LmSSL *ssl)
 					       GNUTLS_X509_FMT_PEM);
 }
 
-gboolean
+/* returns 0 in case of success, errcode otherwise*/
+int
 _lm_ssl_begin (LmSSL *ssl, gint fd, const gchar *server, GError **error)
 {
 	int ret;
@@ -216,6 +217,8 @@ _lm_ssl_begin (LmSSL *ssl, gint fd, const gchar *server, GError **error)
 
 	ret = gnutls_handshake (ssl->gnutls_session);
 
+  printf ("gnutls_handshake ret=%d GNUTLS_E_AGAIN=%d\n", ret, GNUTLS_E_AGAIN);
+
 	if (ret >= 0) {
 		auth_ok = ssl_verify_certificate (ssl, server);
 	}
@@ -226,16 +229,20 @@ _lm_ssl_begin (LmSSL *ssl, gint fd, const gchar *server, GError **error)
 		gnutls_perror (ret);
 	
 		if (!auth_ok) {
+      ret = -ENOPERM; /* hack! */
 			errmsg = "*** GNUTLS authentication error";
 		} else {
 			errmsg = "*** GNUTLS handshake failed";
 		}
 
+    if (ret == GNUTLS_E_AGAIN)
+      ret = -EAGAIN;
+
 		g_set_error (error, 
 			     LM_ERROR, LM_ERROR_CONNECTION_OPEN,
 			     errmsg);			
 
-		return FALSE;
+		return ret;
 	}
 
 	lm_verbose ("GNUTLS negotiated compression: %s",
@@ -244,7 +251,7 @@ _lm_ssl_begin (LmSSL *ssl, gint fd, const gchar *server, GError **error)
 
 	ssl->started = TRUE;
 
-	return TRUE;
+	return 0;
 }
 
 GIOStatus
