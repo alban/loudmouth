@@ -316,11 +316,6 @@ _lm_socket_ssl_init (LmSocket *socket, gboolean delayed)
 
 	_lm_ssl_initialize (socket->ssl);
 
-#ifdef HAVE_GNUTLS
-	/* GNU TLS requires the socket to be blocking */
-	_lm_sock_set_blocking (socket->fd, TRUE);
-#endif
-
 	/* If we're using StartTLS, the correct thing is to verify against
 	 * the domain. If we're using old SSL, we should verify against the
 	 * hostname. */
@@ -347,10 +342,6 @@ _lm_socket_ssl_init (LmSocket *socket, gboolean delayed)
 		
 		return FALSE;
 	}
-
-#ifdef HAVE_GNUTLS
-	_lm_sock_set_blocking (socket->fd, FALSE); 
-#endif
 
 	socket->ssl_started = TRUE;
 
