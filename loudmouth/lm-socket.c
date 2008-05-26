@@ -71,6 +71,7 @@ struct _LmSocket {
 
 	LmSSL        *ssl;
 	gboolean      ssl_started;
+	gboolean      ssl_starting;
 	LmProxy      *proxy;
 
 	GIOChannel   *io_channel;
@@ -126,6 +127,7 @@ static gboolean     socket_parse_srv_response (unsigned char  *srv,
 					       gchar         **out_server, 
 					       guint          *out_port);
 static void         socket_close_io_channel   (GIOChannel     *io_channel);
+static void         _lm_socket_succeeded (LmSocket *socket);
 
 static void
 socket_free (LmSocket *socket)
@@ -307,8 +309,7 @@ socket_error_event (GIOChannel   *source,
 	return TRUE;
 }
 
-/* returns 0 on success, errcode otherwise */
-static int
+static LmSslErrorCode
 _lm_socket_ssl_init (LmSocket *socket, gboolean delayed)
 {
 	GError *error = NULL;
@@ -318,7 +319,11 @@ _lm_socket_ssl_init (LmSocket *socket, gboolean delayed)
 	lm_verbose ("_lm_socket_ssl_init: Called.\n");
 	lm_verbose ("Setting up SSL...\n");
 
-	_lm_ssl_initialize (socket->ssl);
+  if (! socket->ssl_started)
+    {
+	    _lm_ssl_initialize (socket->ssl);
+	    socket->ssl_started = TRUE;
+    }
 
 	/* If we're using StartTLS, the correct thing is to verify against
 	 * the domain. If we're using old SSL, we should verify against the
@@ -330,13 +335,13 @@ _lm_socket_ssl_init (LmSocket *socket, gboolean delayed)
 	
 	ret = _lm_ssl_begin (socket->ssl, socket->fd, ssl_verify_domain, &error);
 
-	lm_verbose ("_lm_ssl_begin returned %d (-EAGAIN=%d)\n", ret, -EAGAIN);
+	lm_verbose ("_lm_ssl_begin returned %d \n", ret);
 
   /* do not close the connection */
-  if (ret == -EAGAIN)
+  if (ret == LM_SSL_EAGAIN_READ || ret == LM_SSL_EAGAIN_WRITE)
     return ret;
 
-	if (ret != 0) {
+	if (ret != LM_SSL_SUCCESS) {
 		lm_verbose ("Could not begin SSL\n");
 
 		if (error) {
@@ -361,7 +366,7 @@ _lm_socket_ssl_init (LmSocket *socket, gboolean delayed)
   return 0;
 }
 
-int
+LmSslErrorCode
 lm_socket_starttls (LmSocket *socket)
 {
 	g_return_val_if_fail (lm_ssl_get_use_starttls (socket->ssl) == TRUE, FALSE);
@@ -371,14 +376,53 @@ lm_socket_starttls (LmSocket *socket)
 	return _lm_socket_ssl_init (socket, TRUE);
 }
 
+static gboolean
+_oldssl_continue(GIOChannel *source,
+    GIOCondition condition,
+    gpointer data)
+{
+  int ret;
+	LmSocket *socket = data;
 
+  ret = _lm_socket_ssl_init (socket, FALSE);
+  lm_verbose ("_lm_socket_ssl_init returned %d\n", ret);
+  switch (ret)
+    {
+      case LM_SSL_FAILURE:
+        break; /* FIXME: do something useful? */
+
+      case LM_SSL_SUCCESS:
+        _lm_socket_succeeded (socket);
+        break;
+
+      case LM_SSL_EAGAIN_WRITE:
+        socket->watch_out = 
+          lm_misc_add_io_watch (socket->context,
+                    socket->io_channel,
+                    G_IO_OUT,
+                    (GIOFunc) _oldssl_continue,
+                    socket);
+        break;
+
+      case LM_SSL_EAGAIN_READ:
+        socket->watch_in = 
+          lm_misc_add_io_watch (socket->context,
+                    socket->io_channel,
+                    G_IO_IN,
+                    (GIOFunc) _oldssl_continue,
+                    socket);
+        break;
+
+    }
+  return FALSE;
+}
 
 void
-_lm_socket_succeeded (LmConnectData *connect_data)
+_lm_socket_connect_succeeded (LmConnectData *connect_data)
 {
 	LmSocket     *socket;
 	
-	lm_verbose ("_lm_socket_succeeded: Called.\n");
+	lm_verbose ("_lm_socket_connect_succeeded: Called.\n");
 
 	socket = connect_data->socket;
 
@@ -405,19 +449,16 @@ _lm_socket_succeeded (LmConnectData *connect_data)
 
 	/* old-style ssl should be started immediately */
 	if (socket->ssl && (lm_ssl_get_use_starttls (socket->ssl) == FALSE)) {
-    int ret;
-    do
-      {
-		    ret = _lm_socket_ssl_init (socket, FALSE);
-        lm_verbose ("_lm_socket_ssl_init returned %d\n", ret);
-      }
-    while (ret == -EAGAIN);
-
-		if (ret != 0) {
-			return;
-		}
+    _oldssl_continue (NULL, 0, socket);
+    return;
 	}
 
+  _lm_socket_succeeded (socket);
+}
+
+static void
+_lm_socket_succeeded (LmSocket *socket)
+{
 	socket->watch_in = 
 		lm_misc_add_io_watch (socket->context,
 				      socket->io_channel,
@@ -548,7 +589,7 @@ socket_connect_cb (GIOChannel   *source,
 				g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET,
 				       "Connection success (1).\n");
 				
-				_lm_socket_succeeded (connect_data);
+				_lm_socket_connect_succeeded (connect_data);
 			}
 			
 			if (_lm_connection_async_connect_waiting (socket->connection) &&
@@ -568,7 +609,7 @@ socket_connect_cb (GIOChannel   *source,
 		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET,
 		       "Connection success (2).\n");
 		
-		_lm_socket_succeeded (connect_data);
+		_lm_socket_connect_succeeded (connect_data);
 	}
 
 	result = TRUE;

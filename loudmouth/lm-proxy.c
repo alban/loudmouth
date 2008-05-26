@@ -163,7 +163,7 @@ proxy_read_cb (GIOChannel *source, GIOCondition condition, gpointer data)
 
 	if (retval == TRUE) {
 		g_source_remove (proxy->io_watch);
-		_lm_socket_succeeded ((LmConnectData *) data);
+		_lm_socket_connect_succeeded ((LmConnectData *) data);
 	}
 
 	return FALSE;

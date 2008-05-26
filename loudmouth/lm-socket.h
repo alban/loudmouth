@@ -24,6 +24,7 @@
 #include <glib.h>
 
 #include "lm-internals.h"
+#include "lm-ssl-internals.h"
 
 typedef struct _LmSocket LmSocket;
 
@@ -69,7 +70,7 @@ void        lm_socket_unref               (LmSocket       *socket);
 #ifdef HAVE_ASYNCNS
 void	    _asyncns_cancel               (LmSocket *socket);
 #endif
-gboolean    lm_socket_starttls            (LmSocket *socket);
+LmSslErrorCode lm_socket_starttls            (LmSocket *socket);
 gboolean    lm_socket_set_keepalive       (LmSocket *socket, int delay);
 gchar *     lm_socket_get_local_host      (LmSocket *socket);
 

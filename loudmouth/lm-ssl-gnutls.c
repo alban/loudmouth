@@ -42,6 +42,7 @@ struct _LmSSL {
 	gnutls_session                 gnutls_session;
 	gnutls_certificate_credentials gnutls_xcred;
 	gboolean                       started;
+	gboolean                       starting;
 };
 
 static gboolean       ssl_verify_certificate    (LmSSL       *ssl,
@@ -193,8 +194,7 @@ _lm_ssl_initialize (LmSSL *ssl)
 					       GNUTLS_X509_FMT_PEM);
 }
 
-/* returns 0 in case of success, errcode otherwise*/
-int
+LmSslErrorCode
 _lm_ssl_begin (LmSSL *ssl, gint fd, const gchar *server, GError **error)
 {
 	int ret;
@@ -208,34 +208,40 @@ _lm_ssl_begin (LmSSL *ssl, gint fd, const gchar *server, GError **error)
   g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SSL,
       "_lm_ssl_begin: Called.\n");
 
-	gnutls_init (&ssl->gnutls_session, GNUTLS_CLIENT);
-	gnutls_set_default_priority (ssl->gnutls_session);
-	gnutls_certificate_type_set_priority (ssl->gnutls_session,
-					      cert_type_priority);
-	gnutls_compression_set_priority (ssl->gnutls_session,
-					 compression_priority);
-	gnutls_credentials_set (ssl->gnutls_session,
-				GNUTLS_CRD_CERTIFICATE,
-				ssl->gnutls_xcred);
-
-	gnutls_transport_set_ptr (ssl->gnutls_session,
-				  (gnutls_transport_ptr_t) fd);
-
-  do
+  if (! ssl->starting)
     {
-      g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SSL,
-         "calling gnutls_handshake...\n");
-	    ret = gnutls_handshake (ssl->gnutls_session);
-      g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SSL,
-         "gnutls_handshake returned %d\n", ret);
-      if (ret == GNUTLS_E_AGAIN)
-        {
-          lm_verbose ("direction = %d (0=read 1=write)\n",
-              gnutls_record_get_direction (ssl->gnutls_session));
-        }
-      sleep (1);
+      gnutls_init (&ssl->gnutls_session, GNUTLS_CLIENT);
+      gnutls_set_default_priority (ssl->gnutls_session);
+      gnutls_certificate_type_set_priority (ssl->gnutls_session,
+                    cert_type_priority);
+      gnutls_compression_set_priority (ssl->gnutls_session,
+               compression_priority);
+      gnutls_credentials_set (ssl->gnutls_session,
+            GNUTLS_CRD_CERTIFICATE,
+            ssl->gnutls_xcred);
+
+      gnutls_transport_set_ptr (ssl->gnutls_session,
+              (gnutls_transport_ptr_t) fd);
+
+      ssl->starting = TRUE;
     }
-  while (ret == GNUTLS_E_AGAIN);
+
+  g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SSL,
+     "calling gnutls_handshake...\n");
+
+  ret = gnutls_handshake (ssl->gnutls_session);
+  
+  g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SSL,
+     "gnutls_handshake returned %d\n", ret);
+  if (ret == GNUTLS_E_AGAIN)
+    {
+      lm_verbose ("direction = %d (0=read 1=write)\n",
+          gnutls_record_get_direction (ssl->gnutls_session));
+      if (gnutls_record_get_direction (ssl->gnutls_session))
+        return LM_SSL_EAGAIN_WRITE;
+      else
+        return LM_SSL_EAGAIN_READ;
+    }
 
   g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SSL,
          "gnutls_handshake ret=%d GNUTLS_E_AGAIN=%d\n",
@@ -257,14 +263,11 @@ _lm_ssl_begin (LmSSL *ssl, gint fd, const gchar *server, GError **error)
 			errmsg = "*** GNUTLS handshake failed";
 		}
 
-    if (ret == GNUTLS_E_AGAIN)
-      ret = -EAGAIN;
-
 		g_set_error (error, 
 			     LM_ERROR, LM_ERROR_CONNECTION_OPEN,
 			     errmsg);			
 
-		return ret;
+		return LM_SSL_FAILURE;
 	}
 
 	lm_verbose ("GNUTLS negotiated compression: %s",
@@ -273,7 +276,7 @@ _lm_ssl_begin (LmSSL *ssl, gint fd, const gchar *server, GError **error)
 
 	ssl->started = TRUE;
 
-	return 0;
+	return LM_SSL_SUCCESS;
 }
 
 GIOStatus

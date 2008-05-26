@@ -23,6 +23,13 @@
 
 #include <glib.h>
 
+typedef enum {
+  LM_SSL_SUCCESS,
+  LM_SSL_FAILURE,
+  LM_SSL_EAGAIN_READ,
+  LM_SSL_EAGAIN_WRITE
+} LmSslErrorCode;
+
 LmSSLResponse   _lm_ssl_func_always_continue (LmSSL       *ssl,
 					      LmSSLStatus  status,
 					      gpointer     user_data);
@@ -32,7 +39,7 @@ LmSSL *          _lm_ssl_new              (const gchar    *expected_fingerprint,
 					   GDestroyNotify  notify);
 
 void             _lm_ssl_initialize       (LmSSL            *ssl);
-gboolean         _lm_ssl_begin            (LmSSL            *ssl,
+LmSslErrorCode   _lm_ssl_begin            (LmSSL            *ssl,
 					   gint              fd,
 					   const gchar      *server,
 					   GError          **error);

@@ -709,16 +709,30 @@ _lm_connection_starttls_cb (LmMessageHandler *handler,
 
   lm_verbose ("_lm_connection_starttls_cb: Called\n");
 
-  ret = lm_socket_starttls (connection->socket);
+  do
+    {
+      ret = lm_socket_starttls (connection->socket);
+      lm_verbose ("lm_socket_starttls returned %d\n", ret);
+    }
+  while (ret == LM_SSL_EAGAIN_WRITE || ret == LM_SSL_EAGAIN_READ);
 
-	if (ret == 0) {
-		connection->tls_started = TRUE;
-		connection_send_stream_header (connection);
-	} else {
-		connection_do_close (connection);
-		connection_signal_disconnect (connection, 
-					      LM_DISCONNECT_REASON_ERROR);
-	}
+  switch (ret) /* TODO */
+    {
+      case LM_SSL_EAGAIN_READ:
+      case LM_SSL_EAGAIN_WRITE:
+        g_assert_not_reached ();
+        break;
+
+      case LM_SSL_SUCCESS:
+        connection->tls_started = TRUE;
+        connection_send_stream_header (connection);
+        break;
+      
+      case LM_SSL_FAILURE:
+        connection_do_close (connection);
+        connection_signal_disconnect (connection, 
+                    LM_DISCONNECT_REASON_ERROR);
+    }
 
 	return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
