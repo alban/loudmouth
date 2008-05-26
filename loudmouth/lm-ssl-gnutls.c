@@ -22,6 +22,8 @@
 
 #include <string.h>
 #include <glib.h>
+#include <errno.h>
+#include <unistd.h>
 
 #include "lm-debug.h"
 #include "lm-error.h"
@@ -202,6 +204,10 @@ _lm_ssl_begin (LmSSL *ssl, gint fd, const gchar *server, GError **error)
 	const int compression_priority[] =
 		{ GNUTLS_COMP_DEFLATE, GNUTLS_COMP_NULL, 0 };
 
+
+  g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SSL,
+      "_lm_ssl_begin: Called.\n");
+
 	gnutls_init (&ssl->gnutls_session, GNUTLS_CLIENT);
 	gnutls_set_default_priority (ssl->gnutls_session);
 	gnutls_certificate_type_set_priority (ssl->gnutls_session,
@@ -215,9 +221,25 @@ _lm_ssl_begin (LmSSL *ssl, gint fd, const gchar *server, GError **error)
 	gnutls_transport_set_ptr (ssl->gnutls_session,
 				  (gnutls_transport_ptr_t) fd);
 
-	ret = gnutls_handshake (ssl->gnutls_session);
+  do
+    {
+      g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SSL,
+         "calling gnutls_handshake...\n");
+	    ret = gnutls_handshake (ssl->gnutls_session);
+      g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SSL,
+         "gnutls_handshake returned %d\n", ret);
+      if (ret == GNUTLS_E_AGAIN)
+        {
+          lm_verbose ("direction = %d (0=read 1=write)\n",
+              gnutls_record_get_direction (ssl->gnutls_session));
+        }
+      sleep (1);
+    }
+  while (ret == GNUTLS_E_AGAIN);
 
-  printf ("gnutls_handshake ret=%d GNUTLS_E_AGAIN=%d\n", ret, GNUTLS_E_AGAIN);
+  g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SSL,
+         "gnutls_handshake ret=%d GNUTLS_E_AGAIN=%d\n",
+         ret, GNUTLS_E_AGAIN);
 
 	if (ret >= 0) {
 		auth_ok = ssl_verify_certificate (ssl, server);
@@ -229,7 +251,7 @@ _lm_ssl_begin (LmSSL *ssl, gint fd, const gchar *server, GError **error)
 		gnutls_perror (ret);
 	
 		if (!auth_ok) {
-      ret = -ENOPERM; /* hack! */
+      ret = -EPERM; /* hack! */
 			errmsg = "*** GNUTLS authentication error";
 		} else {
 			errmsg = "*** GNUTLS handshake failed";

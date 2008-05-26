@@ -24,6 +24,7 @@
 
 #include <string.h>
 #include <sys/types.h>
+#include <errno.h>
 
 /* Needed on Mac OS X */
 #if HAVE_NETINET_IN_H
@@ -312,7 +313,9 @@ _lm_socket_ssl_init (LmSocket *socket, gboolean delayed)
 {
 	GError *error = NULL;
 	const gchar *ssl_verify_domain = NULL;
+  int ret;
 
+	lm_verbose ("_lm_socket_ssl_init: Called.\n");
 	lm_verbose ("Setting up SSL...\n");
 
 	_lm_ssl_initialize (socket->ssl);
@@ -326,6 +329,8 @@ _lm_socket_ssl_init (LmSocket *socket, gboolean delayed)
 		ssl_verify_domain = socket->server;
 	
 	ret = _lm_ssl_begin (socket->ssl, socket->fd, ssl_verify_domain, &error);
+
+	lm_verbose ("_lm_ssl_begin returned %d (-EAGAIN=%d)\n", ret, -EAGAIN);
 
   /* do not close the connection */
   if (ret == -EAGAIN)
@@ -352,6 +357,7 @@ _lm_socket_ssl_init (LmSocket *socket, gboolean delayed)
 
 	socket->ssl_started = TRUE;
 
+  lm_verbose ("_lm_socket_ssl_init: SUCCESS\n");
   return 0;
 }
 
@@ -359,6 +365,8 @@ int
 lm_socket_starttls (LmSocket *socket)
 {
 	g_return_val_if_fail (lm_ssl_get_use_starttls (socket->ssl) == TRUE, FALSE);
+
+  lm_verbose ("lm_socket_starttls: Called\n");
 
 	return _lm_socket_ssl_init (socket, TRUE);
 }
@@ -370,6 +378,8 @@ _lm_socket_succeeded (LmConnectData *connect_data)
 {
 	LmSocket     *socket;
 	
+	lm_verbose ("_lm_socket_succeeded: Called.\n");
+
 	socket = connect_data->socket;
 
 	if (socket->watch_connect) {
@@ -396,8 +406,14 @@ _lm_socket_succeeded (LmConnectData *connect_data)
 	/* old-style ssl should be started immediately */
 	if (socket->ssl && (lm_ssl_get_use_starttls (socket->ssl) == FALSE)) {
     int ret;
-		ret = _lm_socket_ssl_init (socket, FALSE);
-		if (ret != 0 && ret != -EAGAIN) {
+    do
+      {
+		    ret = _lm_socket_ssl_init (socket, FALSE);
+        lm_verbose ("_lm_socket_ssl_init returned %d\n", ret);
+      }
+    while (ret == -EAGAIN);
+
+		if (ret != 0) {
 			return;
 		}
 	}
@@ -496,6 +512,8 @@ socket_connect_cb (GIOChannel   *source,
 	LmSocketT        fd;
 	gboolean         result = FALSE;
 
+	lm_verbose ("socket_connect_cb: Called.\n");
+
 	socket = lm_socket_ref (connect_data->socket);
 	addr = connect_data->current_addr;
 	fd = g_io_channel_unix_get_fd (source);
@@ -572,6 +590,8 @@ socket_do_connect (LmConnectData *connect_data)
 	char             portname[NI_MAXSERV];
 	struct addrinfo *addr;
 	
+	lm_verbose ("socket_do_connect: Called.\n");
+
 	socket = connect_data->socket;
 	addr = connect_data->current_addr;
  
@@ -628,6 +648,7 @@ socket_do_connect (LmConnectData *connect_data)
 					      (GIOFunc) _lm_proxy_connect_cb, 
 					      connect_data);
 	} else {
+      lm_verbose ("Register socket_connect_cb callback.\n");
 		socket->watch_connect =
 			lm_misc_add_io_watch (socket->context,
 					      connect_data->io_channel,

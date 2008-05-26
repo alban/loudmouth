@@ -705,7 +705,13 @@ _lm_connection_starttls_cb (LmMessageHandler *handler,
 			    LmMessage *message,
 			    gpointer user_data)
 {
-	if (lm_socket_starttls (connection->socket)) {
+  int ret;
+
+  lm_verbose ("_lm_connection_starttls_cb: Called\n");
+
+  ret = lm_socket_starttls (connection->socket);
+
+	if (ret == 0) {
 		connection->tls_started = TRUE;
 		connection_send_stream_header (connection);
 	} else {
