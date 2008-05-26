@@ -46,24 +46,4 @@ gint             _lm_ssl_send             (LmSSL            *ssl,
 void             _lm_ssl_close            (LmSSL            *ssl);
 void             _lm_ssl_free             (LmSSL            *ssl);
 
-LmSSL *          _lm_ssl_new              (const gchar    *expected_fingerprint,
-					   LmSSLFunction   ssl_function,
-					   gpointer        user_data,
-					   GDestroyNotify  notify);
-
-void             _lm_ssl_initialize       (LmSSL            *ssl);
-gboolean         _lm_ssl_begin            (LmSSL            *ssl,
-					   gint              fd,
-					   const gchar      *server,
-					   GError          **error);
-GIOStatus        _lm_ssl_read             (LmSSL            *ssl,
-					   gchar            *buf,
-					   gint              len,
-					   gsize             *bytes_read);
-gint             _lm_ssl_send             (LmSSL            *ssl,
-					   const gchar      *str,
-					   gint              len);
-void             _lm_ssl_close            (LmSSL            *ssl);
-void             _lm_ssl_free             (LmSSL            *ssl);
-
 #endif /* __LM_SSL_INTERNALS_H__ */
