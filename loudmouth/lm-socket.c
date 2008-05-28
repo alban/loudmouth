@@ -105,6 +105,12 @@ struct _LmSocket {
 #endif
 }; 
 
+struct _LmSocketTls {
+  LmSocket *socket;
+  void (*tls_success)(gpointer data);
+  void (*tls_failed)(gpointer data);
+};
+
 static void         socket_free               (LmSocket       *socket);
 static gboolean     socket_do_connect         (LmConnectData  *connect_data);
 static gboolean     socket_connect_cb         (GIOChannel     *source, 
@@ -376,6 +382,83 @@ lm_socket_starttls (LmSocket *socket)
 	return _lm_socket_ssl_init (socket, TRUE);
 }
 
+typedef struct {
+  LmSocket *socket;
+  void (*tls_success)(gpointer data);
+  void (*tls_failed)(gpointer data);
+} tls_continue_t;
+
+static gboolean
+_tls_continue (GIOChannel *source,
+    GIOCondition condition,
+    gpointer data)
+{
+  int ret;
+  LmSocket *socket = ((tls_continue_t*)data)->socket;
+
+  ret = lm_socket_starttls (socket);
+  lm_verbose ("lm_socket_starttls returned %d\n", ret);
+
+  switch (ret)
+    {
+      case LM_SSL_EAGAIN_READ:
+        socket->watch_in = 
+          lm_misc_add_io_watch (socket->context,
+                    socket->io_channel,
+                    G_IO_IN,
+                    (GIOFunc) _tls_continue,
+                    data);
+        break;
+
+      case LM_SSL_EAGAIN_WRITE:
+        socket->watch_out = 
+          lm_misc_add_io_watch (socket->context,
+                    socket->io_channel,
+                    G_IO_OUT,
+                    (GIOFunc) _tls_continue,
+                    data);
+        break;
+
+      case LM_SSL_SUCCESS:
+        socket->watch_in = 
+          lm_misc_add_io_watch (socket->context,
+                    socket->io_channel,
+                    G_IO_IN,
+                    (GIOFunc) socket_in_event,
+                    socket);
+        ((tls_continue_t*)data)->tls_success(socket->connection);
+        g_slice_free (tls_continue_t, data);
+        break;
+      
+      case LM_SSL_FAILURE:
+        ((tls_continue_t*)data)->tls_failed(socket->connection);
+        g_slice_free (tls_continue_t, data);
+        break;
+    }
+
+  return FALSE;
+}
+
+void
+lm_socket_start_tls (LmSocket *socket,
+    void (tls_success)(gpointer data),
+    void (tls_failed)(gpointer data))
+{
+  tls_continue_t *data;
+
+  lm_verbose ("lm_socket_start_tls: Called.\n");
+
+  data = g_slice_new0 (tls_continue_t);
+  data->socket = socket;
+  data->tls_success = tls_success;
+  data->tls_failed = tls_failed;
+
+  lm_verbose ("socket->watch_in=%d\n", socket->watch_in);
+  g_assert (g_source_remove (g_source_get_id (socket->watch_in)));
+
+  _tls_continue (NULL, 0, data);
+}
+
 static gboolean
 _oldssl_continue(GIOChannel *source,
     GIOCondition condition,
@@ -459,12 +542,16 @@ _lm_socket_connect_succeeded (LmConnectData *connect_data)
 static void
 _lm_socket_succeeded (LmSocket *socket)
 {
+  lm_verbose ("_lm_socket_succeeded: Called.\n");
+
 	socket->watch_in = 
 		lm_misc_add_io_watch (socket->context,
 				      socket->io_channel,
 				      G_IO_IN,
 				      (GIOFunc) socket_in_event,
 				      socket);
+
+  lm_verbose ("socket->watch_in=%d\n", socket->watch_in);
 
 	/* FIXME: if we add these, we don't get ANY
 	 * response from the server, this is to do with the way that
@@ -1189,6 +1276,8 @@ void
 lm_socket_close (LmSocket *socket)
 {
 	LmConnectData *data;
+
+  lm_verbose ("lm_socket_close: Called.");
 
 	g_return_if_fail (socket != NULL);
 

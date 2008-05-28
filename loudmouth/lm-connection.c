@@ -185,6 +185,9 @@ static LmHandlerResult connection_features_cb (LmMessageHandler *handler,
 					       LmConnection     *connection,
 					       LmMessage        *message,
 					       gpointer          user_data);
+static gboolean _tls_continue (GIOChannel *source,
+                 GIOCondition condition,
+                 gpointer data);
 
 static void
 connection_free (LmConnection *connection)
@@ -492,6 +495,8 @@ connection_do_open (LmConnection *connection, GError **error)
 void
 connection_do_close (LmConnection *connection)
 {
+  lm_verbose ("connection_do_close: Called.");
+
 	connection_stop_keep_alive (connection);
 
 	if (connection->socket) {
@@ -698,6 +703,24 @@ connection_auth_reply (LmMessageHandler *handler,
 	return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
 
+static void
+_tls_failed (gpointer data)
+{
+  LmConnection *connection = data;
+  lm_verbose ("_tls_failed: Called.\n");
+  connection_do_close (connection);
+  connection_signal_disconnect (connection,
+              LM_DISCONNECT_REASON_ERROR);
+}
+
+static void
+_tls_success (gpointer data)
+{
+  LmConnection *connection = data;
+  lm_verbose ("_tls_success: Called.\n");
+  connection->tls_started = TRUE;
+  connection_send_stream_header (connection);
+}
 
 static LmHandlerResult
 _lm_connection_starttls_cb (LmMessageHandler *handler,
@@ -705,34 +728,8 @@ _lm_connection_starttls_cb (LmMessageHandler *handler,
 			    LmMessage *message,
 			    gpointer user_data)
 {
-  int ret;
-
   lm_verbose ("_lm_connection_starttls_cb: Called\n");
-
-  do
-    {
-      ret = lm_socket_starttls (connection->socket);
-      lm_verbose ("lm_socket_starttls returned %d\n", ret);
-    }
-  while (ret == LM_SSL_EAGAIN_WRITE || ret == LM_SSL_EAGAIN_READ);
-
-  switch (ret) /* TODO */
-    {
-      case LM_SSL_EAGAIN_READ:
-      case LM_SSL_EAGAIN_WRITE:
-        g_assert_not_reached ();
-        break;
-
-      case LM_SSL_SUCCESS:
-        connection->tls_started = TRUE;
-        connection_send_stream_header (connection);
-        break;
-      
-      case LM_SSL_FAILURE:
-        connection_do_close (connection);
-        connection_signal_disconnect (connection, 
-                    LM_DISCONNECT_REASON_ERROR);
-    }
+  lm_socket_start_tls (connection->socket, _tls_success, _tls_failed);
 
 	return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }

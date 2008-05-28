@@ -73,6 +73,9 @@ void	    _asyncns_cancel               (LmSocket *socket);
 LmSslErrorCode lm_socket_starttls            (LmSocket *socket);
 gboolean    lm_socket_set_keepalive       (LmSocket *socket, int delay);
 gchar *     lm_socket_get_local_host      (LmSocket *socket);
+void        lm_socket_start_tls           (LmSocket *socket,
+    void (tls_success)(gpointer data),
+    void (tls_failed)(gpointer data));
 
 #endif /* __LM_SOCKET_H__ */
 
