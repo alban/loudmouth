@@ -1,4 +1,4 @@
-AC_INIT(Loudmouth, 1.4.0, loudmouth)
+AC_INIT(Loudmouth, 1.5.0, loudmouth)
 AC_PREREQ(2.59)
 AC_COPYRIGHT([
 	Copyright (C) 2003-2007 Imendio AB
@@ -75,7 +75,7 @@ changequote([,])dnl
 AC_SUBST(CFLAGS)
 AC_SUBST(LDFLAGS)
 
-GLIB2_REQUIRED=2.4.0
+GLIB2_REQUIRED=2.16.0
 GNUTLS_REQUIRED=1.4.0
 LIBTASN1_REQUIRED=0.2.6
 
