@@ -1,3 +1,5 @@
+include $(top_srcdir)/Makefile.decl
+
 SUBDIRS = parser-tests
 
 noinst_PROGRAMS = $(TEST_PROGS)
