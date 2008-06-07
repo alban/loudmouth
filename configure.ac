@@ -92,11 +92,6 @@ if test "x$have_idn" = "xyes"; then
 	AC_DEFINE(HAVE_IDN, 1, [Define if IDN support is included])
 fi
 
-# Check Unit test framework (defined in acinclude.m4)
-IDT_PATH_CHECK(0.9.2, have_check=yes, have_check=no)
-
-AM_CONDITIONAL(HAVE_CHECK, test x$have_check = xyes)
-
 dnl Gtk doc
 GTK_DOC_CHECK(1.0)
 
@@ -282,7 +277,6 @@ echo "
 	Asynchronous DNS:         ${enable_asyncns}
 	Linux TCP keepalives:     ${use_keepalives}
 	Enable Debug:             ${enable_debug}
-	Enable Unit Tests:        ${have_check}
 	Enable Documentation      ${enable_gtk_doc}
 
 	Now type 'make' to build Loudmouth

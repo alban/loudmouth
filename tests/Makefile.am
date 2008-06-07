@@ -1,19 +1,11 @@
 SUBDIRS = parser-tests
 
-TESTS =                                       \
-	test-objects                          \
-	test-parser
+noinst_PROGRAMS = $(TEST_PROGS)
+TEST_PROGS = 
 
-test_objects_SOURCES =                        \
-	test-objects.c                        \
-	test-objects.h
-
+TEST_PROGS += test-parser
 test_parser_SOURCES =                         \
 	test-parser.c
-
-if HAVE_CHECK
-noinst_PROGRAMS = $(TESTS)
-endif
 
 AM_CPPFLAGS =                                 \
 	-I.                                   \
@@ -21,11 +13,9 @@ AM_CPPFLAGS =                                 \
 	-DLM_COMPILATION                      \
 	-DRUNTIME_ENDIAN                      \
 	$(LOUDMOUTH_CFLAGS)                   \
-	-DPARSER_TEST_DIR="\"$(top_srcdir)/tests/parser-tests\""  \
-	@CHECK_CFLAGS@
+	-DPARSER_TEST_DIR="\"$(top_srcdir)/tests/parser-tests\""
 
 LIBS =                                        \
 	$(LOUDMOUTH_LIBS)                     \
-	@CHECK_LIBS@                          \
 	$(top_builddir)/loudmouth/libloudmouth-1.la
 
