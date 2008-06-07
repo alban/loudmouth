@@ -80,7 +80,7 @@ test_parser_with_file (const gchar *file_path, gboolean is_valid)
 		return;
 	}
 	    
-	lm_parser_parse (parser, file_contents);
+	g_assert (lm_parser_parse (parser, file_contents) == is_valid);
 	lm_parser_free (parser);
 	g_free (file_contents);
 }
@@ -107,6 +107,7 @@ test_invalid_suite ()
 	list = get_files ("invalid");
 	for (l = list; l; l = l->next) {
 		g_print ("INVALID: %s\n", (const gchar *) l->data);
+		test_parser_with_file ((const gchar *) l->data, FALSE);
 		g_free (l->data);
 	}
 	g_slist_free (list);

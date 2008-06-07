@@ -239,10 +239,10 @@ lm_parser_new (LmParserMessageFunction function,
 	return parser;
 }
 
-void
+gboolean
 lm_parser_parse (LmParser *parser, const gchar *string)
 {
-	g_return_if_fail (parser != NULL);
+	g_return_val_if_fail (parser != NULL, FALSE);
 	
         if (!parser->context) {
                 parser->context = g_markup_parse_context_new (parser->m_parser, 0,
@@ -250,10 +250,12 @@ lm_parser_parse (LmParser *parser, const gchar *string)
         }
         
         if (g_markup_parse_context_parse (parser->context, string, 
-                                          (gssize)strlen (string), NULL)) {
+					  (gssize)strlen (string), NULL)) {
+		return TRUE;
         } else {
 		g_markup_parse_context_free (parser->context);
 		parser->context = NULL;
+		return FALSE;
         }
 }
 
