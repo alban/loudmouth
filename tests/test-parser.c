@@ -92,7 +92,6 @@ test_valid_suite ()
 
 	list = get_files ("valid");
 	for (l = list; l; l = l->next) {
-		g_print ("VALID: %s\n", (const gchar *) l->data);
 		test_parser_with_file ((const gchar *) l->data, TRUE);
 		g_free (l->data);
 	}
@@ -106,7 +105,6 @@ test_invalid_suite ()
 
 	list = get_files ("invalid");
 	for (l = list; l; l = l->next) {
-		g_print ("INVALID: %s\n", (const gchar *) l->data);
 		test_parser_with_file ((const gchar *) l->data, FALSE);
 		g_free (l->data);
 	}

@@ -1,6 +1,8 @@
-EXTRA_DIST =                           \
+include $(top_srcdir)/Makefile.decl
+
+EXTRA_DIST +=                          \
 	valid-1.xml                    \
 	valid-2.xml                    \
-	valid-3.xml                    \
+	should-be-valid-3.xml          \
 	invalid-1.xml
 	

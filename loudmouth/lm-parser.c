@@ -138,8 +138,10 @@ parser_end_node_cb (GMarkupParseContext  *context,
 		if (strcmp (node_name, "stream:stream")) {
 			g_print ("Got an stream:stream end\n");
 		}
-		g_warning ("Trying to close node that isn't open: %s",
-			   node_name);
+		
+		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_PARSER,
+		       "Trying to close node that isn't open: %s",
+		       node_name);
 		return;
 	}
 
@@ -149,8 +151,9 @@ parser_end_node_cb (GMarkupParseContext  *context,
 		m = _lm_message_new_from_node (parser->cur_root);
 
 		if (!m) {
-			g_warning ("Couldn't create message: %s\n",
-				   parser->cur_root->name);
+			g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_PARSER,
+			       "Couldn't create message: %s\n",
+			       parser->cur_root->name);
 			return;
 		}
 
@@ -200,7 +203,8 @@ parser_error_cb (GMarkupParseContext *context,
 	g_return_if_fail (user_data != NULL);
 	g_return_if_fail (error != NULL);
 	
-	g_warning ("Parsing failed: %s\n", error->message);
+	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_PARSER,
+	       "Parsing failed: %s\n", error->message);
 }
 
 LmParser *
