@@ -2,11 +2,10 @@
 Miscellaneous Utility Functions
 
 <!-- ##### SECTION Short_Description ##### -->
-Test
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>
-Test Long
+Functions to help application developers when writing XMPP applications using Loudmouth.
 </para>
 
 <!-- ##### SECTION See_Also ##### -->
