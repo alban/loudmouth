@@ -32,7 +32,6 @@
 #include "lm-message-node.h"
 #include "lm-sock.h"
 #include "lm-socket.h"
-#include "lm-ssl-internals.h"
 
 #ifndef G_OS_WIN32
 typedef int LmSocketT;

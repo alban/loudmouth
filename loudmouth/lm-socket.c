@@ -24,7 +24,6 @@
 
 #include <string.h>
 #include <sys/types.h>
-#include <errno.h>
 
 /* Needed on Mac OS X */
 #if HAVE_NETINET_IN_H
