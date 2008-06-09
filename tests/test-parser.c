@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- * Copyright (C) 2006 Imendio AB
+ * Copyright (C) 2006-2008 Imendio AB
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License as
@@ -19,7 +19,6 @@
  */
 
 #include <stdlib.h>
-#include <check.h> 
 #include <glib.h>
 
 #include "loudmouth/lm-parser.h"
@@ -81,61 +80,45 @@ test_parser_with_file (const gchar *file_path, gboolean is_valid)
 		return;
 	}
 	    
-	lm_parser_parse (parser, file_contents);
+	g_assert (lm_parser_parse (parser, file_contents) == is_valid);
 	lm_parser_free (parser);
 	g_free (file_contents);
 }
 
-static Suite *
-create_lm_parser_valid_suite ()
+static void
+test_valid_suite ()
 {
-	Suite  *suite;
 	GSList *list, *l;
-
-	suite = suite_create ("LmParser");
 
 	list = get_files ("valid");
 	for (l = list; l; l = l->next) {
-		g_print ("VALID: %s\n", (const gchar *) l->data);
 		test_parser_with_file ((const gchar *) l->data, TRUE);
 		g_free (l->data);
 	}
 	g_slist_free (list);
-
-	return suite;
 }
 
-static Suite *
-create_lm_parser_invalid_suite ()
+static void
+test_invalid_suite ()
 {
-	Suite  *suite;
 	GSList *list, *l;
-
-	suite = suite_create ("LmParser");
 
 	list = get_files ("invalid");
 	for (l = list; l; l = l->next) {
-		g_print ("INVALID: %s\n", (const gchar *) l->data);
+		test_parser_with_file ((const gchar *) l->data, FALSE);
 		g_free (l->data);
 	}
 	g_slist_free (list);
-
-	return suite;
 }
 
 int 
 main (int argc, char **argv)
 {
-	SRunner *srunner;
-	int      nf;
+	g_test_init (&argc, &argv, NULL);
+	
+	g_test_add_func ("/parser/valid_suite", test_valid_suite);
+	g_test_add_func ("/parser/invalid/suite", test_invalid_suite);
 
-	srunner = srunner_create (create_lm_parser_valid_suite ());
-
-	srunner_add_suite (srunner, create_lm_parser_invalid_suite ());
-
-	srunner_run_all (srunner, CK_NORMAL);
-	nf = srunner_ntests_failed (srunner);
-
-	return (nf == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+	return g_test_run ();
 }
 

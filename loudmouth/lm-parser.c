@@ -138,8 +138,10 @@ parser_end_node_cb (GMarkupParseContext  *context,
 		if (strcmp (node_name, "stream:stream")) {
 			g_print ("Got an stream:stream end\n");
 		}
-		g_warning ("Trying to close node that isn't open: %s",
-			   node_name);
+		
+		g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_PARSER,
+		       "Trying to close node that isn't open: %s",
+		       node_name);
 		return;
 	}
 
@@ -149,8 +151,9 @@ parser_end_node_cb (GMarkupParseContext  *context,
 		m = _lm_message_new_from_node (parser->cur_root);
 
 		if (!m) {
-			g_warning ("Couldn't create message: %s\n",
-				   parser->cur_root->name);
+			g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_PARSER,
+			       "Couldn't create message: %s\n",
+			       parser->cur_root->name);
 			return;
 		}
 
@@ -200,7 +203,8 @@ parser_error_cb (GMarkupParseContext *context,
 	g_return_if_fail (user_data != NULL);
 	g_return_if_fail (error != NULL);
 	
-	g_warning ("Parsing failed: %s\n", error->message);
+	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_PARSER,
+	       "Parsing failed: %s\n", error->message);
 }
 
 LmParser *
@@ -239,10 +243,10 @@ lm_parser_new (LmParserMessageFunction function,
 	return parser;
 }
 
-void
+gboolean
 lm_parser_parse (LmParser *parser, const gchar *string)
 {
-	g_return_if_fail (parser != NULL);
+	g_return_val_if_fail (parser != NULL, FALSE);
 	
         if (!parser->context) {
                 parser->context = g_markup_parse_context_new (parser->m_parser, 0,
@@ -250,10 +254,12 @@ lm_parser_parse (LmParser *parser, const gchar *string)
         }
         
         if (g_markup_parse_context_parse (parser->context, string, 
-                                          (gssize)strlen (string), NULL)) {
+					  (gssize)strlen (string), NULL)) {
+		return TRUE;
         } else {
 		g_markup_parse_context_free (parser->context);
 		parser->context = NULL;
+		return FALSE;
         }
 }
 

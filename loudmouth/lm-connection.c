@@ -1558,8 +1558,24 @@ lm_connection_authenticate_and_block (LmConnection  *connection,
 }
 
 /**
+ * lm_connection_get_keep_alive_rate:
+ * @connection: an #LmConnection 
+ *
+ * Get the keep alive rate, in seconds. Zero is returned if no keep alive rate has been set.
+ *
+ * Since 1.3.5
+ **/
+guint
+lm_connection_get_keep_alive_rate (LmConnection *connection)
+{
+	g_return_val_if_fail (connection != NULL, 0);
+
+	return connection->keep_alive_rate;
+}
+
+/**
  * lm_connection_set_keep_alive_rate:
- * @connection: #LmConnection to check if it is open.
+ * @connection: an #LmConnection
  * @rate: Number of seconds between keep alive packages are sent.
  * 
  * Set the keep alive rate, in seconds. Set to 0 to prevent keep alive messages to be sent.

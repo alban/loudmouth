@@ -33,7 +33,7 @@ typedef void (* LmParserMessageFunction) (LmParser     *parser,
 LmParser *   lm_parser_new       (LmParserMessageFunction  function,
 				  gpointer                 user_data,
 				  GDestroyNotify           notify);
-void         lm_parser_parse     (LmParser                *parser,
+gboolean     lm_parser_parse     (LmParser                *parser,
 				  const gchar             *string);
 void         lm_parser_free      (LmParser                *parser);
 

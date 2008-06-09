@@ -224,6 +224,15 @@ Callback called when a connection is closed.
 @Returns: 
 
 
+<!-- ##### FUNCTION lm_connection_get_keep_alive_rate ##### -->
+<para>
+
+</para>
+
+@connection: 
+@Returns: 
+
+
 <!-- ##### FUNCTION lm_connection_set_keep_alive_rate ##### -->
 <para>
 

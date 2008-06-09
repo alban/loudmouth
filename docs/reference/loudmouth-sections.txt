@@ -17,6 +17,7 @@ lm_connection_open_and_block
 lm_connection_close
 lm_connection_authenticate
 lm_connection_authenticate_and_block
+lm_connection_get_keep_alive_rate
 lm_connection_set_keep_alive_rate
 lm_connection_is_open
 lm_connection_is_authenticated

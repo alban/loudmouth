@@ -106,6 +106,7 @@ lm_connection_authenticate_and_block          (LmConnection       *connection,
 					       const gchar        *password,
 					       const gchar        *resource,
 					       GError            **error);
+guint         lm_connection_get_keep_alive_rate (LmConnection     *connection);
 void        lm_connection_set_keep_alive_rate (LmConnection       *connection,
 					       guint               rate);
 

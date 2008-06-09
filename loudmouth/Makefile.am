@@ -1,3 +1,5 @@
+include $(top_srcdir)/Makefile.decl
+
 NULL=
 
 TEST_DIR=$(top_srcdir)/
@@ -86,7 +88,7 @@ libloudmouthincludedir = $(includedir)/loudmouth-1.0/loudmouth
 # an explicit dependency here so alm generated files get built
 $(OBJECTS): $(built_sources)
 
-EXTRA_DIST = \
+EXTRA_DIST += \
 	lm-ssl-gnutls.c \
 	lm-ssl-openssl.c \
 	loudmouth.sym
