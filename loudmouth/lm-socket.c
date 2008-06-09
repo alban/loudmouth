@@ -446,7 +446,6 @@ lm_socket_start_tls (LmSocket *socket,
   data->tls_success = tls_success;
   data->tls_failed = tls_failed;
 
-  lm_verbose ("socket->watch_in=%d\n", socket->watch_in);
   g_assert (g_source_remove (g_source_get_id (socket->watch_in)));
 
   _tls_continue (NULL, 0, data);
