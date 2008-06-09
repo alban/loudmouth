@@ -495,8 +495,6 @@ connection_do_open (LmConnection *connection, GError **error)
 void
 connection_do_close (LmConnection *connection)
 {
-  lm_verbose ("connection_do_close: Called.");
-
 	connection_stop_keep_alive (connection);
 
 	if (connection->socket) {
@@ -707,7 +705,6 @@ static void
 _tls_failed (gpointer data)
 {
   LmConnection *connection = data;
-  lm_verbose ("_tls_failed: Called.\n");
   connection_do_close (connection);
   connection_signal_disconnect (connection,
               LM_DISCONNECT_REASON_ERROR);
@@ -717,7 +714,6 @@ static void
 _tls_success (gpointer data)
 {
   LmConnection *connection = data;
-  lm_verbose ("_tls_success: Called.\n");
   connection->tls_started = TRUE;
   connection_send_stream_header (connection);
 }
@@ -728,7 +724,6 @@ _lm_connection_starttls_cb (LmMessageHandler *handler,
 			    LmMessage *message,
 			    gpointer user_data)
 {
-  lm_verbose ("_lm_connection_starttls_cb: Called\n");
   lm_socket_start_tls (connection->socket, _tls_success, _tls_failed);
 
 	return LM_HANDLER_RESULT_REMOVE_MESSAGE;

@@ -204,10 +204,6 @@ _lm_ssl_begin (LmSSL *ssl, gint fd, const gchar *server, GError **error)
 	const int compression_priority[] =
 		{ GNUTLS_COMP_DEFLATE, GNUTLS_COMP_NULL, 0 };
 
-
-  g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SSL,
-      "_lm_ssl_begin: Called.\n");
-
   if (! ssl->starting)
     {
       gnutls_init (&ssl->gnutls_session, GNUTLS_CLIENT);
@@ -257,7 +253,6 @@ _lm_ssl_begin (LmSSL *ssl, gint fd, const gchar *server, GError **error)
 		gnutls_perror (ret);
 	
 		if (!auth_ok) {
-      ret = -EPERM; /* hack! */
 			errmsg = "*** GNUTLS authentication error";
 		} else {
 			errmsg = "*** GNUTLS handshake failed";

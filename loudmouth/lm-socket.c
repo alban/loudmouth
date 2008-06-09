@@ -322,7 +322,6 @@ _lm_socket_ssl_init (LmSocket *socket, gboolean delayed)
 	const gchar *ssl_verify_domain = NULL;
   int ret;
 
-	lm_verbose ("_lm_socket_ssl_init: Called.\n");
 	lm_verbose ("Setting up SSL...\n");
 
   if (! socket->ssl_started)
@@ -368,7 +367,6 @@ _lm_socket_ssl_init (LmSocket *socket, gboolean delayed)
 
 	socket->ssl_started = TRUE;
 
-  lm_verbose ("_lm_socket_ssl_init: SUCCESS\n");
   return 0;
 }
 
@@ -376,8 +374,6 @@ LmSslErrorCode
 lm_socket_starttls (LmSocket *socket)
 {
 	g_return_val_if_fail (lm_ssl_get_use_starttls (socket->ssl) == TRUE, FALSE);
-
-  lm_verbose ("lm_socket_starttls: Called\n");
 
 	return _lm_socket_ssl_init (socket, TRUE);
 }
@@ -397,7 +393,6 @@ _tls_continue (GIOChannel *source,
   LmSocket *socket = ((tls_continue_t*)data)->socket;
 
   ret = lm_socket_starttls (socket);
-  lm_verbose ("lm_socket_starttls returned %d\n", ret);
 
   switch (ret)
     {
@@ -446,8 +441,6 @@ lm_socket_start_tls (LmSocket *socket,
 {
   tls_continue_t *data;
 
-  lm_verbose ("lm_socket_start_tls: Called.\n");
-
   data = g_slice_new0 (tls_continue_t);
   data->socket = socket;
   data->tls_success = tls_success;
@@ -468,7 +461,6 @@ _oldssl_continue(GIOChannel *source,
 	LmSocket *socket = data;
 
   ret = _lm_socket_ssl_init (socket, FALSE);
-  lm_verbose ("_lm_socket_ssl_init returned %d\n", ret);
   switch (ret)
     {
       case LM_SSL_FAILURE:
@@ -505,8 +497,6 @@ _lm_socket_connect_succeeded (LmConnectData *connect_data)
 {
 	LmSocket     *socket;
 	
-	lm_verbose ("_lm_socket_connect_succeeded: Called.\n");
-
 	socket = connect_data->socket;
 
 	if (socket->watch_connect) {
@@ -542,16 +532,12 @@ _lm_socket_connect_succeeded (LmConnectData *connect_data)
 static void
 _lm_socket_succeeded (LmSocket *socket)
 {
-  lm_verbose ("_lm_socket_succeeded: Called.\n");
-
 	socket->watch_in = 
 		lm_misc_add_io_watch (socket->context,
 				      socket->io_channel,
 				      G_IO_IN,
 				      (GIOFunc) socket_in_event,
 				      socket);
-
-  lm_verbose ("socket->watch_in=%d\n", socket->watch_in);
 
 	/* FIXME: if we add these, we don't get ANY
 	 * response from the server, this is to do with the way that
@@ -640,8 +626,6 @@ socket_connect_cb (GIOChannel   *source,
 	LmSocketT        fd;
 	gboolean         result = FALSE;
 
-	lm_verbose ("socket_connect_cb: Called.\n");
-
 	socket = lm_socket_ref (connect_data->socket);
 	addr = connect_data->current_addr;
 	fd = g_io_channel_unix_get_fd (source);
@@ -718,8 +702,6 @@ socket_do_connect (LmConnectData *connect_data)
 	char             portname[NI_MAXSERV];
 	struct addrinfo *addr;
 	
-	lm_verbose ("socket_do_connect: Called.\n");
-
 	socket = connect_data->socket;
 	addr = connect_data->current_addr;
  
@@ -776,7 +758,6 @@ socket_do_connect (LmConnectData *connect_data)
 					      (GIOFunc) _lm_proxy_connect_cb, 
 					      connect_data);
 	} else {
-      lm_verbose ("Register socket_connect_cb callback.\n");
 		socket->watch_connect =
 			lm_misc_add_io_watch (socket->context,
 					      connect_data->io_channel,
@@ -1276,8 +1257,6 @@ void
 lm_socket_close (LmSocket *socket)
 {
 	LmConnectData *data;
-
-  lm_verbose ("lm_socket_close: Called.");
 
 	g_return_if_fail (socket != NULL);
 
