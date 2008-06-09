@@ -185,9 +185,6 @@ static LmHandlerResult connection_features_cb (LmMessageHandler *handler,
 					       LmConnection     *connection,
 					       LmMessage        *message,
 					       gpointer          user_data);
-static gboolean _tls_continue (GIOChannel *source,
-                 GIOCondition condition,
-                 gpointer data);
 
 static void
 connection_free (LmConnection *connection)
