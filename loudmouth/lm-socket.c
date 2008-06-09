@@ -319,7 +319,7 @@ _lm_socket_ssl_init (LmSocket *socket, gboolean delayed)
 {
 	GError *error = NULL;
 	const gchar *ssl_verify_domain = NULL;
-  int ret;
+	int ret;
 
 	lm_verbose ("Setting up SSL...\n");
 
