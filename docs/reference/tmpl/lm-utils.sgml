@@ -3,6 +3,7 @@ Miscellaneous Utility Functions
 
 <!-- ##### SECTION Short_Description ##### -->
 
+
 <!-- ##### SECTION Long_Description ##### -->
 <para>
 Functions to help application developers when writing XMPP applications using Loudmouth.
@@ -14,5 +15,14 @@ Functions to help application developers when writing XMPP applications using Lo
 </para>
 
 <!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### FUNCTION lm_utils_get_localtime ##### -->
+<para>
+
+</para>
+
+@stamp: 
+@Returns: 
 
 
