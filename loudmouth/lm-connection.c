@@ -377,6 +377,19 @@ connection_stop_keep_alive (LmConnection *connection)
 	connection->keep_alive_source = NULL;
 }
 
+static void
+connection_log_send (LmConnection *connection,
+		     const gchar  *str,
+		     gint          len)
+{
+	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "\nSEND:\n");
+	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
+	       "-----------------------------------\n");
+	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "%s\n", str);
+	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
+	       "-----------------------------------\n");
+}
+
 static gboolean
 connection_send (LmConnection  *connection, 
 		 const gchar   *str, 
@@ -400,12 +413,7 @@ connection_send (LmConnection  *connection,
 		len = strlen (str);
 	}
 
-	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "\nSEND:\n");
-	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
-	       "-----------------------------------\n");
-	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, "%s\n", str);
-	g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_NET, 
-	       "-----------------------------------\n");
+	connection_log_send (connection, str, len);
 
 	/* Check to see if there already is an output buffer, if so, add to the
 	   buffer and return */
