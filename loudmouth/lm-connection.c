@@ -187,23 +187,9 @@ static LmHandlerResult connection_features_cb (LmMessageHandler *handler,
 					       gpointer          user_data);
 
 static void
-connection_free (LmConnection *connection)
+connection_free_handlers (LmConnection *connection)
 {
-	int        i;
-
-	g_free (connection->server);
-	g_free (connection->jid);
-	g_free (connection->effective_jid);
-	g_free (connection->stream_id);
-	g_free (connection->resource);
-
-	if (connection->sasl) {
-		lm_sasl_free (connection->sasl);
-	}
-
-	if (connection->parser) {
-		lm_parser_free (connection->parser);
-	}
+	int i;
 
 	/* Unref handlers */
 	for (i = 0; i < LM_MESSAGE_TYPE_UNKNOWN; ++i) {
@@ -218,7 +204,27 @@ connection_free (LmConnection *connection)
 
 		g_slist_free (connection->handlers[i]);
 	}
+}
 
+static void
+connection_free (LmConnection *connection)
+{
+	g_free (connection->server);
+	g_free (connection->jid);
+	g_free (connection->effective_jid);
+	g_free (connection->stream_id);
+	g_free (connection->resource);
+
+	if (connection->sasl) {
+		lm_sasl_free (connection->sasl);
+	}
+
+	if (connection->parser) {
+		lm_parser_free (connection->parser);
+	}
+
+	connection_free_handlers (connection);
+	
 	g_hash_table_destroy (connection->id_handlers);
 	if (connection->state >= LM_CONNECTION_STATE_OPENING) {
 		connection_do_close (connection);
