@@ -88,7 +88,8 @@ proxy_http_negotiate (LmProxy *proxy, gint fd, const gchar *server, guint port)
 		tmp1 = g_strdup_printf ("%s:%s",
 					proxy->username, 
 					proxy->password);
-		tmp2 = _lm_utils_base64_encode (tmp1);
+		tmp2 = g_base64_encode ((const guchar *) tmp1, 
+					(gsize) strlen (tmp1));
 		g_free (tmp1);
 
 		str = g_strdup_printf ("CONNECT %s:%u HTTP/1.1\r\nHost: %s:%u\r\nProxy-Authorization: Basic %s\r\n\r\n",

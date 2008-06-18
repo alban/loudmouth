@@ -59,8 +59,6 @@ libloudmouth_1_la_SOURCES =		\
 	lm-sasl.h                       \
 	md5.c                           \
 	md5.h                           \
-	base64.c                        \
-	base64.h                        \
 	$(NULL)
 
 libloudmouthinclude_HEADERS =		\

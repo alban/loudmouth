@@ -37,7 +37,6 @@
 #include "lm-sasl.h"
 
 #include "md5.h"
-#include "base64.h"
 
 typedef enum {
 	AUTH_TYPE_PLAIN  = 1,
@@ -198,7 +197,7 @@ sasl_digest_md5_generate_cnonce(void)
 		n[i] = g_random_int();
 	}
 
-	return base64_encode ((gchar *)n, sizeof(n));
+	return g_base64_encode ((const guchar *)n, (gsize)sizeof(n));
 }
 
 static gchar *
@@ -320,7 +319,8 @@ sasl_digest_md5_send_initial_response (LmSASL *sasl, GHashTable *challenge)
 		return FALSE;
 	}
 
-	response64 = base64_encode ((gchar *)response, strlen(response));
+	response64 = g_base64_encode ((const guchar *) response, 
+				      (gsize) strlen(response));
 
 	msg = lm_message_new (NULL, LM_MESSAGE_TYPE_RESPONSE);
 	lm_message_node_set_attributes (msg->node,
@@ -408,7 +408,7 @@ sasl_digest_md5_handle_challenge (LmSASL *sasl, LmMessageNode *node)
 		return FALSE;
 	}
 
-	challenge = (gchar *) base64_decode (encoded, &len);
+	challenge = (gchar *) g_base64_decode (encoded, &len);
 	h = sasl_digest_md5_challenge_to_hash (challenge);
 	g_free(challenge);
 
@@ -610,7 +610,8 @@ sasl_start (LmSASL *sasl)
 		g_string_append (str, sasl->username);
 		g_string_append_c (str, '\0');
 		g_string_append (str, sasl->password);
-		cstr = base64_encode ((gchar *)str->str, str->len);
+		cstr = g_base64_encode ((const guchar *) str->str, 
+					(gsize) str->len);
 
 		lm_message_node_set_value (auth_msg->node, cstr);
 
