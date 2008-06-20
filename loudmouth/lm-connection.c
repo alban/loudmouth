@@ -885,7 +885,7 @@ connection_socket_connect_cb (LmSocket           *socket,
 			      gboolean            result,
 			      LmConnection       *connection)
 {
-	if (!result) {
+	if (result == FALSE) {
 		connection_do_close (connection);
 
 		if (connection->open_cb) {
