@@ -361,7 +361,7 @@ connection_start_keep_alive (LmConnection *connection)
 	/* try using TCP keepalives if possible */
 	if ((connection->keep_alive_rate > 0) &&
 		lm_socket_set_keepalive (connection->socket,
-			connection->keep_alive_rate)) {
+                                         connection->keep_alive_rate)) {
 		return;
 	}
 
@@ -1057,9 +1057,9 @@ connection_bind_reply (LmMessageHandler *handler,
 
 static LmHandlerResult
 connection_features_cb (LmMessageHandler *handler,
-			    LmConnection     *connection,
-			    LmMessage        *message,
-			    gpointer          user_data)
+                        LmConnection     *connection,
+                        LmMessage        *message,
+                        gpointer          user_data)
 {
 	LmMessageNode *bind_node;
 	LmMessageNode    *starttls_node;
