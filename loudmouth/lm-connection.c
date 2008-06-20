@@ -118,80 +118,78 @@ typedef enum {
 #define XMPP_NS_SESSION "urn:ietf:params:xml:ns:xmpp-session"
 #define XMPP_NS_STARTTLS "urn:ietf:params:xml:ns:xmpp-tls"
 
-static void     connection_free (LmConnection *connection);
-
-
-static void     connection_handle_message    (LmConnection         *connection,
-					      LmMessage            *message);
-
-static void     connection_new_message_cb    (LmParser             *parser,
-					      LmMessage            *message,
-					      LmConnection         *connection);
-static gboolean connection_do_open           (LmConnection         *connection,
-					      GError              **error);
-void            connection_do_close          (LmConnection         *connection);
-
-
-static LmMessage *     connection_create_auth_req_msg (const gchar *username);
-static LmMessage *     connection_create_auth_msg     (LmConnection *connection,
-						       const gchar  *username,
-						       const gchar  *password,
-						       const gchar  *resource,
-						       gint          auth_type);
-static LmHandlerResult connection_auth_req_reply (LmMessageHandler *handler,
-						  LmConnection     *connection,
-						  LmMessage        *m,
-						  gpointer          user_data);
-static int connection_check_auth_type            (LmMessage      *auth_req_rpl);
-					      
+static void     connection_free              (LmConnection        *connection);
+static void     connection_handle_message    (LmConnection        *connection,
+					      LmMessage           *message);
+static void     connection_new_message_cb    (LmParser            *parser,
+					      LmMessage           *message,
+					      LmConnection        *connection);
+static gboolean connection_do_open           (LmConnection        *connection,
+					      GError             **error);
+void            connection_do_close          (LmConnection        *connection);
+static LmMessage *     
+connection_create_auth_req_msg               (const gchar         *username);
+static LmMessage *
+connection_create_auth_msg                   (LmConnection        *connection,
+                                              const gchar         *username,
+                                              const gchar         *password,
+                                              const gchar         *resource,
+                                              gint                 auth_type);
+static LmHandlerResult 
+connection_auth_req_reply                    (LmMessageHandler    *handler,
+                                              LmConnection        *connection,
+                                              LmMessage           *m,
+                                              gpointer             user_data);
+static int      connection_check_auth_type   (LmMessage           *auth_req_rpl);
 static LmHandlerResult
-connection_auth_reply                            (LmMessageHandler *handler,
-						  LmConnection     *connection,
-						  LmMessage        *m,
-						  gpointer          user_data);
-
-static void      connection_stream_received      (LmConnection    *connection, 
-						  LmMessage       *m);
-static void      connection_stream_error         (LmConnection    *connection, 
-						  LmMessage       *m);
-
-static gint      connection_handler_compare_func (HandlerData     *a,
-						  HandlerData     *b);
-static gboolean  connection_send_keep_alive      (LmConnection    *connection);
-static void      connection_start_keep_alive     (LmConnection    *connection);
-static void      connection_stop_keep_alive      (LmConnection    *connection);
-static gboolean  connection_send                 (LmConnection    *connection, 
-						  const gchar     *str, 
-						  gint             len, 
-						  GError         **error);
-static void      connection_message_queue_cb     (LmMessageQueue  *queue,
-						  LmConnection    *connection);
-static void      connection_signal_disconnect    (LmConnection       *connection,
-						  LmDisconnectReason  reason);
-static void      connection_incoming_data        (LmSocket        *socket, 
-						  const gchar     *buf,
-						  LmConnection    *connection);
-static void      connection_socket_closed_cb     (LmSocket        *socket,
-						  LmDisconnectReason reason,
-						  LmConnection       *connection);
-static void      connection_socket_connect_cb    (LmSocket           *socket,
-						  gboolean            result,
-						  LmConnection       *connection);
-
-static gboolean  connection_get_server_from_jid  (const gchar     *jid,
-						  gchar          **server);
-static void      connection_send_stream_header   (LmConnection    *connection);
-static LmHandlerResult connection_features_cb (LmMessageHandler *handler,
-					       LmConnection     *connection,
-					       LmMessage        *message,
-					       gpointer          user_data);
-static gboolean  connection_old_auth          (LmConnection       *connection,
-                                               const gchar *username,
-                                               const gchar *password,
-                                               const gchar *resource,
-                                               GError **errror);
-
-
+connection_auth_reply                        (LmMessageHandler    *handler,
+                                              LmConnection        *connection,
+                                              LmMessage           *m,
+                                              gpointer             user_data);
+static void     connection_stream_received   (LmConnection        *connection, 
+                                              LmMessage           *m);
+static void     connection_stream_error      (LmConnection        *connection, 
+                                              LmMessage           *m);
+static gint      
+connection_handler_compare_func              (HandlerData         *a,
+                                              HandlerData         *b);
+static gboolean connection_send_keep_alive   (LmConnection        *connection);
+static void     connection_start_keep_alive  (LmConnection        *connection);
+static void     connection_stop_keep_alive   (LmConnection        *connection);
+static gboolean connection_send              (LmConnection        *connection, 
+                                              const gchar         *str, 
+                                              gint                 len, 
+                                              GError             **error);
+static void     connection_message_queue_cb  (LmMessageQueue      *queue,
+                                              LmConnection        *connection);
+static void      
+connection_signal_disconnect                 (LmConnection        *connection,
+                                              LmDisconnectReason   reason);
+static void     connection_incoming_data     (LmSocket            *socket, 
+                                              const gchar         *buf,
+                                              LmConnection        *connection);
+static void     connection_socket_closed_cb  (LmSocket            *socket,
+                                              LmDisconnectReason   reason,
+                                              LmConnection        *connection);
+static void      
+connection_socket_connect_cb                 (LmSocket            *socket,
+                                              gboolean             result,
+                                              LmConnection        *connection);
+static gboolean
+connection_get_server_from_jid              (const gchar          *jid,
+                                             gchar               **server);
+static void
+connection_send_stream_header               (LmConnection         *connection);
+static LmHandlerResult 
+connection_features_cb                      (LmMessageHandler     *handler,
+                                             LmConnection         *connection,
+                                             LmMessage            *message,
+                                             gpointer              user_data);
+static gboolean connection_old_auth         (LmConnection         *connection,
+                                             const gchar          *username,
+                                             const gchar          *password,
+                                             const gchar          *resource,
+                                             GError              **errror);
 
 static void
 connection_free_handlers (LmConnection *connection)
