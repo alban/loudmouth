@@ -254,7 +254,7 @@ connection_free (LmConnection *connection)
 		lm_socket_unref (connection->socket);
 	}
 
-        g_free (connection);
+        g_slice_free (LmConnection, connection);
 }
 
 static LmHandlerResult
@@ -1183,7 +1183,7 @@ lm_connection_new (const gchar *server)
 	lm_debug_init ();
 	_lm_sock_library_init ();
 
-	connection = g_new0 (LmConnection, 1);
+	connection = g_slice_new0 (LmConnection);
 
 	if (server) {
 		connection->server  = _lm_utils_hostname_to_punycode (server);
