@@ -714,7 +714,8 @@ connection_auth_reply (LmMessageHandler *handler,
 
 		if (cb->func) {
 	    		(* ((LmResultFunction) cb->func)) (connection, 
-						           result, cb->user_data);
+						           result,
+                                                           cb->user_data);
 		}
 
 		_lm_utils_free_callback (cb);
