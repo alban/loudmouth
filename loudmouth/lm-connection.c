@@ -257,13 +257,35 @@ connection_free (LmConnection *connection)
         g_free (connection);
 }
 
+static LmHandlerResult
+connection_run_message_handler (LmConnection *connection, LmMessage *m)
+{
+        LmMessageHandler *handler;
+        const gchar      *id;
+        LmHandlerResult   result = LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+
+        id = lm_message_node_get_attribute (m->node, "id");
+        if (!id) {
+                return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+        }
+
+        handler = g_hash_table_lookup (connection->id_handlers, id);
+        if (handler) {
+                result = _lm_message_handler_handle_message (handler,
+                                                             connection,
+                                                             m);
+                g_hash_table_remove (connection->id_handlers,
+                                     id);
+        }
+
+        return result;
+}
+
 static void
 connection_handle_message (LmConnection *connection, LmMessage *m)
 {
-	LmMessageHandler *handler;
-	GSList           *l;
-	const gchar      *id;
-	LmHandlerResult   result = LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+	GSList          *l;
+	LmHandlerResult  result = LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 
 	lm_connection_ref (connection);
 
@@ -274,35 +296,24 @@ connection_handle_message (LmConnection *connection, LmMessage *m)
 
 	if ((lm_message_get_sub_type (m) == LM_MESSAGE_SUB_TYPE_ERROR) ||
 	    (lm_message_get_sub_type (m) == LM_MESSAGE_SUB_TYPE_RESULT)) {
-		id = lm_message_node_get_attribute (m->node, "id");
+                result = connection_run_message_handler (connection, m);
 
-		if (id) {
-			handler = g_hash_table_lookup (connection->id_handlers, id);
-			if (handler) {
-				result = _lm_message_handler_handle_message (handler,
-									     connection,
-									     m);
-				g_hash_table_remove (connection->id_handlers,
-						    id);
-			}
-		}
-
-		if (result == LM_HANDLER_RESULT_REMOVE_MESSAGE) {
-			goto out;
-		}
+                if (result == LM_HANDLER_RESULT_REMOVE_MESSAGE) {
+                        goto out;
+                }
 	}
 
 	for (l = connection->handlers[lm_message_get_type (m)]; 
 	     l && result == LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS; 
 	     l = l->next) {
-		HandlerData *hd = (HandlerData *) l->data;
+                HandlerData *hd = (HandlerData *) l->data;
 		
 		result = _lm_message_handler_handle_message (hd->handler,
 							     connection,
 							     m);
 	}
 
-	if (lm_message_get_type (m) == LM_MESSAGE_TYPE_STREAM_ERROR) {
+        if (lm_message_get_type (m) == LM_MESSAGE_TYPE_STREAM_ERROR) {
 		connection_stream_error (connection, m);
 		goto out;
 	}
