@@ -185,6 +185,13 @@ static LmHandlerResult connection_features_cb (LmMessageHandler *handler,
 					       LmConnection     *connection,
 					       LmMessage        *message,
 					       gpointer          user_data);
+static gboolean  connection_old_auth          (LmConnection       *connection,
+                                               const gchar *username,
+                                               const gchar *password,
+                                               const gchar *resource,
+                                               GError **errror);
+
+
 
 static void
 connection_free_handlers (LmConnection *connection)
@@ -1153,8 +1160,9 @@ connection_features_cb (LmMessageHandler *handler,
 			lm_sasl_get_auth_params (connection->sasl, &user, &pass);
 			if (user && pass) {
 				GError *error = NULL;
-				_lm_connection_old_auth (connection, user, pass,
-					connection->resource, &error);
+				connection_old_auth (connection, user, pass,
+                                                     connection->resource,
+                                                     &error);
 
 				if (error) {
 					g_error_free (error);
@@ -1483,13 +1491,16 @@ lm_connection_authenticate (LmConnection      *connection,
 		return TRUE;
 	}
 
-	return _lm_connection_old_auth (connection, username, password,
-		resource, error);
+        return connection_old_auth (connection, username, password,
+                                    resource, error);
 }
 
-gboolean
-_lm_connection_old_auth (LmConnection *connection, const gchar *username,
-	const gchar *password, const gchar *resource, GError **error)
+static gboolean
+connection_old_auth (LmConnection  *connection,
+                     const gchar   *username,
+                     const gchar   *password,
+                     const gchar   *resource, 
+                     GError       **error)
 {
 	LmMessage        *m;
 	AuthReqData      *data;
