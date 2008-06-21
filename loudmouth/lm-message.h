@@ -37,6 +37,17 @@ typedef struct {
 	LmMessagePriv *priv;
 } LmMessage;
 
+/**
+ * LmMessageType:
+ * @LM_MESSAGE_TYPE_MESSAGE: a message, <message/>
+ * @LM_MESSAGE_TYPE_PRESENCE: a presence element, <presence/>
+ * @LM_MESSAGE_TYPE_IQ: an info/query element, <iq/>
+ * @LM_MESSAGE_TYPE_STREAM: the stream:stream element, you probably don't need to create a message of this type.
+ * @LM_MESSAGE_TYPE_STREAM_ERROR: a stream:error element
+ * @LM_MESSAGE_TYPE_STREAM_FEATURES:  * @LM_MESSAGE_TYPE_AUTH:  * @LM_MESSAGE_TYPE_CHALLENGE:  * @LM_MESSAGE_TYPE_RESPONSE:  * @LM_MESSAGE_TYPE_SUCCESS:  * @LM_MESSAGE_TYPE_FAILURE:  * @LM_MESSAGE_TYPE_PROCEED:  * @LM_MESSAGE_TYPE_STARTTLS:  * @LM_MESSAGE_TYPE_UNKNOWN: incoming message is of some unknown type.
+ * 
+ * Describes what type of message a message is. This maps directly to top level elements in the jabber protocol.
+ */
 typedef enum {
 	LM_MESSAGE_TYPE_MESSAGE,
 	LM_MESSAGE_TYPE_PRESENCE,
@@ -54,6 +65,26 @@ typedef enum {
 	LM_MESSAGE_TYPE_UNKNOWN
 } LmMessageType;
 
+/**
+ * LmMessageSubType:
+ * @LM_MESSAGE_SUB_TYPE_NOT_SET: the default. No "type" attribute will be sent.
+ * @LM_MESSAGE_SUB_TYPE_AVAILABLE: presence is available, applies to message type "presence"
+ * @LM_MESSAGE_SUB_TYPE_NORMAL:  * @LM_MESSAGE_SUB_TYPE_CHAT: message is a chat message, applies to message type "message"
+ * @LM_MESSAGE_SUB_TYPE_GROUPCHAT: message is a group chat message, applies to message type "message"
+ * @LM_MESSAGE_SUB_TYPE_HEADLINE: message is a headline message, applies to message type "message"
+ * @LM_MESSAGE_SUB_TYPE_UNAVAILABLE: presence is unavailable, applies to message type "presence"
+ * @LM_MESSAGE_SUB_TYPE_PROBE: a probe presence, applies to message type "presence"
+ * @LM_MESSAGE_SUB_TYPE_SUBSCRIBE: try to subscribe to another jids presence, applies to message type "presence"
+ * @LM_MESSAGE_SUB_TYPE_UNSUBSCRIBE: unsubscribes from another jids presence, applies to message type "presence"
+ * @LM_MESSAGE_SUB_TYPE_SUBSCRIBED: reply from a subscribe message, informs that the subscription was successful. Applies to message type "presence"
+ * @LM_MESSAGE_SUB_TYPE_UNSUBSCRIBED: reply from subscribe or unsubscribe message. If it's a reply from a subscribe message it notifies that the subscription failed. Applies to message type "presence"
+ * @LM_MESSAGE_SUB_TYPE_GET: used to get information from an IQ query, applies to message type "iq"
+ * @LM_MESSAGE_SUB_TYPE_SET: used to set information in a IQ call, applised to message type "iq"
+ * @LM_MESSAGE_SUB_TYPE_RESULT: message is an IQ reply, applies to message type "iq"
+ * @LM_MESSAGE_SUB_TYPE_ERROR: messages is an error, applies to all message types.
+ * 
+ * Describes the sub type of a message. This is equal to the "type" attribute in the jabber protocol. What sub type a message can have is depending on the type of the message.
+ */
 typedef enum {
         LM_MESSAGE_SUB_TYPE_NOT_SET = -10,
 	LM_MESSAGE_SUB_TYPE_AVAILABLE = -1,

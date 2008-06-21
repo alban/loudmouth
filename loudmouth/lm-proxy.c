@@ -19,6 +19,23 @@
  * Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:LmProxy
+ * @Short_description: API for the proxy support in Loudmouth
+ * 
+ * Use this together with an #LmConnection to get the connection to use connect through a proxy. Example of how to use the #LmProxy API.
+ * <informalexample><programlisting><![CDATA[
+ * LmConnection *connection;
+ * LmProxy      *proxy;
+ * 
+ * connection = lm_connection_new ("myserver");
+ * proxy = lm_proxy_new_with_server (LM_PROXY_TYPE_HTTP,
+ * 				  "myproxyserver",
+ * 				  8080);
+ * lm_connection_set_proxy (connection, proxy);
+ * ...]]></programlisting></informalexample>
+ */
+
 #include <config.h>
 
 #include <glib.h>

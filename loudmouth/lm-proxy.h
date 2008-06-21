@@ -26,8 +26,20 @@
 
 G_BEGIN_DECLS
 
+/**
+ * LmProxy:
+ * 
+ * This should not be accessed directly. Use the accessor functions as described below.
+ */
 typedef struct _LmProxy LmProxy;
 
+/**
+ * LmProxyType:
+ * @LM_PROXY_TYPE_NONE: Unused
+ * @LM_PROXY_TYPE_HTTP: An HTTP proxy.
+ * 
+ * The type of the proxy.
+ */
 typedef enum {
 	LM_PROXY_TYPE_NONE = 0,
 	LM_PROXY_TYPE_HTTP

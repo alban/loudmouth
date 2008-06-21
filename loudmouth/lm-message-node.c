@@ -18,6 +18,11 @@
  * Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:LmMessageNode
+ * @Short_description: A node in the message tree
+ */
+
 #include <config.h>
 #include <string.h>
 

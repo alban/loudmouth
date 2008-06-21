@@ -18,6 +18,12 @@
  * Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:Miscellaneous Utility Functions
+ * 
+ * Functions to help application developers when writing XMPP applications using Loudmouth.
+ */
+
 #include <config.h>
 #include <string.h>
 #include <stdio.h>

@@ -29,6 +29,17 @@
 
 G_BEGIN_DECLS
 
+/**
+ * LmHandleMessageFunction:
+ * @handler: an #LmMessageHandler
+ * @connection: an #LmConnection
+ * @message: an #LmMessage
+ * @user_data: user data set when creating the handler
+ * 
+ * The actual callback function in an #LmMessageHandler. This function is called when an incoming message arrives that haven't been handled by an handler with higher priority.
+ * 
+ * Returns: #LM_HANDLER_RESULT_REMOVE_MESSAGE to indicate that message has been handled, otherwise #LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS.
+ */
 typedef LmHandlerResult (* LmHandleMessageFunction) (LmMessageHandler *handler,
 						     LmConnection     *connection,
 						     LmMessage        *message,

@@ -29,6 +29,18 @@
 
 G_BEGIN_DECLS
 
+/**
+ * LmMessageNode:
+ * @name: the name of the node
+ * @value: value of the node, can be NULL
+ * @raw_mode: if true, don't escape the content of the message. The content must be valid XML.
+ * @next: next sibling
+ * @prev: previous sibling
+ * @parent: node parent
+ * @children: pointing to first child
+ * 
+ * A struct representing a node in a message. 
+ */
 typedef struct _LmMessageNode LmMessageNode;
 
 struct _LmMessageNode {
