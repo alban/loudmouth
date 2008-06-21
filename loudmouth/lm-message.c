@@ -20,6 +20,7 @@
 
 /**
  * SECTION:lm-message
+ * @Title: LmMessage
  * @Short_description: A message is built up like a tree of message nodes.
  * 
  * Represents a message that can be sent with lm_connection_send(), lm_connection_send_with_reply() or lm_connection_send_with_reply_and_block(). Either use lm_message_new() or lm_message_new_with_subtype() to create a message. You need to call lm_message_unref() when are finished with it.

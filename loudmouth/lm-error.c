@@ -20,6 +20,7 @@
 
 /**
  * SECTION:lm-error
+ * @Title: LmError
  * @Short_description: Error reporting.
  */
 

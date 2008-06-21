@@ -20,6 +20,7 @@
 
 /**
  * SECTION:lm-message-handler
+ * @Title: LmMessageHandler
  * @Short_description: A handler for incoming messages.
  * 
  *  A handler can be registered to listen to incoming messages with lm_connection_register_message_handler(). When a message is recieved the handlers of the correct type will be called.

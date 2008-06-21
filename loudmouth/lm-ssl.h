@@ -20,6 +20,7 @@
 
 /**
  * SECTION:lm-ssl
+ * @Title: LmSSL
  * @Short_description: SSL struct for SSL support in Loudmouth
  * 
  * Use this together with an #LmConnection to get the connection to use SSL. Example of how to use the #LmSSL API.

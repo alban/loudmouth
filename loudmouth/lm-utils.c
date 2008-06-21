@@ -20,6 +20,7 @@
 
 /**
  * SECTION:lm-utils
+ * @Title: Miscellaneous Utility Functions
  * @Short_description: Miscellaneous Utility Functions
  * 
  * Functions to help application developers when writing XMPP applications using Loudmouth.

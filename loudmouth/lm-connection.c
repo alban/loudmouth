@@ -22,6 +22,7 @@
 
 /**
  * SECTION:lm-connection
+ * @Title: LmConnection
  * @Short_description: A client connection to the server
  * 
  * An example of how to use Loudmouth with the synchronous API.

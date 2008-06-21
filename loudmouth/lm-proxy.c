@@ -21,6 +21,7 @@
 
 /**
  * SECTION:lm-proxy
+ * @Title: LmProxy
  * @Short_description: API for the proxy support in Loudmouth
  * 
  * Use this together with an #LmConnection to get the connection to use connect through a proxy. Example of how to use the #LmProxy API.
