@@ -19,7 +19,7 @@
  */
 
 /**
- * SECTION:LmError
+ * SECTION:lm-error
  * @Short_description: Error reporting.
  */
 

@@ -19,7 +19,7 @@
  */
 
 /**
- * SECTION:LmMessageNode
+ * SECTION:lm-message-node
  * @Short_description: A node in the message tree
  */
 

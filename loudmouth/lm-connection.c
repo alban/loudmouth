@@ -21,7 +21,7 @@
  */
 
 /**
- * SECTION:LmConnection
+ * SECTION:lm-connection
  * @Short_description: A client connection to the server
  * 
  * An example of how to use Loudmouth with the synchronous API.
@@ -29,18 +29,18 @@
  * int
  * main (int argc, char **argv)
  * {
- *         LmConnection *connection;
- *         GError       *error = NULL;
- *         gint          i;
- * 	LmMessage    *m;
+ *       LmConnection *connection;
+ *       GError       *error = NULL;
+ *       gint          i;
+ * 	 LmMessage    *m;
+ *
+ *       connection = lm_connection_new ("myserver");
  * 
- *         connection = lm_connection_new ("myserver");
+ *       if (!lm_connection_open_and_block (connection, &amp;error)) {
+ *               g_error ("Failed to open: &percnt;s\n", error->message);
+ *       }
  * 
- *         if (!lm_connection_open_and_block (connection, &amp;error)) {
- *                 g_error ("Failed to open: &percnt;s\n", error->message);
- *         }
- * 
- * 	if (!lm_connection_authenticate_and_block (connection,
+ *       if (!lm_connection_authenticate_and_block (connection,
  * 						   "username", "password", 
  * 						   "resource",
  * 						   &amp;error)) {
