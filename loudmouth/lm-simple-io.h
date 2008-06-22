@@ -41,14 +41,6 @@ struct LmSimpleIO {
 
 struct LmSimpleIOClass {
 	GObjectClass parent_class;
-	
-	/* <vtable> */
-	void  (*initialize)    (LmSimpleIO     *simple_io,
-				const char *username,
-				const char *server,
-				const char *password);
-	void  (*begin)         (LmSimpleIO     *simple_io);
-	void  (*cancel)        (LmSimpleIO     *simple_io);
 };
 
 GType   lm_simple_io_get_type  (void);
