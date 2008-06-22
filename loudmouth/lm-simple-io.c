@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- * Copyright (C) 2007 Imendio AB
+ * Copyright (C) 2008 Imendio AB
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License as
@@ -21,6 +21,7 @@
 #include <config.h>
 
 #include "lm-marshal.h"
+#include "lm-xmpp-writer.h"
 #include "lm-simple-io.h"
 
 #define GET_PRIV(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), LM_TYPE_DUMMY, LmSimpleIOPriv))
@@ -31,28 +32,29 @@ struct LmSimpleIOPriv {
 };
 
 static void     simple_io_finalize            (GObject           *object);
+static void     simple_io_writer_iface_init   (LmXmppWriterIface *iface);
 static void     simple_io_get_property        (GObject           *object,
-					   guint              param_id,
-					   GValue            *value,
-					   GParamSpec        *pspec);
+                                               guint              param_id,
+                                               GValue            *value,
+                                               GParamSpec        *pspec);
 static void     simple_io_set_property        (GObject           *object,
-					   guint              param_id,
-					   const GValue      *value,
-					   GParamSpec        *pspec);
+                                               guint              param_id,
+                                               const GValue      *value,
+                                               GParamSpec        *pspec);
+static void     simple_io_send_message        (LmXmppWriter      *writer,
+                                               LmMessage         *message);
+static void     simple_io_send_text           (LmXmppWriter      *writer,
+                                               const gchar       *buf,
+                                               gsize              len);
 
-G_DEFINE_TYPE (LmSimpleIO, lm_simple_io, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_CODE (LmSimpleIO, lm_simple_io, G_TYPE_OBJECT,
+                         G_IMPLEMENT_INTERFACE (LM_TYPE_XMPP_WRITER,
+                                                simple_io_writer_iface_init))
 
 enum {
 	PROP_0,
 	PROP_MY_PROP
 };
-
-enum {
-	SIGNAL_NAME,
-	LAST_SIGNAL
-};
-
-static guint signals[LAST_SIGNAL] = { 0 };
 
 static void
 lm_simple_io_class_init (LmSimpleIOClass *class)
@@ -71,16 +73,6 @@ lm_simple_io_class_init (LmSimpleIOClass *class)
 							      NULL,
 							      G_PARAM_READWRITE));
 	
-	signals[SIGNAL_NAME] = 
-		g_signal_new ("signal-name",
-			      G_OBJECT_CLASS_TYPE (object_class),
-			      G_SIGNAL_RUN_LAST,
-			      0,
-			      NULL, NULL,
-			      lm_marshal_VOID__INT,
-			      G_TYPE_NONE, 
-			      1, G_TYPE_INT);
-	
 	g_type_class_add_private (object_class, sizeof (LmSimpleIOPriv));
 }
 
@@ -90,7 +82,6 @@ lm_simple_io_init (LmSimpleIO *simple_io)
 	LmSimpleIOPriv *priv;
 
 	priv = GET_PRIV (simple_io);
-
 }
 
 static void
@@ -104,10 +95,17 @@ simple_io_finalize (GObject *object)
 }
 
 static void
+simple_io_writer_iface_init (LmXmppWriterIface *iface)
+{
+        iface->send_message = simple_io_send_message;
+        iface->send_text    = simple_io_send_text;
+}
+
+static void
 simple_io_get_property (GObject    *object,
-		   guint       param_id,
-		   GValue     *value,
-		   GParamSpec *pspec)
+                        guint       param_id,
+                        GValue     *value,
+                        GParamSpec *pspec)
 {
 	LmSimpleIOPriv *priv;
 
@@ -125,9 +123,9 @@ simple_io_get_property (GObject    *object,
 
 static void
 simple_io_set_property (GObject      *object,
-		   guint         param_id,
-		   const GValue *value,
-		   GParamSpec   *pspec)
+                        guint         param_id,
+                        const GValue *value,
+                        GParamSpec   *pspec)
 {
 	LmSimpleIOPriv *priv;
 
@@ -142,4 +140,17 @@ simple_io_set_property (GObject      *object,
 		break;
 	};
 }
+
+static void
+simple_io_send_message (LmXmppWriter *writer, LmMessage *message)
+{
+}
+
+static void
+simple_io_send_text (LmXmppWriter *writer,
+                     const gchar  *buf,
+                     gsize         len)
+{
+}
+
 

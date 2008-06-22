@@ -38,7 +38,7 @@ struct _LmXmppWriterIface {
 	GTypeInterface parent;
 
 	/* <vtable> */
-        void (*send)         (LmXmppWriter *writer,
+        void (*send_message) (LmXmppWriter *writer,
                               LmMessage    *message);
         void (*send_text)    (LmXmppWriter *writer,
                               const gchar  *buf,
@@ -48,14 +48,14 @@ struct _LmXmppWriterIface {
         void (*flush)        (LmXmppWriter   *writer);
 };
 
-GType   lm_xmpp_writer_get_type  (void);
+GType   lm_xmpp_writer_get_type      (void);
 
-void    lm_xmpp_writer_send      (LmXmppWriter   *writer,
-                                  LmMessage      *message);
-void    lm_xmpp_writer_send_text (LmXmppWriter   *writer,
-                                  const gchar    *buf,
-                                  gsize           len);
-void    lm_xmpp_writer_flush     (LmXmppWriter   *writer);
+void    lm_xmpp_writer_send_message  (LmXmppWriter   *writer,
+                                      LmMessage      *message);
+void    lm_xmpp_writer_send_text     (LmXmppWriter   *writer,
+                                      const gchar    *buf,
+                                      gsize           len);
+void    lm_xmpp_writer_flush         (LmXmppWriter   *writer);
 
 G_END_DECLS
 

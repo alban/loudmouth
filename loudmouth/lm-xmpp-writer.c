@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- * Copyright (C) 2007 Imendio AB
+ * Copyright (C) 2008 Imendio AB
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License as
@@ -59,14 +59,13 @@ xmpp_writer_base_init (LmXmppWriterIface *iface)
 }
 
 void
-lm_xmpp_writer_send (LmXmppWriter *writer,
-                     LmMessage    *message)
+lm_xmpp_writer_send_message (LmXmppWriter *writer, LmMessage *message)
 {
-        if (!LM_XMPP_WRITER_GET_IFACE(writer)->send) {
+        if (!LM_XMPP_WRITER_GET_IFACE(writer)->send_message) {
                 g_assert_not_reached ();
 	}
 
-	LM_XMPP_WRITER_GET_IFACE(writer)->send (writer, message);
+        LM_XMPP_WRITER_GET_IFACE(writer)->send_message (writer, message);
 }
 
 void
