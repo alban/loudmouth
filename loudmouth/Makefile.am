@@ -29,7 +29,10 @@ libloudmouth_1_la_SOURCES =		\
 	lm-connection.c	 		\
 	lm-debug.c                      \
 	lm-debug.h                      \
+	lm-dummy.c                      \
+	lm-dummy.h                      \
 	lm-error.c			\
+	lm-marshal-main.c               \
 	lm-message.c	 		\
 	lm-message-handler.c		\
 	lm-message-node.c		\
@@ -85,11 +88,32 @@ libloudmouth_1_la_LDFLAGS = \
 	-export-symbols $(srcdir)/loudmouth.sym
 libloudmouthincludedir = $(includedir)/loudmouth-1.0/loudmouth
 
-# an explicit dependency here so alm generated files get built
-$(OBJECTS): $(built_sources)
+lm-marshal.h: lm-marshal.list
+	(cd $(srcdir) && \
+	$(GLIB_GENMARSHAL) --prefix=lm_marshal lm-marshal.list --header) > xgen-gmh \
+	&& (cmp -s xgen-gmh lm-marshal.h || cp xgen-gmh lm-marshal.h) \
+	&& rm -f xgen-gmh xgen-gmh~
+
+lm-marshal.c: lm-marshal.list
+	(cd $(srcdir) && \
+	$(GLIB_GENMARSHAL) --prefix=lm_marshal lm-marshal.list --body) > xgen-gmc \
+	&& cp xgen-gmc lm-marshal.c \
+	&& rm -f xgen-gmc xgen-gmc~
+
+lm-marshal-main.c: lm-marshal.c lm-marshal.h
+
+BUILT_SOURCES =				\
+	lm-marshal.h			\
+	lm-marshal.c
+
+# an explicit dependency here so all generated files get built
+$(OBJECTS): $(BUILT_SOURCES)
+
+CLEANFILES = $(BUILT_SOURCES)
 
 EXTRA_DIST += \
 	lm-ssl-gnutls.c \
 	lm-ssl-openssl.c \
-	loudmouth.sym
+	loudmouth.sym \
+	lm-marshal.list
 
