@@ -53,10 +53,12 @@ libloudmouth_1_la_SOURCES =		\
 	lm-sock.c			\
 	lm-socket.c                     \
 	lm-socket.h                     \
-	asyncns.c     \
-	asyncns.h     \
+	asyncns.c                       \
+	asyncns.h                       \
 	lm-sasl.c                       \
 	lm-sasl.h                       \
+	lm-xmpp-writer.c                \
+	lm-xmpp-writer.h                \
 	md5.c                           \
 	md5.h                           \
 	$(NULL)
