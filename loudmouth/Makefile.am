@@ -60,6 +60,8 @@ libloudmouth_1_la_SOURCES =		\
 	asyncns.h                       \
 	lm-sasl.c                       \
 	lm-sasl.h                       \
+	lm-simple-io.c                  \
+	lm-simple-io.h                  \
 	lm-xmpp-writer.c                \
 	lm-xmpp-writer.h                \
 	md5.c                           \
