@@ -24,7 +24,7 @@
 #include "lm-xmpp-writer.h"
 #include "lm-simple-io.h"
 
-#define GET_PRIV(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), LM_TYPE_DUMMY, LmSimpleIOPriv))
+#define GET_PRIV(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), LM_TYPE_SIMPLE_IO, LmSimpleIOPriv))
 
 typedef struct LmSimpleIOPriv LmSimpleIOPriv;
 struct LmSimpleIOPriv {

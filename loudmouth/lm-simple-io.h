@@ -25,12 +25,12 @@
 
 G_BEGIN_DECLS
 
-#define LM_TYPE_DUMMY            (lm_simple_io_get_type ())
-#define LM_SIMPLE_IO(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), LM_TYPE_DUMMY, LmSimpleIO))
-#define LM_SIMPLE_IO_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), LM_TYPE_DUMMY, LmSimpleIOClass))
-#define LM_IS_DUMMY(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), LM_TYPE_DUMMY))
-#define LM_IS_DUMMY_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), LM_TYPE_DUMMY))
-#define LM_SIMPLE_IO_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), LM_TYPE_DUMMY, LmSimpleIOClass))
+#define LM_TYPE_SIMPLE_IO            (lm_simple_io_get_type ())
+#define LM_SIMPLE_IO(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), LM_TYPE_SIMPLE_IO, LmSimpleIO))
+#define LM_SIMPLE_IO_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), LM_TYPE_SIMPLE_IO, LmSimpleIOClass))
+#define LM_IS_SIMPLE_IO(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), LM_TYPE_SIMPLE_IO))
+#define LM_IS_SIMPLE_IO_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), LM_TYPE_SIMPLE_IO))
+#define LM_SIMPLE_IO_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), LM_TYPE_SIMPLE_IO, LmSimpleIOClass))
 
 typedef struct LmSimpleIO      LmSimpleIO;
 typedef struct LmSimpleIOClass LmSimpleIOClass;
