@@ -80,7 +80,7 @@
 #include <arpa/nameser.h>
 #include <resolv.h>
 
-#include <glib.h>
+#include <glib-object.h>
 
 #include "lm-sock.h"
 #include "lm-debug.h"
@@ -499,8 +499,8 @@ connection_send (LmConnection  *connection,
 
 	if (b_written < len) {
 		lm_socket_setup_output_buffer (connection->socket, 
-						str + b_written, 
-						len - b_written);
+                                               str + b_written, 
+                                               len - b_written);
 	}
 
 	return TRUE;
@@ -1234,7 +1234,8 @@ lm_connection_new (const gchar *server)
 {
 	LmConnection *connection;
 	gint          i;
-	
+
+        g_type_init (); /* Ensure that the GLib type library is initialized */
 	lm_debug_init ();
 	_lm_sock_library_init ();
 

@@ -85,7 +85,9 @@ AC_SUBST(LIBTASN1_REQUIRED)
 
 LM_CHECK_TIMEZONE
 
-PKG_CHECK_MODULES(LOUDMOUTH, glib-2.0 >= $GLIB2_REQUIRED)
+PKG_CHECK_MODULES(LOUDMOUTH, 
+                  glib-2.0 >= $GLIB2_REQUIRED
+                  gobject-2.0 >= $GLIB2_REQUIRED)
 
 PKG_CHECK_MODULES(LIBIDN, libidn, have_idn=yes, have_idn=no)
 if test "x$have_idn" = "xyes"; then
