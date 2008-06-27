@@ -22,7 +22,9 @@
 #define __LM_XMPP_WRITER_H__
 
 #include <glib-object.h>
+
 #include "lm-message.h"
+#include "lm-socket.h"
 
 G_BEGIN_DECLS
 
@@ -48,14 +50,16 @@ struct _LmXmppWriterIface {
         void (*flush)        (LmXmppWriter   *writer);
 };
 
-GType   lm_xmpp_writer_get_type      (void);
+GType          lm_xmpp_writer_get_type      (void);
 
-void    lm_xmpp_writer_send_message  (LmXmppWriter   *writer,
-                                      LmMessage      *message);
-void    lm_xmpp_writer_send_text     (LmXmppWriter   *writer,
-                                      const gchar    *buf,
-                                      gsize           len);
-void    lm_xmpp_writer_flush         (LmXmppWriter   *writer);
+LmXmppWriter * lm_xmpp_writer_new           (LmSocket       *socket);
+
+void           lm_xmpp_writer_send_message  (LmXmppWriter   *writer,
+                                             LmMessage      *message);
+void           lm_xmpp_writer_send_text     (LmXmppWriter   *writer,
+                                             const gchar    *buf,
+                                             gsize           len);
+void           lm_xmpp_writer_flush         (LmXmppWriter   *writer);
 
 G_END_DECLS
 

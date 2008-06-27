@@ -27,6 +27,7 @@
 
 #include <sys/types.h>
 
+#include "lm-connection.h"
 #include "lm-message.h"
 #include "lm-message-handler.h"
 #include "lm-message-node.h"

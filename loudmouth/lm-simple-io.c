@@ -153,4 +153,3 @@ simple_io_send_text (LmXmppWriter *writer,
 {
 }
 
-
