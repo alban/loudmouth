@@ -24,7 +24,7 @@
 #include <glib-object.h>
 
 #include "lm-message.h"
-#include "lm-socket.h"
+#include "lm-internals.h"
 
 G_BEGIN_DECLS
 
