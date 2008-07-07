@@ -116,7 +116,7 @@ _lm_sock_library_shutdown (void)
 }
 
 void
-_lm_sock_set_blocking (LmSocketT sock, 
+_lm_sock_set_blocking (LmOldSocketT sock, 
 		       gboolean block)
 {
 	int res;
@@ -136,13 +136,13 @@ _lm_sock_set_blocking (LmSocketT sock,
 }
 
 void
-_lm_sock_shutdown (LmSocketT sock)
+_lm_sock_shutdown (LmOldSocketT sock)
 {
 	shutdown (sock, LM_SHUTDOWN);
 }
 
 void
-_lm_sock_close (LmSocketT sock)
+_lm_sock_close (LmOldSocketT sock)
 {
 #ifndef G_OS_WIN32
 	close (sock);
@@ -151,16 +151,16 @@ _lm_sock_close (LmSocketT sock)
 #endif /* G_OS_WIN32 */
 }
 
-LmSocketT
+LmOldSocketT
 _lm_sock_makesocket (int af,
 		     int type, 
 		     int protocol)
 {
-	return (LmSocketT)socket (af, type, protocol);
+	return (LmOldSocketT)socket (af, type, protocol);
 }
 
 int 
-_lm_sock_connect (LmSocketT               sock, 
+_lm_sock_connect (LmOldSocketT               sock, 
 		  const struct sockaddr *name, 
 		  int                    namelen)
 {
@@ -196,7 +196,7 @@ _lm_sock_get_last_error (void)
 }
 
 void 
-_lm_sock_get_error (LmSocketT   sock, 
+_lm_sock_get_error (LmOldSocketT   sock, 
 		    void      *error, 
 		    socklen_t *len)
 {
@@ -303,7 +303,7 @@ _lm_sock_addrinfo_get_error_str (int err)
 
 #ifdef USE_TCP_KEEPALIVES
 gboolean
-_lm_sock_set_keepalive (LmSocketT sock, int delay)
+_lm_sock_set_keepalive (LmOldSocketT sock, int delay)
 {
 	int opt;
 
@@ -332,7 +332,7 @@ _lm_sock_set_keepalive (LmSocketT sock, int delay)
 #endif /* USE_TCP_KEEPALIVES */
 
 gchar *
-_lm_sock_get_local_host (LmSocketT sock)
+_lm_sock_get_local_host (LmOldSocketT sock)
 {
 	struct sockaddr      addr_info;
 	void                *sock_addr;

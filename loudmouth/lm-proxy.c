@@ -182,7 +182,7 @@ proxy_read_cb (GIOChannel *source, GIOCondition condition, gpointer data)
 
 	if (retval == TRUE) {
 		g_source_remove (proxy->io_watch);
-		_lm_socket_succeeded ((LmConnectData *) data);
+		_lm_old_socket_succeeded ((LmConnectData *) data);
 	}
 
 	return FALSE;
@@ -223,11 +223,11 @@ _lm_proxy_connect_cb (GIOChannel *source, GIOCondition condition, gpointer data)
 	if (condition == G_IO_ERR) {
 		len = sizeof (error);
 		_lm_sock_get_error (connect_data->fd, &error, &len);
-		_lm_socket_failed_with_error (connect_data, error);
+		_lm_old_socket_failed_with_error (connect_data, error);
 		return FALSE;
 	} else if (condition == G_IO_OUT) {
 		if (!proxy_negotiate (lm_connection_get_proxy (connection), connect_data->fd, lm_connection_get_server (connection), lm_connection_get_port (connection))) {
-			_lm_socket_failed (connect_data);
+			_lm_old_socket_failed (connect_data);
 			return FALSE;
 		}
 			

@@ -52,7 +52,7 @@ struct _LmXmppWriterIface {
 
 GType          lm_xmpp_writer_get_type      (void);
 
-LmXmppWriter * lm_xmpp_writer_new           (LmSocket       *socket);
+LmXmppWriter * lm_xmpp_writer_new           (LmOldSocket       *socket);
 
 void           lm_xmpp_writer_send_message  (LmXmppWriter   *writer,
                                              LmMessage      *message);

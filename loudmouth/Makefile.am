@@ -54,8 +54,8 @@ libloudmouth_1_la_SOURCES =		\
 	lm-proxy.c                      \
 	lm-sock.h			\
 	lm-sock.c			\
-	lm-socket.c                     \
-	lm-socket.h                     \
+	lm-old-socket.c                 \
+	lm-old-socket.h                 \
 	asyncns.c                       \
 	asyncns.h                       \
 	lm-sasl.c                       \

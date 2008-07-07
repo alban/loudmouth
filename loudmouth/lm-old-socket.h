@@ -25,31 +25,31 @@
 
 #include "lm-internals.h"
 
-typedef struct _LmSocket LmSocket;
+typedef struct _LmOldSocket LmOldSocket;
 
-typedef void    (* IncomingDataFunc)  (LmSocket       *socket,
+typedef void    (* IncomingDataFunc)  (LmOldSocket       *socket,
 				       const gchar    *buf,
 				       gpointer        user_data);
 
-typedef void    (* SocketClosedFunc)  (LmSocket       *socket,
+typedef void    (* SocketClosedFunc)  (LmOldSocket       *socket,
 				       LmDisconnectReason reason,
 				       gpointer        user_data);
 
-typedef void    (* ConnectResultFunc) (LmSocket        *socket,
+typedef void    (* ConnectResultFunc) (LmOldSocket        *socket,
 				       gboolean         result,
 				       gpointer         user_data);
 
-gboolean  lm_socket_output_is_buffered    (LmSocket       *socket,
+gboolean  lm_old_socket_output_is_buffered    (LmOldSocket       *socket,
 					   const gchar    *buffer,
 					   gint            len);
-void      lm_socket_setup_output_buffer   (LmSocket       *socket,
+void      lm_old_socket_setup_output_buffer   (LmOldSocket       *socket,
 					   const gchar    *buffer,
 					   gint            len);
-gint      lm_socket_do_write              (LmSocket       *socket,
+gint      lm_old_socket_do_write              (LmOldSocket       *socket,
 					   const gchar    *buf,
 					   gint            len);
 
-LmSocket *  lm_socket_create              (GMainContext   *context, 
+LmOldSocket *  lm_old_socket_create              (GMainContext   *context, 
 					   IncomingDataFunc data_func,
 					   SocketClosedFunc closed_func,
 					   ConnectResultFunc connect_func,
@@ -62,16 +62,16 @@ LmSocket *  lm_socket_create              (GMainContext   *context,
 					   LmSSL          *ssl,
 					   LmProxy        *proxy,
 					   GError        **error);
-void        lm_socket_flush               (LmSocket       *socket);
-void        lm_socket_close               (LmSocket       *socket);
-LmSocket *  lm_socket_ref                 (LmSocket       *socket);
-void        lm_socket_unref               (LmSocket       *socket);
+void        lm_old_socket_flush               (LmOldSocket       *socket);
+void        lm_old_socket_close               (LmOldSocket       *socket);
+LmOldSocket *  lm_old_socket_ref                 (LmOldSocket       *socket);
+void        lm_old_socket_unref               (LmOldSocket       *socket);
 #ifdef HAVE_ASYNCNS
-void	    _asyncns_cancel               (LmSocket *socket);
+void	    _asyncns_cancel               (LmOldSocket *socket);
 #endif
-gboolean    lm_socket_starttls            (LmSocket *socket);
-gboolean    lm_socket_set_keepalive       (LmSocket *socket, int delay);
-gchar *     lm_socket_get_local_host      (LmSocket *socket);
+gboolean    lm_old_socket_starttls            (LmOldSocket *socket);
+gboolean    lm_old_socket_set_keepalive       (LmOldSocket *socket, int delay);
+gchar *     lm_old_socket_get_local_host      (LmOldSocket *socket);
 
 #endif /* __LM_SOCKET_H__ */
 

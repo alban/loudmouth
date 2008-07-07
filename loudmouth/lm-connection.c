@@ -93,7 +93,7 @@
 #include "lm-sha.h"
 #include "lm-connection.h"
 #include "lm-utils.h"
-#include "lm-socket.h"
+#include "lm-old-socket.h"
 #include "lm-sasl.h"
 
 #define IN_BUFFER_SIZE 1024
@@ -113,7 +113,7 @@ struct _LmConnection {
 	guint         port;
 	gboolean      use_srv;
 
-	LmSocket     *socket;
+	LmOldSocket     *socket;
 	LmSSL        *ssl;
 	LmProxy      *proxy;
 	LmParser     *parser;
@@ -210,14 +210,14 @@ static void     connection_message_queue_cb  (LmMessageQueue      *queue,
 static void      
 connection_signal_disconnect                 (LmConnection        *connection,
                                               LmDisconnectReason   reason);
-static void     connection_incoming_data     (LmSocket            *socket, 
+static void     connection_incoming_data     (LmOldSocket            *socket, 
                                               const gchar         *buf,
                                               LmConnection        *connection);
-static void     connection_socket_closed_cb  (LmSocket            *socket,
+static void     connection_socket_closed_cb  (LmOldSocket            *socket,
                                               LmDisconnectReason   reason,
                                               LmConnection        *connection);
 static void      
-connection_socket_connect_cb                 (LmSocket            *socket,
+connection_socket_connect_cb                 (LmOldSocket            *socket,
                                               gboolean             result,
                                               LmConnection        *connection);
 static gboolean
@@ -301,7 +301,7 @@ connection_free (LmConnection *connection)
         }
 
 	if (connection->socket) {
-		lm_socket_unref (connection->socket);
+		lm_old_socket_unref (connection->socket);
 	}
 
         g_slice_free (LmConnection, connection);
@@ -410,7 +410,7 @@ connection_start_keep_alive (LmConnection *connection)
 {
         /* try using TCP keepalives if possible */
         if ((connection->keep_alive_rate > 0) &&
-            lm_socket_set_keepalive (connection->socket,
+            lm_old_socket_set_keepalive (connection->socket,
                                      connection->keep_alive_rate)) {
 #ifdef ONLY_TCP_KEEP_ALIVE
                 /* Many NAT firewalls seems to not handle this correctly and 
@@ -483,11 +483,11 @@ connection_send (LmConnection  *connection,
 	/* Check to see if there already is an output buffer, if so, add to the
 	   buffer and return */
 
-	if (lm_socket_output_is_buffered (connection->socket, str, len)) {
+	if (lm_old_socket_output_is_buffered (connection->socket, str, len)) {
 		return TRUE;
 	}
 
-	b_written = lm_socket_do_write (connection->socket, str, len);
+	b_written = lm_old_socket_do_write (connection->socket, str, len);
 
 	if (b_written < 0) {
 		g_set_error (error,
@@ -498,7 +498,7 @@ connection_send (LmConnection  *connection,
 	}
 
 	if (b_written < len) {
-		lm_socket_setup_output_buffer (connection->socket, 
+		lm_old_socket_setup_output_buffer (connection->socket, 
                                                str + b_written, 
                                                len - b_written);
 	}
@@ -540,7 +540,7 @@ connection_do_open (LmConnection *connection, GError **error)
 
 	lm_verbose ("Connecting to: %s:%d\n", connection->server, connection->port);
 
-	connection->socket = lm_socket_create (connection->context,
+	connection->socket = lm_old_socket_create (connection->context,
 					       (IncomingDataFunc) connection_incoming_data,
 					       (SocketClosedFunc) connection_socket_closed_cb,
 					       (ConnectResultFunc) connection_socket_connect_cb,
@@ -574,7 +574,7 @@ connection_do_close (LmConnection *connection)
 	connection_stop_keep_alive (connection);
 
 	if (connection->socket) {
-		lm_socket_close (connection->socket);
+		lm_old_socket_close (connection->socket);
 	}
 
 	lm_message_queue_detach (connection->queue);
@@ -785,7 +785,7 @@ _lm_connection_starttls_cb (LmMessageHandler *handler,
 			    LmMessage *message,
 			    gpointer user_data)
 {
-	if (lm_socket_starttls (connection->socket)) {
+	if (lm_old_socket_starttls (connection->socket)) {
 		connection->tls_started = TRUE;
 		connection_send_stream_header (connection);
 	} else {
@@ -918,7 +918,7 @@ connection_signal_disconnect (LmConnection       *connection,
 }
 
 static void
-connection_incoming_data (LmSocket     *socket, 
+connection_incoming_data (LmOldSocket     *socket, 
 			  const gchar  *buf, 
 			  LmConnection *connection)
 {
@@ -926,7 +926,7 @@ connection_incoming_data (LmSocket     *socket,
 }
 
 static void
-connection_socket_closed_cb (LmSocket        *socket,
+connection_socket_closed_cb (LmOldSocket        *socket,
 			     LmDisconnectReason reason,
 			     LmConnection       *connection)
 {
@@ -935,7 +935,7 @@ connection_socket_closed_cb (LmSocket        *socket,
 }
 
 static void
-connection_socket_connect_cb (LmSocket           *socket,
+connection_socket_connect_cb (LmOldSocket           *socket,
 			      gboolean            result,
 			      LmConnection       *connection)
 {
@@ -1446,7 +1446,7 @@ lm_connection_close (LmConnection      *connection,
 			no_errors = FALSE;
 		}
 
-		lm_socket_flush (connection->socket);
+		lm_old_socket_flush (connection->socket);
 	}
 	
 	connection_do_close (connection);
@@ -2200,7 +2200,7 @@ lm_connection_get_state (LmConnection *connection)
 gchar *
 lm_connection_get_local_host (LmConnection *connection)
 {
-	return lm_socket_get_local_host (connection->socket);
+	return lm_old_socket_get_local_host (connection->socket);
 }
 
 /**

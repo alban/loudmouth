@@ -33,7 +33,7 @@
 #include "lm-sha.h"
 #include "lm-connection.h"
 #include "lm-utils.h"
-#include "lm-socket.h"
+#include "lm-old-socket.h"
 #include "lm-sasl.h"
 
 #include "md5.h"
