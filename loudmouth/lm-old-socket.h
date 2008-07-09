@@ -18,8 +18,8 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#ifndef __LM_SOCKET_H__ 
-#define __LM_SOCKET_H__
+#ifndef __LM_OLD_SOCKET_H__ 
+#define __LM_OLD_SOCKET_H__
 
 #include <glib.h>
 
@@ -73,5 +73,5 @@ gboolean    lm_old_socket_starttls            (LmOldSocket *socket);
 gboolean    lm_old_socket_set_keepalive       (LmOldSocket *socket, int delay);
 gchar *     lm_old_socket_get_local_host      (LmOldSocket *socket);
 
-#endif /* __LM_SOCKET_H__ */
+#endif /* __LM_OLD_SOCKET_H__ */
 

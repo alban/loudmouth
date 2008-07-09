@@ -23,43 +23,51 @@
 
 #include <glib-object.h>
 
+#include "lm-message.h"
+#include "lm-internals.h"
+
 G_BEGIN_DECLS
 
-#define LM_TYPE_DUMMY            (lm_socket_get_type ())
-#define LM_SOCKET(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), LM_TYPE_DUMMY, LmSocket))
-#define LM_SOCKET_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), LM_TYPE_DUMMY, LmSocketClass))
-#define LM_IS_DUMMY(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), LM_TYPE_DUMMY))
-#define LM_IS_DUMMY_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), LM_TYPE_DUMMY))
-#define LM_SOCKET_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), LM_TYPE_DUMMY, LmSocketClass))
+#define LM_TYPE_SOCKET             (lm_socket_get_type())
+#define LM_SOCKET(o)               (G_TYPE_CHECK_INSTANCE_CAST((o), LM_TYPE_SOCKET, LmSocket))
+#define LM_IS_SOCKET(o)            (G_TYPE_CHECK_INSTANCE_TYPE((o), LM_TYPE_SOCKET))
+#define LM_SOCKET_GET_IFACE(o)     (G_TYPE_INSTANCE_GET_INTERFACE((o), LM_TYPE_SOCKET, LmSocketIface))
 
-typedef struct LmSocket      LmSocket;
-typedef struct LmSocketClass LmSocketClass;
+typedef struct _LmSocket      LmSocket;
+typedef struct _LmSocketIface LmSocketIface;
 
-struct LmSocket {
-	GObject parent;
+struct _LmSocketIface {
+	GTypeInterface parent;
+
+	/* <vtable> */
+        void     (*connect)      (LmSocket *socket);
+        gboolean (*write)        (LmSocket *socket,
+                                  gchar    *buf,
+                                  gsize     len);
+        gboolean (*read)         (LmSocket *socket,
+                                  gchar    *buf,
+                                  gsize     buf_len,
+                                  gsize     read_len);
+        void     (*disconnect)   (LmSocket *socket);
 };
 
-struct LmSocketClass {
-	GObjectClass parent_class;
-};
+GType          lm_socket_get_type          (void);
 
-GType       lm_socket_get_type      (void);
-
-LmSocket *  lm_socket_new           (const gchar *host,
-                                     guint        port);
+LmSocket *     lm_socket_new               (const gchar *host,
+                                            guint        port);
 /* Use DNS lookup to find the port and the host */
-LmSocket *  lm_socket_new_srv       (const gchar *service);
+LmSocket *     lm_socket_new_to_service    (const gchar *service);
 
 /* All async functions so doesn't make a lot of sense to return anything */
-void        lm_socket_connect       (LmSocket    *socket);
-gboolean    lm_socket_write         (LmSocket    *socket,
-                                     gchar       *data,
-                                     gsize        len);
-gboolean    lm_socket_read          (LmSocket    *socket,
-                                     gchar       *buf,
-                                     gsize        buf_len,
-                                     gsize        read_len);
-void        lm_socket_disconnect    (LmSocket    *socket);
+void           lm_socket_connect           (LmSocket    *socket);
+gboolean       lm_socket_write             (LmSocket    *socket,
+                                            gchar       *buf,
+                                            gsize        len);
+gboolean       lm_socket_read              (LmSocket    *socket,
+                                            gchar       *buf,
+                                            gsize        buf_len,
+                                            gsize        read_len);
+void           lm_socket_disconnect        (LmSocket    *socket);
 
 G_END_DECLS
 

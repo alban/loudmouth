@@ -20,155 +20,87 @@
 
 #include <config.h>
 
-#include "lm-marshal.h"
 #include "lm-socket.h"
 
-#define GET_PRIV(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), LM_TYPE_DUMMY, LmSocketPriv))
+static void    socket_base_init (LmSocketIface *iface);
 
-typedef struct LmSocketPriv LmSocketPriv;
-struct LmSocketPriv {
-	gint my_prop;
-};
-
-static void     socket_finalize            (GObject           *object);
-static void     socket_get_property        (GObject           *object,
-					   guint              param_id,
-					   GValue            *value,
-					   GParamSpec        *pspec);
-static void     socket_set_property        (GObject           *object,
-					   guint              param_id,
-					   const GValue      *value,
-					   GParamSpec        *pspec);
-
-G_DEFINE_TYPE (LmSocket, lm_socket, G_TYPE_OBJECT)
-
-enum {
-	PROP_0,
-	PROP_MY_PROP
-};
-
-enum {
-	SIGNAL_NAME,
-	LAST_SIGNAL
-};
-
-static guint signals[LAST_SIGNAL] = { 0 };
-
-static void
-lm_socket_class_init (LmSocketClass *class)
+GType
+lm_socket_get_type (void)
 {
-	GObjectClass *object_class = G_OBJECT_CLASS (class);
+	static GType iface_type = 0;
 
-	object_class->finalize     = socket_finalize;
-	object_class->get_property = socket_get_property;
-	object_class->set_property = socket_set_property;
+	if (!iface_type) {
+		static const GTypeInfo iface_info = {
+			sizeof (LmSocketIface),
+			(GBaseInitFunc)     socket_base_init,
+			(GBaseFinalizeFunc) NULL,
+		};
 
-	g_object_class_install_property (object_class,
-					 PROP_MY_PROP,
-					 g_param_spec_string ("my-prop",
-							      "My Prop",
-							      "My Property",
-							      NULL,
-							      G_PARAM_READWRITE));
-	
-	signals[SIGNAL_NAME] = 
-		g_signal_new ("signal-name",
-			      G_OBJECT_CLASS_TYPE (object_class),
-			      G_SIGNAL_RUN_LAST,
-			      0,
-			      NULL, NULL,
-			      lm_marshal_VOID__INT,
-			      G_TYPE_NONE, 
-			      1, G_TYPE_INT);
-	
-	g_type_class_add_private (object_class, sizeof (LmSocketPriv));
+		iface_type = g_type_register_static (G_TYPE_INTERFACE,
+						     "LmSocketIface",
+						     &iface_info,
+						     0);
+
+		g_type_interface_add_prerequisite (iface_type, G_TYPE_OBJECT);
+	}
+
+	return iface_type;
 }
 
 static void
-lm_socket_init (LmSocket *dummy)
+socket_base_init (LmSocketIface *iface)
 {
-	LmSocketPriv *priv;
+	static gboolean initialized = FALSE;
 
-	priv = GET_PRIV (dummy);
-
-}
-
-static void
-socket_finalize (GObject *object)
-{
-	LmSocketPriv *priv;
-
-	priv = GET_PRIV (object);
-
-	(G_OBJECT_CLASS (lm_socket_parent_class)->finalize) (object);
-}
-
-static void
-socket_get_property (GObject    *object,
-		   guint       param_id,
-		   GValue     *value,
-		   GParamSpec *pspec)
-{
-	LmSocketPriv *priv;
-
-	priv = GET_PRIV (object);
-
-	switch (param_id) {
-	case PROP_MY_PROP:
-		g_value_set_int (value, priv->my_prop);
-		break;
-	default:
-		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, param_id, pspec);
-		break;
-	};
-}
-
-static void
-socket_set_property (GObject      *object,
-                     guint         param_id,
-                     const GValue *value,
-                     GParamSpec   *pspec)
-{
-	LmSocketPriv *priv;
-
-	priv = GET_PRIV (object);
-
-	switch (param_id) {
-	case PROP_MY_PROP:
-		priv->my_prop = g_value_get_int (value);
-		break;
-	default:
-		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, param_id, pspec);
-		break;
-	};
+	if (!initialized) {
+		/* create interface signals here. */
+		initialized = TRUE;
+	}
 }
 
 LmSocket *
 lm_socket_new (const gchar *host, guint port)
 {
+        g_return_val_if_fail (host != NULL, NULL);
+
         return NULL;
 }
 
 /* Use DNS lookup to find the port and the host */
 LmSocket *
-lm_socket_new_srv (const gchar *service)
+lm_socket_new_to_service (const gchar *service)
 {
+        g_return_val_if_fail (service != NULL, NULL);
+
         return NULL;
 }
 
 void 
 lm_socket_connect (LmSocket *socket)
 {
+        g_return_if_fail (LM_IS_SOCKET (socket));
+
+
         /* Initiate the connection process                 */
         /* DNS lookup, connect thing, create IOchannel etc */
+        if (!LM_SOCKET_GET_IFACE(socket)->write) {
+                g_assert_not_reached ();
+        }
+
+        LM_SOCKET_GET_IFACE(socket)->connect (socket);
 }
 
 gboolean
-lm_socket_write (LmSocket *socket,
-                 gchar    *data,
-                 gsize     len)
+lm_socket_write (LmSocket *socket, gchar *buf, gsize len)
 {
-        return FALSE;
+        g_return_val_if_fail (LM_IS_SOCKET (socket), FALSE);
+        g_return_val_if_fail (buf != NULL, FALSE);
+
+        if (!LM_SOCKET_GET_IFACE(socket)->write) {
+                g_assert_not_reached ();
+        }
+
+        return LM_SOCKET_GET_IFACE(socket)->write (socket, buf, len);
 }
 
 gboolean
@@ -177,12 +109,25 @@ lm_socket_read (LmSocket *socket,
                 gsize     buf_len,
                 gsize     read_len)
 {
-        return FALSE;
+        g_return_val_if_fail (LM_IS_SOCKET (socket), FALSE);
+        g_return_val_if_fail (buf != NULL, FALSE);
+
+        if (!LM_SOCKET_GET_IFACE(socket)->read) {
+                g_assert_not_reached ();
+        }
+
+        return LM_SOCKET_GET_IFACE(socket)->read (socket, buf, buf_len, read_len);
 }
 
 void 
 lm_socket_disconnect (LmSocket *socket)
 {
-}
+        g_return_if_fail (LM_IS_SOCKET (socket));
 
+        if (!LM_SOCKET_GET_IFACE(socket)->disconnect) {
+                g_assert_not_reached ();
+        }
+
+        LM_SOCKET_GET_IFACE(socket)->disconnect (socket);
+}
 
