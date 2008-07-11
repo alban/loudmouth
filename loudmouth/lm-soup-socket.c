@@ -30,17 +30,29 @@ struct LmSoupSocketPriv {
 	gint my_prop;
 };
 
+static void     soup_socket_iface_init          (LmSocketIface     *iface);
 static void     soup_socket_finalize            (GObject           *object);
 static void     soup_socket_get_property        (GObject           *object,
-					   guint              param_id,
-					   GValue            *value,
-					   GParamSpec        *pspec);
+                                                 guint              param_id,
+                                                 GValue            *value,
+                                                 GParamSpec        *pspec);
 static void     soup_socket_set_property        (GObject           *object,
-					   guint              param_id,
-					   const GValue      *value,
-					   GParamSpec        *pspec);
+                                                 guint              param_id,
+                                                 const GValue      *value,
+                                                 GParamSpec        *pspec);
+static void     soup_socket_connect             (LmSocket          *socket);
+static gboolean soup_socket_write               (LmSocket          *socket,
+                                                 gchar             *data, 
+                                                 gsize              len);
+static gboolean soup_socket_read                (LmSocket          *socket,
+                                                 gchar             *buf,
+                                                 gsize              buf_len,
+                                                 gsize              read_len);
+static void     soup_socket_disconnect          (LmSocket          *socket);
 
-G_DEFINE_TYPE (LmSoupSocket, lm_soup_socket, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_CODE (LmSoupSocket, lm_soup_socket, G_TYPE_OBJECT,
+                         G_IMPLEMENT_INTERFACE (LM_TYPE_SOCKET,
+                                                soup_socket_iface_init))
 
 enum {
 	PROP_0,
@@ -94,6 +106,15 @@ lm_soup_socket_init (LmSoupSocket *soup_socket)
 }
 
 static void
+soup_socket_iface_init (LmSocketIface *iface)
+{
+        iface->connect    = soup_socket_connect;
+        iface->write      = soup_socket_write;
+        iface->read       = soup_socket_read;
+        iface->disconnect = soup_socket_disconnect;
+}
+
+static void
 soup_socket_finalize (GObject *object)
 {
 	LmSoupSocketPriv *priv;
@@ -141,5 +162,32 @@ soup_socket_set_property (GObject      *object,
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, param_id, pspec);
 		break;
 	};
+}
+
+static void
+soup_socket_connect (LmSocket *socket)
+{
+}
+
+static gboolean
+soup_socket_write (LmSocket *socket,
+                   gchar    *data, 
+                   gsize     len)
+{
+        return FALSE;
+}
+
+static gboolean
+soup_socket_read (LmSocket *socket,
+                  gchar    *buf,
+                  gsize     buf_len,
+                  gsize     read_len)
+{
+        return FALSE;
+}
+
+static void
+soup_socket_disconnect (LmSocket *socket)
+{
 }
 

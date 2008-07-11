@@ -23,6 +23,8 @@
 
 #include <glib-object.h>
 
+#include "lm-socket.h"
+
 G_BEGIN_DECLS
 
 #define LM_TYPE_SOUP_SOCKET            (lm_soup_socket_get_type ())
