@@ -29,8 +29,9 @@
 
 typedef struct LmSoupSocketPriv LmSoupSocketPriv;
 struct LmSoupSocketPriv {
-        gint        my_prop;
-        SoupSocket *soup;
+        gint          my_prop;
+        SoupSocket   *soup;
+        GCancellable *cancellable;
 };
 
 static void     soup_socket_iface_init          (LmSocketIface     *iface);
@@ -54,6 +55,9 @@ static gboolean _soup_socket_read               (LmSocket          *socket,
                                                  gsize              buf_len,
                                                  gsize              read_len);
 static void     _soup_socket_disconnect         (LmSocket          *socket);
+static void     _soup_socket_callback           (SoupSocket        *soup,
+                                                 guint              status,
+                                                 LmSocket          *socket);
 
 G_DEFINE_TYPE_WITH_CODE (LmSoupSocket, lm_soup_socket, G_TYPE_OBJECT,
                          G_IMPLEMENT_INTERFACE (LM_TYPE_SOCKET,
@@ -131,9 +135,9 @@ soup_socket_finalize (GObject *object)
 
 static void
 soup_socket_get_property (GObject    *object,
-		   guint       param_id,
-		   GValue     *value,
-		   GParamSpec *pspec)
+                          guint       param_id,
+                          GValue     *value,
+                          GParamSpec *pspec)
 {
 	LmSoupSocketPriv *priv;
 
@@ -151,9 +155,9 @@ soup_socket_get_property (GObject    *object,
 
 static void
 soup_socket_set_property (GObject      *object,
-		   guint         param_id,
-		   const GValue *value,
-		   GParamSpec   *pspec)
+                          guint         param_id,
+                          const GValue *value,
+                          GParamSpec   *pspec)
 {
 	LmSoupSocketPriv *priv;
 
@@ -172,6 +176,12 @@ soup_socket_set_property (GObject      *object,
 static void
 _soup_socket_connect (LmSocket *socket)
 {
+        LmSoupSocketPriv *priv = GET_PRIV (socket);
+
+        soup_socket_connect_async (priv->soup,
+                                   priv->cancellable,
+                                   (SoupSocketCallback)_soup_socket_callback,
+                                   socket);
 }
 
 static gboolean
@@ -194,5 +204,13 @@ _soup_socket_read (LmSocket *socket,
 static void
 _soup_socket_disconnect (LmSocket *socket)
 {
+}
+
+static void
+_soup_socket_callback (SoupSocket *soup,
+                       guint       status,
+                       LmSocket   *socket)
+{
+        /* Signal back to caller of lm_socket_connect through LmSocketCallback */
 }
 
