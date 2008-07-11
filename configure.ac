@@ -78,6 +78,7 @@ AC_SUBST(LDFLAGS)
 GLIB2_REQUIRED=2.16.0
 GNUTLS_REQUIRED=1.4.0
 LIBTASN1_REQUIRED=0.2.6
+LIBSOUP_REQUIRED=2.4.1
 
 AC_SUBST(GLIB2_REQUIRED)
 AC_SUBST(GNUTLS_REQUIRED)
@@ -87,7 +88,8 @@ LM_CHECK_TIMEZONE
 
 PKG_CHECK_MODULES(LOUDMOUTH, 
                   glib-2.0 >= $GLIB2_REQUIRED
-                  gobject-2.0 >= $GLIB2_REQUIRED)
+                  gobject-2.0 >= $GLIB2_REQUIRED
+                  libsoup-2.4 >= $LIBSOUP_REQUIRED)
 
 PKG_CHECK_MODULES(LIBIDN, libidn, have_idn=yes, have_idn=no)
 if test "x$have_idn" = "xyes"; then
