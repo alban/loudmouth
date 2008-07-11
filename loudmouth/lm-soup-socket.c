@@ -189,7 +189,19 @@ _soup_socket_write (LmSocket *socket,
                    gchar    *data, 
                    gsize     len)
 {
-        return FALSE;
+        LmSoupSocketPriv   *priv = GET_PRIV (socket);
+        SoupSocketIOStatus  io_status;
+
+        if (!priv->soup || !soup_socket_is_connected (priv->soup)) {
+                return FALSE;
+        }
+
+        io_status = soup_socket_write (priv->soup,
+                                       data, len,
+                                       NULL /* FIXME: Should be how much was written */,
+                                       priv->cancellable,
+                                       NULL /* FIXME: Should be a GError */);
+        return TRUE; /* FIXME: Return properly depending on IOStatus */
 }
 
 static gboolean
@@ -198,12 +210,22 @@ _soup_socket_read (LmSocket *socket,
                   gsize     buf_len,
                   gsize     read_len)
 {
+        LmSoupSocketPriv *priv = GET_PRIV (socket);
+
+        if (!priv->soup || !soup_socket_is_connected (priv->soup)) {
+        }
+
         return FALSE;
 }
 
 static void
 _soup_socket_disconnect (LmSocket *socket)
 {
+        LmSoupSocketPriv *priv = GET_PRIV (socket);
+
+        if (priv->soup) {
+                soup_socket_disconnect (priv->soup);
+        }
 }
 
 static void
