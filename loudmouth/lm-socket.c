@@ -69,29 +69,27 @@ socket_base_init (LmSocketIface *iface)
                                       G_SIGNAL_RUN_LAST,
                                       0,
                                       NULL, NULL,
-                                      lm_marshal_VOID__BOOLEAN,
+                                      lm_marshal_VOID__VOID,
                                       G_TYPE_NONE,
-                                      1, G_TYPE_BOOLEAN);
-
+                                      0);
                 signals[WRITABLE] = 
                         g_signal_new ("writable",
                                       LM_TYPE_SOCKET,
                                       G_SIGNAL_RUN_LAST,
                                       0,
                                       NULL, NULL,
-                                      lm_marshal_VOID__BOOLEAN,
+                                      lm_marshal_VOID__VOID,
                                       G_TYPE_NONE,
-                                      1, G_TYPE_BOOLEAN);
+                                      0);
                 signals[DISCONNECTED] =
                         g_signal_new ("disconnected",
                                       LM_TYPE_SOCKET,
                                       G_SIGNAL_RUN_LAST,
                                       0,
                                       NULL, NULL,
-                                      lm_marshal_VOID__BOOLEAN,
+                                      lm_marshal_VOID__VOID,
                                       G_TYPE_NONE,
-                                      1, G_TYPE_BOOLEAN);
-
+                                      0);
 		initialized = TRUE;
 	}
 }
