@@ -20,9 +20,19 @@
 
 #include <config.h>
 
+#include "lm-marshal.h"
 #include "lm-socket.h"
 
 static void    socket_base_init (LmSocketIface *iface);
+
+enum {
+        READABLE,
+        WRITABLE,
+        DISCONNECTED,
+        LAST_SIGNAL
+};
+
+static guint signals[LAST_SIGNAL] = { 0 };
 
 GType
 lm_socket_get_type (void)
@@ -53,7 +63,35 @@ socket_base_init (LmSocketIface *iface)
 	static gboolean initialized = FALSE;
 
 	if (!initialized) {
-		/* create interface signals here. */
+                signals[READABLE] =
+                        g_signal_new ("readable",
+                                      LM_TYPE_SOCKET,
+                                      G_SIGNAL_RUN_LAST,
+                                      0,
+                                      NULL, NULL,
+                                      lm_marshal_VOID__BOOLEAN,
+                                      G_TYPE_NONE,
+                                      1, G_TYPE_BOOLEAN);
+
+                signals[WRITABLE] = 
+                        g_signal_new ("writable",
+                                      LM_TYPE_SOCKET,
+                                      G_SIGNAL_RUN_LAST,
+                                      0,
+                                      NULL, NULL,
+                                      lm_marshal_VOID__BOOLEAN,
+                                      G_TYPE_NONE,
+                                      1, G_TYPE_BOOLEAN);
+                signals[DISCONNECTED] =
+                        g_signal_new ("disconnected",
+                                      LM_TYPE_SOCKET,
+                                      G_SIGNAL_RUN_LAST,
+                                      0,
+                                      NULL, NULL,
+                                      lm_marshal_VOID__BOOLEAN,
+                                      G_TYPE_NONE,
+                                      1, G_TYPE_BOOLEAN);
+
 		initialized = TRUE;
 	}
 }

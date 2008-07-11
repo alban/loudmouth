@@ -51,6 +51,10 @@ struct _LmSocketIface {
         void     (*disconnect)   (LmSocket *socket);
 };
 
+typedef void  (*LmSocketCallback)  (LmSocket *socket,
+                                    guint     status_code,
+                                    gpointer  user_data);
+
 GType          lm_socket_get_type          (void);
 
 LmSocket *     lm_socket_new               (const gchar *host,
@@ -59,6 +63,7 @@ LmSocket *     lm_socket_new               (const gchar *host,
 LmSocket *     lm_socket_new_to_service    (const gchar *service);
 
 /* All async functions so doesn't make a lot of sense to return anything */
+/* Use LmSocketCallback instead of signal for the connect result */
 void           lm_socket_connect           (LmSocket    *socket);
 gboolean       lm_socket_write             (LmSocket    *socket,
                                             gchar       *buf,

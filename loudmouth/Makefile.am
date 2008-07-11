@@ -56,6 +56,8 @@ libloudmouth_1_la_SOURCES =		\
 	lm-sock.c			\
 	lm-socket.c                     \
 	lm-socket.h                     \
+	lm-soup-socket.c                \
+	lm-soup-socket.h                \
 	lm-tcp-socket.c                 \
 	lm-tcp-socket.h                 \
 	lm-old-socket.c                 \
