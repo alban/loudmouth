@@ -20,6 +20,8 @@
 
 #include <config.h>
 
+#include <libsoup/soup.h>
+
 #include "lm-marshal.h"
 #include "lm-soup-socket.h"
 
@@ -27,7 +29,8 @@
 
 typedef struct LmSoupSocketPriv LmSoupSocketPriv;
 struct LmSoupSocketPriv {
-	gint my_prop;
+        gint        my_prop;
+        SoupSocket *soup;
 };
 
 static void     soup_socket_iface_init          (LmSocketIface     *iface);
@@ -40,15 +43,17 @@ static void     soup_socket_set_property        (GObject           *object,
                                                  guint              param_id,
                                                  const GValue      *value,
                                                  GParamSpec        *pspec);
-static void     soup_socket_connect             (LmSocket          *socket);
-static gboolean soup_socket_write               (LmSocket          *socket,
+/* Loudmouths naming policy for static functions clash with the naming of 
+ * Libsoups public functions here, hence the _ */
+static void     _soup_socket_connect            (LmSocket          *socket);
+static gboolean _soup_socket_write              (LmSocket          *socket,
                                                  gchar             *data, 
                                                  gsize              len);
-static gboolean soup_socket_read                (LmSocket          *socket,
+static gboolean _soup_socket_read               (LmSocket          *socket,
                                                  gchar             *buf,
                                                  gsize              buf_len,
                                                  gsize              read_len);
-static void     soup_socket_disconnect          (LmSocket          *socket);
+static void     _soup_socket_disconnect         (LmSocket          *socket);
 
 G_DEFINE_TYPE_WITH_CODE (LmSoupSocket, lm_soup_socket, G_TYPE_OBJECT,
                          G_IMPLEMENT_INTERFACE (LM_TYPE_SOCKET,
@@ -108,10 +113,10 @@ lm_soup_socket_init (LmSoupSocket *soup_socket)
 static void
 soup_socket_iface_init (LmSocketIface *iface)
 {
-        iface->connect    = soup_socket_connect;
-        iface->write      = soup_socket_write;
-        iface->read       = soup_socket_read;
-        iface->disconnect = soup_socket_disconnect;
+        iface->connect    = _soup_socket_connect;
+        iface->write      = _soup_socket_write;
+        iface->read       = _soup_socket_read;
+        iface->disconnect = _soup_socket_disconnect;
 }
 
 static void
@@ -165,12 +170,12 @@ soup_socket_set_property (GObject      *object,
 }
 
 static void
-soup_socket_connect (LmSocket *socket)
+_soup_socket_connect (LmSocket *socket)
 {
 }
 
 static gboolean
-soup_socket_write (LmSocket *socket,
+_soup_socket_write (LmSocket *socket,
                    gchar    *data, 
                    gsize     len)
 {
@@ -178,7 +183,7 @@ soup_socket_write (LmSocket *socket,
 }
 
 static gboolean
-soup_socket_read (LmSocket *socket,
+_soup_socket_read (LmSocket *socket,
                   gchar    *buf,
                   gsize     buf_len,
                   gsize     read_len)
@@ -187,7 +192,7 @@ soup_socket_read (LmSocket *socket,
 }
 
 static void
-soup_socket_disconnect (LmSocket *socket)
+_soup_socket_disconnect (LmSocket *socket)
 {
 }
 
