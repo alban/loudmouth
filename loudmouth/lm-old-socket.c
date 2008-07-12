@@ -825,12 +825,12 @@ _lm_old_socket_create_phase2 (LmOldSocket *socket, struct addrinfo *ans);
 
 static gboolean
 _lm_old_socket_resolver_done (GSource *source,
-    			  GIOCondition condition,
-			  gpointer data);
+                              GIOCondition condition,
+                              gpointer data);
 
 
 static void
-_asyncns_done (LmOldSocket *socket)
+old_socket_asyncns_done (LmOldSocket *socket)
 {
 	if (socket->resolv_channel != NULL) {
 		g_io_channel_unref (socket->resolv_channel);
@@ -851,7 +851,7 @@ _asyncns_done (LmOldSocket *socket)
 }
 
 static gboolean
-_asyncns_prep (LmOldSocket *socket, GError **error)
+old_socket_asyncns_prep (LmOldSocket *socket, GError **error)
 {
 	if (socket->asyncns_ctx) {
 		return TRUE;
@@ -907,10 +907,10 @@ _lm_old_socket_resolver_done (GSource *source,
 			err = asyncns_getaddrinfo_done (socket->asyncns_ctx, socket->resolv_query, &ans);
 			socket->resolv_query = NULL;
 			_lm_old_socket_create_phase2 (socket, (err) ? NULL : ans);
-			_asyncns_done (socket);
+			old_socket_asyncns_done (socket);
 			break;
 		default:
-			g_assert_not_reached();
+                        old_socket_g_assert_not_reached();
 			break;
 		}
 	}
