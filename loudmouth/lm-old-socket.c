@@ -152,6 +152,10 @@ lm_old_socket_do_write (LmOldSocket *socket, const gchar *buf, gint len)
 {
 	gint b_written;
 
+	if (lm_old_socket_output_is_buffered (socket, buf, len)) {
+                return len;
+        }
+
 	if (socket->ssl_started) {
 		b_written = _lm_ssl_send (socket->ssl, buf, len);
 	} else {
@@ -172,7 +176,14 @@ lm_old_socket_do_write (LmOldSocket *socket, const gchar *buf, gint len)
 		}
 	}
 
-	return b_written;
+        if (b_written < len && b_written != -1) {
+                lm_old_socket_setup_output_buffer (socket,
+                                                   buf + b_written,
+                                                   len - b_written);
+                return len;
+        }
+        
+        return b_written;
 }
 
 static gboolean

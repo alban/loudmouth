@@ -483,10 +483,6 @@ connection_send (LmConnection  *connection,
 	/* Check to see if there already is an output buffer, if so, add to the
 	   buffer and return */
 
-	if (lm_old_socket_output_is_buffered (connection->socket, str, len)) {
-		return TRUE;
-	}
-
 	b_written = lm_old_socket_do_write (connection->socket, str, len);
 
 	if (b_written < 0) {
@@ -495,12 +491,6 @@ connection_send (LmConnection  *connection,
 			     LM_ERROR_CONNECTION_FAILED,
 			     "Server closed the connection");
 		return FALSE;
-	}
-
-	if (b_written < len) {
-		lm_old_socket_setup_output_buffer (connection->socket, 
-                                                   str + b_written, 
-                                                   len - b_written);
 	}
 
 	return TRUE;
