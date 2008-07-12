@@ -499,8 +499,8 @@ connection_send (LmConnection  *connection,
 
 	if (b_written < len) {
 		lm_old_socket_setup_output_buffer (connection->socket, 
-                                               str + b_written, 
-                                               len - b_written);
+                                                   str + b_written, 
+                                                   len - b_written);
 	}
 
 	return TRUE;
