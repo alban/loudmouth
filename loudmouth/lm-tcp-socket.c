@@ -48,7 +48,7 @@ static gboolean tcp_socket_write               (LmSocket          *socket,
 static gboolean tcp_socket_read                (LmSocket          *socket,
                                                 gchar             *buf,
                                                 gsize              buf_len,
-                                                gsize              read_len);
+                                                gsize             *read_len);
 static void     tcp_socket_disconnect          (LmSocket          *socket);
 
 G_DEFINE_TYPE_WITH_CODE (LmTcpSocket, lm_tcp_socket, G_TYPE_OBJECT,
@@ -180,9 +180,9 @@ tcp_socket_write (LmSocket *socket, gchar *data, gsize len)
 
 static gboolean
 tcp_socket_read (LmSocket *socket,
-                gchar    *buf,
-                gsize     buf_len,
-                gsize     read_len)
+                gchar     *buf,
+                gsize      buf_len,
+                gsize     *read_len)
 {
         return FALSE;
 }

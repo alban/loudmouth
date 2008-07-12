@@ -53,7 +53,7 @@ static gboolean _soup_socket_write              (LmSocket          *socket,
 static gboolean _soup_socket_read               (LmSocket          *socket,
                                                  gchar             *buf,
                                                  gsize              buf_len,
-                                                 gsize              read_len);
+                                                 gsize             *read_len);
 static void     _soup_socket_disconnect         (LmSocket          *socket);
 static void     _soup_socket_callback           (SoupSocket        *soup,
                                                  guint              status,
@@ -111,7 +111,6 @@ lm_soup_socket_init (LmSoupSocket *soup_socket)
 	LmSoupSocketPriv *priv;
 
 	priv = GET_PRIV (soup_socket);
-
 }
 
 static void
@@ -129,6 +128,14 @@ soup_socket_finalize (GObject *object)
 	LmSoupSocketPriv *priv;
 
 	priv = GET_PRIV (object);
+
+        if (priv->soup) {
+                if (soup_socket_is_connected (priv->soup)) {
+                        soup_socket_disconnect (priv->soup);
+                }
+
+                g_object_unref (priv->soup);
+        }
 
 	(G_OBJECT_CLASS (lm_soup_socket_parent_class)->finalize) (object);
 }
@@ -178,6 +185,15 @@ _soup_socket_connect (LmSocket *socket)
 {
         LmSoupSocketPriv *priv = GET_PRIV (socket);
 
+        if (priv->soup) {
+                g_warning ("Already have a SoupSocket");
+                return;
+        }
+
+        priv->soup = soup_socket_new ("remote-address", "kenny.imendio.com",
+                                      "non-blocking", TRUE,
+                                      NULL);
+
         soup_socket_connect_async (priv->soup,
                                    priv->cancellable,
                                    (SoupSocketCallback)_soup_socket_callback,
@@ -193,6 +209,7 @@ _soup_socket_write (LmSocket *socket,
         SoupSocketIOStatus  io_status;
 
         if (!priv->soup || !soup_socket_is_connected (priv->soup)) {
+                g_warning ("Trying to write to an unconnected socket");
                 return FALSE;
         }
 
@@ -206,14 +223,23 @@ _soup_socket_write (LmSocket *socket,
 
 static gboolean
 _soup_socket_read (LmSocket *socket,
-                  gchar    *buf,
-                  gsize     buf_len,
-                  gsize     read_len)
+                  gchar     *buf,
+                  gsize      buf_len,
+                  gsize     *read_len)
 {
         LmSoupSocketPriv *priv = GET_PRIV (socket);
+        SoupSocketIOStatus  io_status;
 
         if (!priv->soup || !soup_socket_is_connected (priv->soup)) {
+                g_warning ("Trying to read from an unconnected socket");
+                return FALSE;
         }
+
+        io_status = soup_socket_read (priv->soup,
+                                      buf, buf_len, read_len,
+                                      priv->cancellable,
+                                      NULL /* FIXME: Look at if the match is up tonight */);
+
 
         return FALSE;
 }

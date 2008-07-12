@@ -143,7 +143,7 @@ gboolean
 lm_socket_read (LmSocket *socket,
                 gchar    *buf,
                 gsize     buf_len,
-                gsize     read_len)
+                gsize    *read_len)
 {
         g_return_val_if_fail (LM_IS_SOCKET (socket), FALSE);
         g_return_val_if_fail (buf != NULL, FALSE);

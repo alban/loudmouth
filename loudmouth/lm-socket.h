@@ -47,7 +47,7 @@ struct _LmSocketIface {
         gboolean (*read)         (LmSocket *socket,
                                   gchar    *buf,
                                   gsize     buf_len,
-                                  gsize     read_len);
+                                  gsize    *read_len);
         void     (*disconnect)   (LmSocket *socket);
 };
 
@@ -71,7 +71,7 @@ gboolean       lm_socket_write             (LmSocket    *socket,
 gboolean       lm_socket_read              (LmSocket    *socket,
                                             gchar       *buf,
                                             gsize        buf_len,
-                                            gsize        read_len);
+                                            gsize       *read_len);
 void           lm_socket_disconnect        (LmSocket    *socket);
 
 G_END_DECLS
