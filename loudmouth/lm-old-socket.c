@@ -850,7 +850,7 @@ _asyncns_done (LmOldSocket *socket)
  	socket->resolv_query = NULL;
 }
 
-void _asyncns_cancel (LmOldSocket *socket)
+void lm_old_socket_asyncns_cancel (LmOldSocket *socket)
 {
 	if (socket == NULL)
 		return;

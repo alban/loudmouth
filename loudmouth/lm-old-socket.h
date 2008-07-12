@@ -61,7 +61,7 @@ void        lm_old_socket_close               (LmOldSocket       *socket);
 LmOldSocket *  lm_old_socket_ref                 (LmOldSocket       *socket);
 void        lm_old_socket_unref               (LmOldSocket       *socket);
 #ifdef HAVE_ASYNCNS
-void	    _asyncns_cancel               (LmOldSocket *socket);
+void	    lm_old_socket_asyncns_cancel      (LmOldSocket *socket);
 #endif
 gboolean    lm_old_socket_starttls            (LmOldSocket *socket);
 gboolean    lm_old_socket_set_keepalive       (LmOldSocket *socket, int delay);

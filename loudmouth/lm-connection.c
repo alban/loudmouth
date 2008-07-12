@@ -1395,7 +1395,7 @@ lm_connection_cancel_open (LmConnection *connection)
 	connection->cancel_open = TRUE;
 
 #ifdef HAVE_ASYNCNS
-	_asyncns_cancel(connection->socket);
+	lm_old_socket_asyncns_cancel (connection->socket);
 #endif
 }
 
@@ -1417,7 +1417,7 @@ lm_connection_close (LmConnection      *connection,
 	g_return_val_if_fail (connection != NULL, FALSE);
 
 #ifdef HAVE_ASYNCNS
-	_asyncns_cancel (connection->socket);
+	lm_old_socket_asyncns_cancel (connection->socket);
 #endif
 
 	if (connection->state == LM_CONNECTION_STATE_CLOSED) {
