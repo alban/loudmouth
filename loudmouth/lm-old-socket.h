@@ -60,12 +60,10 @@ void        lm_old_socket_flush               (LmOldSocket       *socket);
 void        lm_old_socket_close               (LmOldSocket       *socket);
 LmOldSocket *  lm_old_socket_ref                 (LmOldSocket       *socket);
 void        lm_old_socket_unref               (LmOldSocket       *socket);
-#ifdef HAVE_ASYNCNS
-void	    lm_old_socket_asyncns_cancel      (LmOldSocket *socket);
-#endif
 gboolean    lm_old_socket_starttls            (LmOldSocket *socket);
 gboolean    lm_old_socket_set_keepalive       (LmOldSocket *socket, int delay);
 gchar *     lm_old_socket_get_local_host      (LmOldSocket *socket);
+void	    lm_old_socket_asyncns_cancel      (LmOldSocket *socket);
 
 #endif /* __LM_OLD_SOCKET_H__ */
 

@@ -850,19 +850,6 @@ _asyncns_done (LmOldSocket *socket)
  	socket->resolv_query = NULL;
 }
 
-void lm_old_socket_asyncns_cancel (LmOldSocket *socket)
-{
-	if (socket == NULL)
-		return;
-
-	if (socket->asyncns_ctx) {
-		if (socket->resolv_query)
-			asyncns_cancel (socket->asyncns_ctx, socket->resolv_query);
-
-		_asyncns_done (socket);
-	}
-}
-
 static gboolean
 _asyncns_prep (LmOldSocket *socket, GError **error)
 {
@@ -1224,4 +1211,23 @@ lm_old_socket_set_keepalive (LmOldSocket *socket, int delay)
 	return FALSE;
 #endif /* USE_TCP_KEEPALIVES */
 }
+
+void
+lm_old_socket_asyncns_cancel (LmOldSocket *socket)
+{
+#ifdef HAVE_ASYNCNS
+        if (socket == NULL)
+		return;
+
+	if (socket->asyncns_ctx) {
+                if (socket->resolv_query)
+                        asyncns_cancel (socket->asyncns_ctx, socket->resolv_query);
+
+                _asyncns_done (socket);
+	}
+#else
+        return;
+#endif /* HAVE_ASYNCNS */
+}
+
 
