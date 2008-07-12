@@ -125,6 +125,12 @@ static gboolean     socket_parse_srv_response (unsigned char  *srv,
 					       gchar         **out_server, 
 					       guint          *out_port);
 static void         socket_close_io_channel   (GIOChannel     *io_channel);
+static gboolean     old_socket_output_is_buffered    (LmOldSocket       *socket,
+                                                      const gchar    *buffer,
+                                                      gint            len);
+static void         old_socket_setup_output_buffer   (LmOldSocket       *socket,
+                                                      const gchar    *buffer,
+                                                      gint            len);
 
 static void
 socket_free (LmOldSocket *socket)
@@ -152,7 +158,7 @@ lm_old_socket_do_write (LmOldSocket *socket, const gchar *buf, gint len)
 {
 	gint b_written;
 
-	if (lm_old_socket_output_is_buffered (socket, buf, len)) {
+	if (old_socket_output_is_buffered (socket, buf, len)) {
                 return len;
         }
 
@@ -177,9 +183,9 @@ lm_old_socket_do_write (LmOldSocket *socket, const gchar *buf, gint len)
 	}
 
         if (b_written < len && b_written != -1) {
-                lm_old_socket_setup_output_buffer (socket,
-                                                   buf + b_written,
-                                                   len - b_written);
+                old_socket_setup_output_buffer (socket,
+                                                buf + b_written,
+                                                len - b_written);
                 return len;
         }
         
@@ -662,8 +668,8 @@ socket_do_connect (LmConnectData *connect_data)
 	return TRUE;
 }
 
-gboolean
-lm_old_socket_output_is_buffered (LmOldSocket     *socket,
+static gboolean
+old_socket_output_is_buffered (LmOldSocket     *socket,
 			       const gchar  *buffer,
 			       gint          len)
 {
@@ -676,8 +682,8 @@ lm_old_socket_output_is_buffered (LmOldSocket     *socket,
 	return FALSE;
 }
 
-void
-lm_old_socket_setup_output_buffer (LmOldSocket *socket, const gchar *buffer, gint len)
+static void
+old_socket_setup_output_buffer (LmOldSocket *socket, const gchar *buffer, gint len)
 {
 	lm_verbose ("OUTPUT BUFFER ENABLED\n");
 

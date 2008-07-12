@@ -39,12 +39,6 @@ typedef void    (* ConnectResultFunc) (LmOldSocket        *socket,
 				       gboolean         result,
 				       gpointer         user_data);
 
-gboolean  lm_old_socket_output_is_buffered    (LmOldSocket       *socket,
-					   const gchar    *buffer,
-					   gint            len);
-void      lm_old_socket_setup_output_buffer   (LmOldSocket       *socket,
-					   const gchar    *buffer,
-					   gint            len);
 gint      lm_old_socket_do_write              (LmOldSocket       *socket,
 					   const gchar    *buf,
 					   gint            len);
