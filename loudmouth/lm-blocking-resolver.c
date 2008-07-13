@@ -47,7 +47,8 @@ lm_blocking_resolver_class_init (LmBlockingResolverClass *class)
         resolver_class->lookup = blocking_resolver_lookup;
         resolver_class->cancel = blocking_resolver_cancel;
 	
-	g_type_class_add_private (object_class, sizeof (LmBlockingResolverPriv));
+	g_type_class_add_private (object_class, 
+                                  sizeof (LmBlockingResolverPriv));
 }
 
 static void
@@ -65,6 +66,9 @@ blocking_resolver_finalize (GObject *object)
 
 	priv = GET_PRIV (object);
 
+        /* Ensure we don't have an idle around */
+        blocking_resolver_cancel (LM_RESOLVER (object));
+
 	(G_OBJECT_CLASS (lm_blocking_resolver_parent_class)->finalize) (object);
 }
 
@@ -75,6 +79,9 @@ blocking_resolver_idle_lookup (LmBlockingResolver *resolver)
 
         /* Start the DNS querying */
 
+
+
+        /* End of DNS querying */
         priv->idle_id = 0;
         return FALSE;
 }
