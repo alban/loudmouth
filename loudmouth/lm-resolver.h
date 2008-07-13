@@ -43,25 +43,27 @@ struct LmResolverClass {
 	GObjectClass parent_class;
 	
 	/* <vtable> */
-        void (*lookup_host)  (LmResolver  *resolver,
-                              const gchar *host);
-        void (*lookup_srv)   (LmResolver  *resolver,
-                              const gchar *domain,
-                              const gchar *srv);
-        void (*cancel)       (LmResolver  *resolver);
+        void (*lookup)  (LmResolver  *resolver);
+        void (*cancel)  (LmResolver  *resolver);
 };
+
+typedef enum {
+        LM_RESOLVER_HOST,
+        LM_RESOLVER_SRV
+} LmResolverType;
 
 typedef void (*LmResolverCallback) (LmResolver *resolver,
                                     gpointer    user_data);
 
 GType          lm_resolver_get_type          (void);
-LmResolver *   lm_resolver_new               (LmResolverCallback  callback,
+LmResolver *   lm_resolver_new_for_host      (const gchar        *host,
+                                              LmResolverCallback  callback,
                                               gpointer            user_data);
-void           lm_resolver_lookup_host       (LmResolver         *resolver,
-                                              const gchar        *host);
-void           lm_resolver_lookup_srv        (LmResolver         *resolver,
-                                              const gchar        *domain,
-                                              const gchar        *srv);
+LmResolver *   lm_resolver_new_for_srv       (const gchar        *domain,
+                                              const gchar        *srv,
+                                              LmResolverCallback  callback,
+                                              gpointer            user_data);
+void           lm_resolver_lookup            (LmResolver         *resolver);
 void           lm_resolver_cancel            (LmResolver         *resolver);
 
 G_END_DECLS

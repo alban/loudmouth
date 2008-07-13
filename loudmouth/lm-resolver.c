@@ -114,7 +114,6 @@ lm_resolver_init (LmResolver *resolver)
 	LmResolverPriv *priv;
 
 	priv = GET_PRIV (resolver);
-
 }
 
 static void
@@ -183,39 +182,37 @@ resolver_set_property (GObject      *object,
 }
 
 LmResolver *
-lm_resolver_new (LmResolverCallback callback, gpointer user_data)
+lm_resolver_new_for_host (const gchar        *host,
+                          LmResolverCallback  callback,
+                          gpointer            user_data)
 {
-        return NULL;
+        return g_object_new (LM_TYPE_RESOLVER,
+                             "type", LM_RESOLVER_HOST,
+                             "host", host,
+                             NULL);
+}
+
+LmResolver *
+lm_resolver_new_for_srv (const gchar        *domain, 
+                         const gchar        *srv,
+                         LmResolverCallback  callback,
+                         gpointer            user_data)
+{
+        return g_object_new (LM_TYPE_RESOLVER, 
+                             "type", LM_RESOLVER_SRV,
+                             "domain", domain,
+                             "srv", srv,
+                             NULL);
 }
 
 void
-lm_resolver_lookup_host (LmResolver *resolver, const gchar *host)
+lm_resolver_lookup (LmResolver *resolver)
 {
-
-        g_object_set (resolver, "host", host, NULL);
-
         if (!LM_RESOLVER_GET_CLASS(resolver)) {
                 g_assert_not_reached ();
         }
 
-        LM_RESOLVER_GET_CLASS(resolver)->lookup_host (resolver, host);
-}
-
-void
-lm_resolver_lookup_srv (LmResolver  *resolver,
-                        const gchar *domain,
-                        const gchar *srv)
-{
-        g_object_set (resolver, 
-                      "domain", domain,
-                      "srv", srv,
-                      NULL);
-
-        if (!LM_RESOLVER_GET_CLASS(resolver)->lookup_srv) {
-                g_assert_not_reached ();
-        }
-
-        LM_RESOLVER_GET_CLASS(resolver)->lookup_srv (resolver, domain, srv);
+        LM_RESOLVER_GET_CLASS(resolver)->lookup (resolver);
 }
 
 void
