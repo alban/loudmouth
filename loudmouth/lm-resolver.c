@@ -31,7 +31,7 @@ struct LmResolverPriv {
         gpointer            user_data;
 
         /* Properties */
-        LmResolverType      type;                
+        LmResolverType      type;
         gchar              *host;
         gchar              *domain;
         gchar              *srv;
@@ -115,7 +115,7 @@ lm_resolver_class_init (LmResolverClass *class)
 			      NULL, NULL,
 			      lm_marshal_VOID__INT,
 			      G_TYPE_NONE, 
-			      1, G_TYPE_INT);
+                              1, G_TYPE_INT);
 	
 	g_type_class_add_private (object_class, sizeof (LmResolverPriv));
 }
