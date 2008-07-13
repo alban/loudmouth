@@ -27,7 +27,7 @@
 
 typedef struct LmBlockingResolverPriv LmBlockingResolverPriv;
 struct LmBlockingResolverPriv {
-	gint my_prop;
+        guint idle_id;
 };
 
 static void     blocking_resolver_finalize    (GObject       *object);
@@ -56,7 +56,6 @@ lm_blocking_resolver_init (LmBlockingResolver *blocking_resolver)
 	LmBlockingResolverPriv *priv;
 
 	priv = GET_PRIV (blocking_resolver);
-
 }
 
 static void
@@ -69,13 +68,41 @@ blocking_resolver_finalize (GObject *object)
 	(G_OBJECT_CLASS (lm_blocking_resolver_parent_class)->finalize) (object);
 }
 
+static gboolean
+blocking_resolver_idle_lookup (LmBlockingResolver *resolver) 
+{
+        LmBlockingResolverPriv *priv = GET_PRIV (resolver);
+
+        /* Start the DNS querying */
+
+        priv->idle_id = 0;
+        return FALSE;
+}
+
 static void
 blocking_resolver_lookup (LmResolver *resolver)
 {
+        LmBlockingResolverPriv *priv;
+
+        g_return_if_fail (LM_IS_BLOCKING_RESOLVER (resolver));
+
+        priv = GET_PRIV (resolver);
+
+        priv->idle_id = g_idle_add ((GSourceFunc) blocking_resolver_idle_lookup,
+                                    resolver);
 }
 
 static void
 blocking_resolver_cancel (LmResolver *resolver)
 {
-}
+        LmBlockingResolverPriv *priv;
 
+        g_return_if_fail (LM_IS_BLOCKING_RESOLVER (resolver));
+
+        priv = GET_PRIV (resolver);
+
+        if (priv->idle_id > 0) {
+                g_source_remove (priv->idle_id);
+                priv->idle_id = 0;
+        }
+}
