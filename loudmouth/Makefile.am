@@ -49,6 +49,8 @@ libloudmouth_1_la_SOURCES =		\
 	lm-resolver.h                   \
 	lm-asyncns-resolver.c           \
 	lm-asyncns-resolver.h           \
+	lm-blocking-resolver.c          \
+	lm-blocking-resolver.h          \
 	                                \
 	lm-internals.h			\
 	lm-sha.c			\
