@@ -42,6 +42,8 @@ libloudmouth_1_la_SOURCES =		\
 	lm-misc.h                       \
 	lm-parser.c			\
 	lm-parser.h			\
+	lm-resolver.c                   \
+	lm-resolver.h                   \
 	lm-internals.h			\
 	lm-sha.c			\
 	lm-sha.h			\
