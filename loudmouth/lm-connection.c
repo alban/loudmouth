@@ -578,9 +578,6 @@ connection_do_close (LmConnection *connection)
 	
 	connection->state = LM_CONNECTION_STATE_CLOSED;
 	connection->async_connect_waiting = FALSE;
-	if (connection->ssl) {
-		_lm_ssl_close (connection->ssl);
-	}
 
 	if (connection->sasl) {
 		lm_sasl_free (connection->sasl);

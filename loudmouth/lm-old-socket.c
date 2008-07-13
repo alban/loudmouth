@@ -1182,6 +1182,10 @@ lm_old_socket_close (LmOldSocket *socket)
 		socket->io_channel = NULL;
 		socket->fd = -1;
 	}
+
+        if (socket->ssl) {
+                _lm_ssl_close (socket->ssl);
+        }
 }
 
 gchar *
