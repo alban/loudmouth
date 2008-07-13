@@ -30,22 +30,25 @@ struct LmResolverPriv {
         LmResolverCallback  callback;
         gpointer            user_data;
 
-        /* Properties */
+        /* -- Properties -- */
         LmResolverType      type;
         gchar              *host;
+
+        /* For SRV lookups */
         gchar              *domain;
-        gchar              *srv;
+        gchar              *service;
+        gchar              *protocol;
 };
 
 static void     resolver_finalize            (GObject           *object);
 static void     resolver_get_property        (GObject           *object,
-					   guint              param_id,
-					   GValue            *value,
-					   GParamSpec        *pspec);
+                                              guint              param_id,
+                                              GValue            *value,
+                                              GParamSpec        *pspec);
 static void     resolver_set_property        (GObject           *object,
-					   guint              param_id,
-					   const GValue      *value,
-					   GParamSpec        *pspec);
+                                              guint              param_id,
+                                              const GValue      *value,
+                                              GParamSpec        *pspec);
 
 G_DEFINE_TYPE (LmResolver, lm_resolver, G_TYPE_OBJECT)
 
@@ -54,15 +57,9 @@ enum {
         PROP_TYPE,
         PROP_HOST,
         PROP_DOMAIN,
-        PROP_SRV
+        PROP_SERVICE,
+        PROP_PROTOCOL
 };
-
-enum {
-        SIGNAL_NAME,
-	LAST_SIGNAL
-};
-
-static guint signals[LAST_SIGNAL] = { 0 };
 
 static void
 lm_resolver_class_init (LmResolverClass *class)
@@ -100,23 +97,21 @@ lm_resolver_class_init (LmResolverClass *class)
                                                               G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
 
         g_object_class_install_property (object_class,
-                                         PROP_SRV,
-					 g_param_spec_string ("srv",
-							      "Srv",
+                                         PROP_SERVICE,
+					 g_param_spec_string ("service",
+							      "Service",
 							      "Service to lookup",
                                                               NULL,
                                                               G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
 
-	signals[SIGNAL_NAME] = 
-		g_signal_new ("signal-name",
-			      G_OBJECT_CLASS_TYPE (object_class),
-			      G_SIGNAL_RUN_LAST,
-			      0,
-			      NULL, NULL,
-			      lm_marshal_VOID__INT,
-			      G_TYPE_NONE, 
-                              1, G_TYPE_INT);
-	
+        g_object_class_install_property (object_class,
+                                         PROP_PROTOCOL,
+                                         g_param_spec_string ("protocol",
+							      "Protocol",
+							      "Protocol for SRV lookup",
+                                                              NULL,
+                                                              G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+
 	g_type_class_add_private (object_class, sizeof (LmResolverPriv));
 }
 
@@ -134,6 +129,11 @@ resolver_finalize (GObject *object)
 	LmResolverPriv *priv;
 
 	priv = GET_PRIV (object);
+
+        g_free (priv->host);
+        g_free (priv->domain);
+        g_free (priv->service);
+        g_free (priv->protocol);
 
 	(G_OBJECT_CLASS (lm_resolver_parent_class)->finalize) (object);
 }
@@ -158,8 +158,11 @@ resolver_get_property (GObject    *object,
 	case PROP_DOMAIN:
 		g_value_set_string (value, priv->domain);
 		break;
-        case PROP_SRV:
-		g_value_set_string (value, priv->srv);
+        case PROP_SERVICE:
+		g_value_set_string (value, priv->service);
+		break;
+	case PROP_PROTOCOL:
+		g_value_set_string (value, priv->protocol);
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, param_id, pspec);
@@ -189,9 +192,13 @@ resolver_set_property (GObject      *object,
                 g_free (priv->domain);
 		priv->domain = g_value_dup_string (value);
 		break;
-	case PROP_SRV:
-                g_free (priv->srv);
-                priv->srv = g_value_dup_string (value);
+        case PROP_SERVICE:
+                g_free (priv->service);
+                priv->service = g_value_dup_string (value);
+		break;
+	case PROP_PROTOCOL:
+                g_free (priv->protocol);
+                priv->protocol = g_value_dup_string (value);
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, param_id, pspec);
@@ -204,6 +211,9 @@ lm_resolver_new_for_host (const gchar        *host,
                           LmResolverCallback  callback,
                           gpointer            user_data)
 {
+        g_return_val_if_fail (host != NULL, NULL);
+        g_return_val_if_fail (callback != NULL, NULL);
+
         return g_object_new (LM_TYPE_RESOLVER,
                              "type", LM_RESOLVER_HOST,
                              "host", host,
@@ -211,15 +221,22 @@ lm_resolver_new_for_host (const gchar        *host,
 }
 
 LmResolver *
-lm_resolver_new_for_srv (const gchar        *domain, 
-                         const gchar        *srv,
-                         LmResolverCallback  callback,
-                         gpointer            user_data)
+lm_resolver_new_for_service (const gchar        *domain, 
+                             const gchar        *service,
+                             const gchar        *protocol,
+                             LmResolverCallback  callback,
+                             gpointer            user_data)
 {
+        g_return_val_if_fail (domain != NULL, NULL);
+        g_return_val_if_fail (service != NULL, NULL);
+        g_return_val_if_fail (protocol != NULL, NULL);
+        g_return_val_if_fail (callback != NULL, NULL);
+
         return g_object_new (LM_TYPE_RESOLVER, 
                              "type", LM_RESOLVER_SRV,
                              "domain", domain,
-                             "srv", srv,
+                             "service", service,
+                             "protocol", protocol,
                              NULL);
 }
 
@@ -241,5 +258,17 @@ lm_resolver_cancel (LmResolver *resolver)
         }
 
         LM_RESOLVER_GET_CLASS(resolver)->cancel (resolver);
+}
+
+gchar *
+lm_resolver_create_srv_string (const gchar *domain, 
+                               const gchar *service, 
+                               const gchar *protocol) 
+{
+        g_return_val_if_fail (domain != NULL, NULL);
+        g_return_val_if_fail (service != NULL, NULL);
+        g_return_val_if_fail (protocol != NULL, NULL);
+
+        return g_strdup_printf ("_%s._%s.%s", service, protocol, domain);
 }
 

@@ -72,14 +72,52 @@ blocking_resolver_finalize (GObject *object)
 	(G_OBJECT_CLASS (lm_blocking_resolver_parent_class)->finalize) (object);
 }
 
+static void
+blocking_resolver_lookup_host (LmBlockingResolver *resolver)
+{
+}
+
+static void
+blocking_resolver_lookup_service (LmBlockingResolver *resolver)
+{
+        gchar *domain;
+        gchar *service;
+        gchar *protocol;
+        gchar *srv;
+
+        g_object_get (resolver,
+                      "domain", &domain,
+                      "service", &service,
+                      "protocol", &protocol,
+                      NULL);
+
+        srv = lm_resolver_create_srv_string (domain, service, protocol);
+
+        g_free (srv);
+        g_free (domain);
+        g_free (service);
+        g_free (protocol);
+}
+
 static gboolean
 blocking_resolver_idle_lookup (LmBlockingResolver *resolver) 
 {
         LmBlockingResolverPriv *priv = GET_PRIV (resolver);
+        gint                    type;
 
         /* Start the DNS querying */
 
+        /* Decide if we are going to lookup a srv or host */
+        g_object_get (resolver, "type", &type, NULL);
 
+        switch (type) {
+        case LM_RESOLVER_HOST:
+                blocking_resolver_lookup_host (resolver);
+                break;
+        case LM_RESOLVER_SRV:
+                blocking_resolver_lookup_service (resolver);
+                break;
+        };
 
         /* End of DNS querying */
         priv->idle_id = 0;

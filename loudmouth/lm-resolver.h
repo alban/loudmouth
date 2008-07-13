@@ -59,12 +59,16 @@ GType          lm_resolver_get_type          (void);
 LmResolver *   lm_resolver_new_for_host      (const gchar        *host,
                                               LmResolverCallback  callback,
                                               gpointer            user_data);
-LmResolver *   lm_resolver_new_for_srv       (const gchar        *domain,
-                                              const gchar        *srv,
+LmResolver *   lm_resolver_new_for_service   (const gchar        *domain,
+                                              const gchar        *service,
+                                              const gchar        *protocol,
                                               LmResolverCallback  callback,
                                               gpointer            user_data);
 void           lm_resolver_lookup            (LmResolver         *resolver);
 void           lm_resolver_cancel            (LmResolver         *resolver);
+gchar *        lm_resolver_create_srv_string (const gchar *domain, 
+                                              const gchar *service, 
+                                              const gchar *protocol);
 
 G_END_DECLS
 
