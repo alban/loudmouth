@@ -785,6 +785,24 @@ _lm_connection_starttls_cb (LmMessageHandler *handler,
 }
 
 static void
+connection_possibly_register_starttls_handler (LmConnection *connection) 
+{
+        /* if we'd like to use tls and we didn't already start
+         * it, prepare for it now */
+        if (connection->ssl &&
+            lm_old_socket_get_use_starttls (connection->socket) &&
+            !connection->starttls_cb) {
+                connection->starttls_cb  =
+                        lm_message_handler_new (_lm_connection_starttls_cb,
+                                                NULL, NULL);
+                lm_connection_register_message_handler (connection,
+                                                        connection->starttls_cb,
+                                                        LM_MESSAGE_TYPE_PROCEED,
+                                                        LM_HANDLER_PRIORITY_FIRST);
+        }
+}
+
+static void
 connection_stream_received (LmConnection *connection, LmMessage *m)
 {
 	gboolean result;
@@ -805,23 +823,12 @@ connection_stream_received (LmConnection *connection, LmMessage *m)
 		
 		/* stream is started multiple times, but we only want
 		 * one sasl mechanism */
-		if (!connection->sasl)
+		if (!connection->sasl) {
 			connection->sasl = lm_sasl_new(connection);
+                }
 
-		/* if we'd like to use tls and we didn't already start
-		 * it, prepare for it now */
-		if (connection->ssl &&
-				lm_ssl_get_use_starttls (connection->ssl) &&
-				!connection->starttls_cb) {
-			connection->starttls_cb  =
-				lm_message_handler_new (_lm_connection_starttls_cb,
-					NULL, NULL);
-			lm_connection_register_message_handler (connection,
-				connection->starttls_cb,
-				LM_MESSAGE_TYPE_PROCEED,
-				LM_HANDLER_PRIORITY_FIRST);
-		}
-	} else {
+                connection_possibly_register_starttls_handler (connection);
+        } else {
 		lm_verbose ("Old Jabber stream received: %s\n", 
 			    connection->stream_id);
 	}
@@ -1107,7 +1114,7 @@ connection_features_cb (LmMessageHandler *handler,
 	LmMessageNode *old_auth;
 	
 	starttls_node = lm_message_node_find_child (message->node, "starttls");
-	if (connection->ssl && lm_ssl_get_use_starttls (connection->ssl)) {
+        if (connection->ssl && lm_old_socket_get_use_starttls (connection->socket)) {
 		if (starttls_node) {
 			LmMessage        *msg;
 
@@ -1123,7 +1130,7 @@ connection_features_cb (LmMessageHandler *handler,
 
 			return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 		} else if (!connection->tls_started &&
-				lm_ssl_get_require_starttls (connection->ssl)) {
+                           lm_old_socket_get_require_starttls (connection->socket)) {
 			/* If there were no starttls features present and we require it, this is
 			 * the place to scream. */
 

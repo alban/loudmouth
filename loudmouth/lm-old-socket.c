@@ -1244,4 +1244,25 @@ lm_old_socket_asyncns_cancel (LmOldSocket *socket)
 #endif /* HAVE_ASYNCNS */
 }
 
+gboolean
+lm_old_socket_get_use_starttls (LmOldSocket *socket)
+{
+        if (!socket->ssl) {
+                return FALSE;
+        }
+
+        return lm_ssl_get_use_starttls (socket->ssl);
+}
+
+gboolean
+lm_old_socket_get_require_starttls (LmOldSocket *socket)
+{
+        if (!socket->ssl) {
+                return FALSE;
+        }
+
+        return lm_ssl_get_require_starttls (socket->ssl);
+}
+
+
 

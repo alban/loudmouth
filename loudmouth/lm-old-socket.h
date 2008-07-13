@@ -65,5 +65,8 @@ gboolean       lm_old_socket_set_keepalive  (LmOldSocket        *socket,
 gchar *        lm_old_socket_get_local_host (LmOldSocket        *socket);
 void	       lm_old_socket_asyncns_cancel (LmOldSocket        *socket);
 
+gboolean       lm_old_socket_get_use_starttls (LmOldSocket      *socket);
+gboolean       lm_old_socket_get_require_starttls (LmOldSocket  *socket);
+
 #endif /* __LM_OLD_SOCKET_H__ */
 
