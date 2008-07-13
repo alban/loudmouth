@@ -411,7 +411,7 @@ connection_start_keep_alive (LmConnection *connection)
         /* try using TCP keepalives if possible */
         if ((connection->keep_alive_rate > 0) &&
             lm_old_socket_set_keepalive (connection->socket,
-                                     connection->keep_alive_rate)) {
+                                         connection->keep_alive_rate)) {
 #ifdef ONLY_TCP_KEEP_ALIVE
                 /* Many NAT firewalls seems to not handle this correctly and 
                  * will disconnect the clients */
@@ -531,18 +531,18 @@ connection_do_open (LmConnection *connection, GError **error)
 	lm_verbose ("Connecting to: %s:%d\n", connection->server, connection->port);
 
 	connection->socket = lm_old_socket_create (connection->context,
-					       (IncomingDataFunc) connection_incoming_data,
-					       (SocketClosedFunc) connection_socket_closed_cb,
-					       (ConnectResultFunc) connection_socket_connect_cb,
-					       connection,
-					       connection,
-					       connection->blocking,
-					       connection->server,
-					       domain,
-					       connection->port,
-					       connection->ssl,
-					       connection->proxy,
-					       error);
+                                                   (IncomingDataFunc) connection_incoming_data,
+                                                   (SocketClosedFunc) connection_socket_closed_cb,
+                                                   (ConnectResultFunc) connection_socket_connect_cb,
+                                                   connection,
+                                                   connection,
+                                                   connection->blocking,
+                                                   connection->server,
+                                                   domain,
+                                                   connection->port,
+                                                   connection->ssl,
+                                                   connection->proxy,
+                                                   error);
 
 	g_free (domain);
 

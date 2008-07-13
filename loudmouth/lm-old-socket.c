@@ -891,8 +891,8 @@ old_socket_asyncns_prep (LmOldSocket *socket, GError **error)
 
 static gboolean
 _lm_old_socket_resolver_done (GSource *source,
-    			  GIOCondition condition,
-			  gpointer data)
+                              GIOCondition condition,
+                              gpointer data)
 {
 	LmOldSocket	*socket = lm_old_socket_ref ((LmOldSocket *) data);
 	struct addrinfo	*ans;
@@ -934,8 +934,8 @@ _lm_old_socket_resolver_done (GSource *source,
 
 static void
 _lm_old_socket_create_phase1 (LmOldSocket *socket,
-			  unsigned char *srv_ans,
-			  int len)
+                              unsigned char *srv_ans,
+                              int len)
 {
 	const char          *remote_addr;
 	LmConnectData       *data;
@@ -1030,18 +1030,18 @@ _lm_old_socket_create_phase2 (LmOldSocket *socket, struct addrinfo *ans)
 
 LmOldSocket *
 lm_old_socket_create (GMainContext      *context,
-		  IncomingDataFunc   data_func,
-		  SocketClosedFunc   closed_func,
-		  ConnectResultFunc  connect_func,
-		  gpointer           user_data,
-		  LmConnection      *connection,
-		  gboolean           blocking,
-		  const gchar       *server,
-		  const gchar       *domain,
-		  guint              port, 
-		  LmSSL             *ssl,
-		  LmProxy           *proxy,
-		  GError           **error)
+                      IncomingDataFunc   data_func,
+                      SocketClosedFunc   closed_func,
+                      ConnectResultFunc  connect_func,
+                      gpointer           user_data,
+                      LmConnection      *connection,
+                      gboolean           blocking,
+                      const gchar       *server,
+                      const gchar       *domain,
+                      guint              port, 
+                      LmSSL             *ssl,
+                      LmProxy           *proxy,
+                      GError           **error)
 {
 	LmOldSocket        *socket;
 
@@ -1084,8 +1084,9 @@ lm_old_socket_create (GMainContext      *context,
 		lm_verbose ("Performing a SRV lookup for %s\n", srv);
 
 #ifdef HAVE_ASYNCNS
-		if (!old_socket_asyncns_prep (socket, error))
-			return NULL;
+		if (!old_socket_asyncns_prep (socket, error)) {
+                        return NULL;
+                }
 		
 		socket->resolv_query =
 			asyncns_res_query (socket->asyncns_ctx, srv, C_IN, T_SRV);
