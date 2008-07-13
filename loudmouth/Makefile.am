@@ -42,8 +42,14 @@ libloudmouth_1_la_SOURCES =		\
 	lm-misc.h                       \
 	lm-parser.c			\
 	lm-parser.h			\
+	                                \
+	asyncns.c                       \
+	asyncns.h                       \
 	lm-resolver.c                   \
 	lm-resolver.h                   \
+	lm-asyncns-resolver.c           \
+	lm-asyncns-resolver.h           \
+	                                \
 	lm-internals.h			\
 	lm-sha.c			\
 	lm-sha.h			\
@@ -56,16 +62,16 @@ libloudmouth_1_la_SOURCES =		\
 	lm-proxy.c                      \
 	lm-sock.h			\
 	lm-sock.c			\
+	lm-old-socket.c                 \
+	lm-old-socket.h                 \
+	                                \
 	lm-socket.c                     \
 	lm-socket.h                     \
 	lm-soup-socket.c                \
 	lm-soup-socket.h                \
 	lm-tcp-socket.c                 \
 	lm-tcp-socket.h                 \
-	lm-old-socket.c                 \
-	lm-old-socket.h                 \
-	asyncns.c                       \
-	asyncns.h                       \
+	                                \
 	lm-sasl.c                       \
 	lm-sasl.h                       \
 	lm-simple-io.c                  \
