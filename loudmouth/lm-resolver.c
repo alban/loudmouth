@@ -31,6 +31,7 @@ struct LmResolverPriv {
         gpointer            user_data;
 
         /* Properties */
+        LmResolverType      type;                
         gchar              *host;
         gchar              *domain;
         gchar              *srv;
@@ -50,6 +51,7 @@ G_DEFINE_TYPE (LmResolver, lm_resolver, G_TYPE_OBJECT)
 
 enum {
 	PROP_0,
+        PROP_TYPE,
         PROP_HOST,
         PROP_DOMAIN,
         PROP_SRV
@@ -72,12 +74,22 @@ lm_resolver_class_init (LmResolverClass *class)
 	object_class->set_property = resolver_set_property;
 
         g_object_class_install_property (object_class,
+                                         PROP_TYPE,
+					 g_param_spec_int ("type",
+                                                           "Type",
+                                                           "Resolver Type",
+                                                           LM_RESOLVER_HOST,
+                                                           LM_RESOLVER_SRV,
+                                                           LM_RESOLVER_HOST,
+                                                           G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+
+        g_object_class_install_property (object_class,
                                          PROP_HOST,
 					 g_param_spec_string ("host",
 							      "Host",
 							      "Host to lookup",
                                                               NULL,
-                                                              G_PARAM_READWRITE));
+                                                              G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
 
         g_object_class_install_property (object_class,
                                          PROP_DOMAIN,
@@ -85,7 +97,7 @@ lm_resolver_class_init (LmResolverClass *class)
 							      "Domain",
 							      "Domain to lookup",
                                                               NULL,
-                                                              G_PARAM_READWRITE));
+                                                              G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
 
         g_object_class_install_property (object_class,
                                          PROP_SRV,
@@ -93,7 +105,7 @@ lm_resolver_class_init (LmResolverClass *class)
 							      "Srv",
 							      "Service to lookup",
                                                               NULL,
-                                                              G_PARAM_READWRITE));
+                                                              G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
 
 	signals[SIGNAL_NAME] = 
 		g_signal_new ("signal-name",
@@ -137,6 +149,9 @@ resolver_get_property (GObject    *object,
 	priv = GET_PRIV (object);
 
 	switch (param_id) {
+        case PROP_TYPE:
+                g_value_set_int (value, priv->type);
+                break;
         case PROP_HOST:
 		g_value_set_string (value, priv->host);
 		break;
@@ -163,6 +178,9 @@ resolver_set_property (GObject      *object,
 	priv = GET_PRIV (object);
 
 	switch (param_id) {
+        case PROP_TYPE:
+                priv->type = g_value_get_int (value);
+                break;
         case PROP_HOST:
                 g_free (priv->host);
 		priv->host = g_value_dup_string (value);
