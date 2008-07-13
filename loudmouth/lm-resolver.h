@@ -25,32 +25,36 @@
 
 G_BEGIN_DECLS
 
-#define LM_TYPE_RESOLVER             (lm_resolver_get_type())
-#define LM_RESOLVER(o)               (G_TYPE_CHECK_INSTANCE_CAST((o), LM_TYPE_RESOLVER, LmResolver))
-#define LM_IS_RESOLVER(o)            (G_TYPE_CHECK_INSTANCE_TYPE((o), LM_TYPE_RESOLVER))
-#define LM_RESOLVER_GET_IFACE(o)     (G_TYPE_INSTANCE_GET_INTERFACE((o), LM_TYPE_RESOLVER, LmResolverIface))
+#define LM_TYPE_RESOLVER            (lm_resolver_get_type ())
+#define LM_RESOLVER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), LM_TYPE_RESOLVER, LmResolver))
+#define LM_RESOLVER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), LM_TYPE_RESOLVER, LmResolverClass))
+#define LM_IS_RESOLVER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), LM_TYPE_RESOLVER))
+#define LM_IS_RESOLVER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), LM_TYPE_RESOLVER))
+#define LM_RESOLVER_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), LM_TYPE_RESOLVER, LmResolverClass))
 
-typedef struct _LmResolver      LmResolver;
-typedef struct _LmResolverIface LmResolverIface;
+typedef struct LmResolver      LmResolver;
+typedef struct LmResolverClass LmResolverClass;
 
-struct _LmResolverIface {
-	GTypeInterface parent;
-
-	/* <vtable> */
-        void     (*lookup_host)       (LmResolver  *resolver,
-                                       const gchar *host);
-        void     (*lookup_srv)        (LmResolver  *resolver,
-                                       const gchar *domain,
-                                       const gchar *srv);
-        void     (*cancel)            (LmResolver  *resolver);
+struct LmResolver {
+	GObject parent;
 };
 
-typedef void  (*LmResolverCallback)  (LmResolver  *resolver,
-                                      guint        status_code,
-                                      gpointer     user_data);
+struct LmResolverClass {
+	GObjectClass parent_class;
+	
+	/* <vtable> */
+        void (*lookup_host)  (LmResolver  *resolver,
+                              const gchar *host);
+        void (*lookup_srv)   (LmResolver  *resolver,
+                              const gchar *domain,
+                              const gchar *srv);
+        void (*cancel)       (LmResolver  *resolver);
+};
+
+typedef void (*LmResolverCallback) (LmResolver *resolver,
+                                    gpointer    user_data);
 
 GType          lm_resolver_get_type          (void);
-
 LmResolver *   lm_resolver_new               (LmResolverCallback  callback,
                                               gpointer            user_data);
 void           lm_resolver_lookup_host       (LmResolver         *resolver,
@@ -63,3 +67,4 @@ void           lm_resolver_cancel            (LmResolver         *resolver);
 G_END_DECLS
 
 #endif /* __LM_RESOLVER_H__ */
+
