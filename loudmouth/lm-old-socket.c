@@ -153,16 +153,12 @@ socket_free (LmOldSocket *socket)
 	g_free (socket);
 }
 
-gint
-lm_old_socket_do_write (LmOldSocket *socket, const gchar *buf, gint len)
+static gint
+old_socket_do_write (LmOldSocket *socket, const gchar *buf, guint len)
 {
-	gint b_written;
+        gint b_written;
 
-	if (old_socket_output_is_buffered (socket, buf, len)) {
-                return len;
-        }
-
-	if (socket->ssl_started) {
+        if (socket->ssl_started) {
 		b_written = _lm_ssl_send (socket->ssl, buf, len);
 	} else {
 		GIOStatus io_status = G_IO_STATUS_AGAIN;
@@ -181,6 +177,20 @@ lm_old_socket_do_write (LmOldSocket *socket, const gchar *buf, gint len)
 			b_written = -1;
 		}
 	}
+
+        return b_written;
+}
+
+gint
+lm_old_socket_write (LmOldSocket *socket, const gchar *buf, gint len)
+{
+	gint b_written;
+
+	if (old_socket_output_is_buffered (socket, buf, len)) {
+                return len;
+        }
+
+        b_written = old_socket_do_write (socket, buf, len);
 
         if (b_written < len && b_written != -1) {
                 old_socket_setup_output_buffer (socket,
@@ -712,7 +722,7 @@ socket_buffered_write_cb (GIOChannel   *source,
 		return FALSE;
 	}
 
-	b_written = lm_old_socket_do_write (socket, out_buf->str, out_buf->len);
+	b_written = old_socket_do_write (socket, out_buf->str, out_buf->len);
 
 	if (b_written < 0) {
 		(socket->closed_func) (socket, LM_DISCONNECT_REASON_ERROR, 
@@ -978,7 +988,7 @@ _lm_old_socket_create_phase1 (LmOldSocket *socket,
 	req.ai_protocol = IPPROTO_TCP;
 
 #ifdef HAVE_ASYNCNS
-	if (!_asyncns_prep (socket, NULL))
+	if (!old_socket_asyncns_prep (socket, NULL))
 		return;
 
 	socket->resolv_query =
@@ -1074,7 +1084,7 @@ lm_old_socket_create (GMainContext      *context,
 		lm_verbose ("Performing a SRV lookup for %s\n", srv);
 
 #ifdef HAVE_ASYNCNS
-		if (!_asyncns_prep (socket, error))
+		if (!old_socket_asyncns_prep (socket, error))
 			return NULL;
 		
 		socket->resolv_query =
@@ -1223,7 +1233,7 @@ lm_old_socket_asyncns_cancel (LmOldSocket *socket)
                 if (socket->resolv_query)
                         asyncns_cancel (socket->asyncns_ctx, socket->resolv_query);
 
-                _asyncns_done (socket);
+                old_so_asyncns_done (socket);
 	}
 #else
         return;

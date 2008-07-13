@@ -27,43 +27,43 @@
 
 typedef struct _LmOldSocket LmOldSocket;
 
-typedef void    (* IncomingDataFunc)  (LmOldSocket       *socket,
-				       const gchar    *buf,
-				       gpointer        user_data);
+typedef void    (* IncomingDataFunc)  (LmOldSocket         *socket,
+				       const gchar         *buf,
+				       gpointer             user_data);
 
-typedef void    (* SocketClosedFunc)  (LmOldSocket       *socket,
-				       LmDisconnectReason reason,
-				       gpointer        user_data);
+typedef void    (* SocketClosedFunc)  (LmOldSocket         *socket,
+				       LmDisconnectReason   reason,
+				       gpointer             user_data);
 
-typedef void    (* ConnectResultFunc) (LmOldSocket        *socket,
-				       gboolean         result,
-				       gpointer         user_data);
+typedef void    (* ConnectResultFunc) (LmOldSocket         *socket,
+                                       gboolean             result,
+				       gpointer             user_data);
 
-gint      lm_old_socket_do_write              (LmOldSocket       *socket,
-					   const gchar    *buf,
-					   gint            len);
-
-LmOldSocket *  lm_old_socket_create              (GMainContext   *context, 
-					   IncomingDataFunc data_func,
-					   SocketClosedFunc closed_func,
-					   ConnectResultFunc connect_func,
-					   gpointer         user_data,
-					   LmConnection   *connection,
-					   gboolean        blocking,
-					   const gchar    *server, 
-					   const gchar    *domain,
-					   guint           port, 
-					   LmSSL          *ssl,
-					   LmProxy        *proxy,
-					   GError        **error);
-void        lm_old_socket_flush               (LmOldSocket       *socket);
-void        lm_old_socket_close               (LmOldSocket       *socket);
-LmOldSocket *  lm_old_socket_ref                 (LmOldSocket       *socket);
-void        lm_old_socket_unref               (LmOldSocket       *socket);
-gboolean    lm_old_socket_starttls            (LmOldSocket *socket);
-gboolean    lm_old_socket_set_keepalive       (LmOldSocket *socket, int delay);
-gchar *     lm_old_socket_get_local_host      (LmOldSocket *socket);
-void	    lm_old_socket_asyncns_cancel      (LmOldSocket *socket);
+LmOldSocket * lm_old_socket_create          (GMainContext       *context, 
+                                             IncomingDataFunc    data_func,
+                                             SocketClosedFunc    closed_func,
+                                             ConnectResultFunc   connect_func,
+                                             gpointer            user_data,
+                                             LmConnection       *connection,
+                                             gboolean            blocking,
+                                             const gchar        *server, 
+                                             const gchar        *domain,
+                                             guint               port, 
+                                             LmSSL              *ssl,
+                                             LmProxy            *proxy,
+                                             GError           **error);
+gint           lm_old_socket_write          (LmOldSocket       *socket,
+                                             const gchar       *buf,
+                                             gint               len);
+void           lm_old_socket_flush          (LmOldSocket        *socket);
+void           lm_old_socket_close          (LmOldSocket        *socket);
+LmOldSocket *  lm_old_socket_ref            (LmOldSocket        *socket);
+void           lm_old_socket_unref          (LmOldSocket        *socket);
+gboolean       lm_old_socket_starttls       (LmOldSocket        *socket);
+gboolean       lm_old_socket_set_keepalive  (LmOldSocket        *socket, 
+                                             int                 delay);
+gchar *        lm_old_socket_get_local_host (LmOldSocket        *socket);
+void	       lm_old_socket_asyncns_cancel (LmOldSocket        *socket);
 
 #endif /* __LM_OLD_SOCKET_H__ */
 

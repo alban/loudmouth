@@ -483,7 +483,7 @@ connection_send (LmConnection  *connection,
 	/* Check to see if there already is an output buffer, if so, add to the
 	   buffer and return */
 
-	b_written = lm_old_socket_do_write (connection->socket, str, len);
+	b_written = lm_old_socket_write (connection->socket, str, len);
 
 	if (b_written < 0) {
 		g_set_error (error,
