@@ -27,6 +27,8 @@
 
 typedef struct LmResolverPriv LmResolverPriv;
 struct LmResolverPriv {
+        GMainContext       *context;
+
         LmResolverCallback  callback;
         gpointer            user_data;
 
@@ -54,6 +56,7 @@ G_DEFINE_TYPE (LmResolver, lm_resolver, G_TYPE_OBJECT)
 
 enum {
 	PROP_0,
+        PROP_CONTEXT,
         PROP_TYPE,
         PROP_HOST,
         PROP_DOMAIN,
@@ -69,6 +72,13 @@ lm_resolver_class_init (LmResolverClass *class)
 	object_class->finalize     = resolver_finalize;
 	object_class->get_property = resolver_get_property;
 	object_class->set_property = resolver_set_property;
+
+        g_object_class_install_property (object_class,
+                                         PROP_CONTEXT,
+                                         g_param_spec_pointer ("context",
+                                                               "Context",
+                                                               "Main context to use",
+                                                               G_PARAM_READWRITE));
 
         g_object_class_install_property (object_class,
                                          PROP_TYPE,
@@ -135,6 +145,10 @@ resolver_finalize (GObject *object)
         g_free (priv->service);
         g_free (priv->protocol);
 
+        if (priv->context) {
+                g_main_context_unref (priv->context);
+        }
+
 	(G_OBJECT_CLASS (lm_resolver_parent_class)->finalize) (object);
 }
 
@@ -149,6 +163,9 @@ resolver_get_property (GObject    *object,
 	priv = GET_PRIV (object);
 
 	switch (param_id) {
+        case PROP_CONTEXT:
+                g_value_set_pointer (value, priv->context);
+                break;
         case PROP_TYPE:
                 g_value_set_int (value, priv->type);
                 break;
@@ -181,6 +198,14 @@ resolver_set_property (GObject      *object,
 	priv = GET_PRIV (object);
 
 	switch (param_id) {
+        case PROP_CONTEXT:
+                if (priv->context) {
+                        g_main_context_unref (priv->context);
+                }
+
+                priv->context = (GMainContext *) g_value_get_pointer (value);
+                g_main_context_ref (priv->context);
+                break;
         case PROP_TYPE:
                 priv->type = g_value_get_int (value);
                 break;

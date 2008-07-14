@@ -21,13 +21,15 @@
 #include <config.h>
 
 #include "lm-marshal.h"
+#include "lm-misc.h"
+
 #include "lm-blocking-resolver.h"
 
 #define GET_PRIV(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), LM_TYPE_BLOCKING_RESOLVER, LmBlockingResolverPriv))
 
 typedef struct LmBlockingResolverPriv LmBlockingResolverPriv;
 struct LmBlockingResolverPriv {
-        guint idle_id;
+        GSource *idle_source;
 };
 
 static void     blocking_resolver_finalize    (GObject       *object);
@@ -75,6 +77,13 @@ blocking_resolver_finalize (GObject *object)
 static void
 blocking_resolver_lookup_host (LmBlockingResolver *resolver)
 {
+        gchar *host;
+
+        g_object_get (resolver, "host", &host, NULL);
+
+        /* Lookup */
+
+        g_free (host);
 }
 
 static void
@@ -92,6 +101,8 @@ blocking_resolver_lookup_service (LmBlockingResolver *resolver)
                       NULL);
 
         srv = lm_resolver_create_srv_string (domain, service, protocol);
+
+        /* Lookup */
 
         g_free (srv);
         g_free (domain);
@@ -120,7 +131,7 @@ blocking_resolver_idle_lookup (LmBlockingResolver *resolver)
         };
 
         /* End of DNS querying */
-        priv->idle_id = 0;
+        priv->idle_source = NULL;
         return FALSE;
 }
 
@@ -128,13 +139,17 @@ static void
 blocking_resolver_lookup (LmResolver *resolver)
 {
         LmBlockingResolverPriv *priv;
+        GMainContext           *context;
 
         g_return_if_fail (LM_IS_BLOCKING_RESOLVER (resolver));
 
         priv = GET_PRIV (resolver);
 
-        priv->idle_id = g_idle_add ((GSourceFunc) blocking_resolver_idle_lookup,
-                                    resolver);
+        g_object_get (resolver, "context", &context, NULL);
+
+        priv->idle_source = lm_misc_add_idle (context, 
+                                              (GSourceFunc) blocking_resolver_idle_lookup,
+                                              resolver);
 }
 
 static void
@@ -146,8 +161,8 @@ blocking_resolver_cancel (LmResolver *resolver)
 
         priv = GET_PRIV (resolver);
 
-        if (priv->idle_id > 0) {
-                g_source_remove (priv->idle_id);
-                priv->idle_id = 0;
+        if (priv->idle_source) {
+                g_source_destroy (priv->idle_source);
+                priv->idle_source = NULL;
         }
 }
