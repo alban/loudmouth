@@ -1,3 +1,4 @@
+lm_blocking_resolver_get_type
 lm_connection_authenticate
 lm_connection_authenticate_and_block
 lm_connection_cancel_open
@@ -75,6 +76,7 @@ lm_proxy_set_server
 lm_proxy_set_type
 lm_proxy_set_username
 lm_proxy_unref
+lm_resolver_lookup
 lm_ssl_get_fingerprint
 lm_ssl_get_require_starttls
 lm_ssl_get_use_starttls

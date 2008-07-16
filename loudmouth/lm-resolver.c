@@ -107,8 +107,8 @@ lm_resolver_class_init (LmResolverClass *class)
                                                             "Port",
                                                             "Port number",
                                                             0,
-                                                            LM_MIN_PORT,
                                                             LM_MAX_PORT, 
+                                                            0,
                                                             G_PARAM_READWRITE));
 
         g_object_class_install_property (object_class,
