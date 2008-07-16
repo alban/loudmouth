@@ -20,6 +20,7 @@
 
 #include <config.h>
 
+#include "lm-internals.h"
 #include "lm-marshal.h"
 #include "lm-resolver.h"
 
@@ -35,6 +36,7 @@ struct LmResolverPriv {
         /* -- Properties -- */
         LmResolverType      type;
         gchar              *host;
+        guint               port;
 
         /* For SRV lookups */
         gchar              *domain;
@@ -59,6 +61,7 @@ enum {
         PROP_CONTEXT,
         PROP_TYPE,
         PROP_HOST,
+        PROP_PORT,
         PROP_DOMAIN,
         PROP_SERVICE,
         PROP_PROTOCOL
@@ -96,7 +99,17 @@ lm_resolver_class_init (LmResolverClass *class)
 							      "Host",
 							      "Host to lookup",
                                                               NULL,
-                                                              G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+                                                              G_PARAM_READWRITE));
+
+        g_object_class_install_property (object_class,
+                                         PROP_PORT,
+                                         g_param_spec_uint ("port",
+                                                            "Port",
+                                                            "Port number",
+                                                            0,
+                                                            LM_MIN_PORT,
+                                                            LM_MAX_PORT, 
+                                                            G_PARAM_READWRITE));
 
         g_object_class_install_property (object_class,
                                          PROP_DOMAIN,
@@ -172,6 +185,9 @@ resolver_get_property (GObject    *object,
         case PROP_HOST:
 		g_value_set_string (value, priv->host);
 		break;
+        case PROP_PORT:
+                g_value_set_uint (value, priv->port);
+                break;
 	case PROP_DOMAIN:
 		g_value_set_string (value, priv->domain);
 		break;
@@ -213,6 +229,9 @@ resolver_set_property (GObject      *object,
                 g_free (priv->host);
 		priv->host = g_value_dup_string (value);
 		break;
+        case PROP_PORT:
+                priv->port = g_value_get_uint (value);
+                break;
 	case PROP_DOMAIN:
                 g_free (priv->domain);
 		priv->domain = g_value_dup_string (value);

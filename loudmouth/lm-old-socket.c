@@ -54,8 +54,6 @@
 #endif
 
 #define IN_BUFFER_SIZE 1024
-#define MIN_PORT 1
-#define MAX_PORT 65536
 #define SRV_LEN 8192
 
 struct _LmOldSocket {
@@ -1051,7 +1049,7 @@ lm_old_socket_create (GMainContext      *context,
 #endif
 	
 	g_return_val_if_fail (domain != NULL, NULL);
-	g_return_val_if_fail ((port >= MIN_PORT && port <= MAX_PORT), NULL);
+	g_return_val_if_fail ((port >= LM_MIN_PORT && port <= LM_MAX_PORT), NULL);
 	g_return_val_if_fail (data_func != NULL, NULL);
 	g_return_val_if_fail (closed_func != NULL, NULL);
 	g_return_val_if_fail (connect_func != NULL, NULL);

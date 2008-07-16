@@ -34,6 +34,9 @@
 #include "lm-sock.h"
 #include "lm-old-socket.h"
 
+#define LM_MIN_PORT 1
+#define LM_MAX_PORT 65536
+
 #ifndef G_OS_WIN32
 typedef int LmOldSocketT;
 #else  /* G_OS_WIN32 */

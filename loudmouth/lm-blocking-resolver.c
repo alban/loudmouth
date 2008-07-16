@@ -20,10 +20,24 @@
 
 #include <config.h>
 
+#include <string.h>
+#include <sys/types.h>
+#include <netdb.h>
+
+/* Needed on Mac OS X */
+#if HAVE_ARPA_NAMESER_COMPAT_H
+#include <arpa/nameser_compat.h>
+#endif
+
+#include <arpa/nameser.h>
+#include <resolv.h>
+
 #include "lm-marshal.h"
 #include "lm-misc.h"
 
 #include "lm-blocking-resolver.h"
+
+#define SRV_LEN 8192
 
 #define GET_PRIV(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), LM_TYPE_BLOCKING_RESOLVER, LmBlockingResolverPriv))
 
@@ -77,13 +91,99 @@ blocking_resolver_finalize (GObject *object)
 static void
 blocking_resolver_lookup_host (LmBlockingResolver *resolver)
 {
-        gchar *host;
+        gchar           *host;
+        struct addrinfo  req;
+        struct addrinfo *ans;
+        int              err;
 
         g_object_get (resolver, "host", &host, NULL);
 
         /* Lookup */
 
+	memset (&req, 0, sizeof(req));
+	req.ai_family   = AF_UNSPEC;
+	req.ai_socktype = SOCK_STREAM;
+	req.ai_protocol = IPPROTO_TCP;
+
+        err = getaddrinfo (host, NULL, &req, &ans);
+
+	if (err != 0) {
+                /* FIXME: Report error */
+		return;
+	}
+
+        if (ans == NULL) {
+                /* Couldn't find any results */
+                /* FIXME: Report no results  */
+        }
+
+        /* FIXME: How to set and iterate the results */
+        /*priv->results    = ans;
+        priv->cur_result = ans; */
+
         g_free (host);
+}
+
+static gboolean
+blocking_resolver_parse_srv_response (unsigned char  *srv, 
+                                      int             srv_len, 
+                                      gchar         **out_server, 
+                                      guint          *out_port)
+{
+	int                  qdcount;
+	int                  ancount;
+	int                  len;
+	const unsigned char *pos;
+	unsigned char       *end;
+	HEADER              *head;
+	char                 name[256];
+	char                 pref_name[256];
+	guint                pref_port = 0;
+	guint                pref_prio = 9999;
+
+	pref_name[0] = 0;
+
+	pos = srv + sizeof (HEADER);
+	end = srv + srv_len;
+	head = (HEADER *) srv;
+
+	qdcount = ntohs (head->qdcount);
+	ancount = ntohs (head->ancount);
+
+	/* Ignore the questions */
+	while (qdcount-- > 0 && (len = dn_expand (srv, end, pos, name, 255)) >= 0) {
+		g_assert (len >= 0);
+		pos += len + QFIXEDSZ;
+	}
+
+	/* Parse the answers */
+	while (ancount-- > 0 && (len = dn_expand (srv, end, pos, name, 255)) >= 0) {
+		/* Ignore the initial string */
+		uint16_t pref, weight, port;
+
+		g_assert (len >= 0);
+		pos += len;
+		/* Ignore type, ttl, class and dlen */
+		pos += 10;
+		GETSHORT (pref, pos);
+		GETSHORT (weight, pos);
+		GETSHORT (port, pos);
+
+		len = dn_expand (srv, end, pos, name, 255);
+		if (pref < pref_prio) {
+			pref_prio = pref;
+			strcpy (pref_name, name);
+			pref_port = port;
+		}
+		pos += len;
+	}
+
+	if (pref_name[0]) {
+		*out_server = g_strdup (pref_name);
+		*out_port = pref_port;
+		return TRUE;
+	} 
+	return FALSE;
 }
 
 static void
@@ -93,6 +193,11 @@ blocking_resolver_lookup_service (LmBlockingResolver *resolver)
         gchar *service;
         gchar *protocol;
         gchar *srv;
+        gchar *new_server = NULL;
+        guint  new_port = 0;
+        gboolean  result;
+	unsigned char    srv_ans[SRV_LEN];
+	int              len;
 
         g_object_get (resolver,
                       "domain", &domain,
@@ -102,8 +207,24 @@ blocking_resolver_lookup_service (LmBlockingResolver *resolver)
 
         srv = lm_resolver_create_srv_string (domain, service, protocol);
 
-        /* Lookup */
+        res_init ();
 
+        len = res_query (srv, C_IN, T_SRV, srv_ans, SRV_LEN);
+
+        result = blocking_resolver_parse_srv_response (srv_ans, len, 
+                                                       &new_server, &new_port);
+        if (result == FALSE) {
+                /* FIXME: Report error */
+        }
+
+        g_object_set (resolver, 
+                      "host", new_server,
+                      "port", new_port,
+                      NULL);
+
+        /* Lookup the new server and the new port */
+
+        g_free (new_server);
         g_free (srv);
         g_free (domain);
         g_free (service);
