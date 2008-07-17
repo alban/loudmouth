@@ -20,6 +20,7 @@
 
 #include <config.h>
 
+#include "lm-blocking-resolver.h"
 #include "lm-internals.h"
 #include "lm-marshal.h"
 #include "lm-resolver.h"
@@ -42,6 +43,11 @@ struct LmResolverPriv {
         gchar              *domain;
         gchar              *service;
         gchar              *protocol;
+
+        /* The results */
+        LmResolverResult    result;
+        struct addrinfo    *results;
+        struct addrinfo    *current_result;
 };
 
 static void     resolver_finalize            (GObject           *object);
@@ -255,13 +261,23 @@ lm_resolver_new_for_host (const gchar        *host,
                           LmResolverCallback  callback,
                           gpointer            user_data)
 {
+        LmResolver     *resolver;
+        LmResolverPriv *priv;
+
         g_return_val_if_fail (host != NULL, NULL);
         g_return_val_if_fail (callback != NULL, NULL);
 
-        return g_object_new (LM_TYPE_RESOLVER,
-                             "type", LM_RESOLVER_HOST,
-                             "host", host,
-                             NULL);
+        resolver =  g_object_new (LM_TYPE_BLOCKING_RESOLVER,
+                                  "type", LM_RESOLVER_HOST,
+                                  "host", host,
+                                  NULL);
+
+        priv = GET_PRIV (resolver);
+
+        priv->callback = callback;
+        priv->user_data = user_data;
+
+        return resolver;
 }
 
 LmResolver *
@@ -271,17 +287,27 @@ lm_resolver_new_for_service (const gchar        *domain,
                              LmResolverCallback  callback,
                              gpointer            user_data)
 {
+        LmResolver     *resolver;
+        LmResolverPriv *priv;
+
         g_return_val_if_fail (domain != NULL, NULL);
         g_return_val_if_fail (service != NULL, NULL);
         g_return_val_if_fail (protocol != NULL, NULL);
         g_return_val_if_fail (callback != NULL, NULL);
 
-        return g_object_new (LM_TYPE_RESOLVER, 
-                             "type", LM_RESOLVER_SRV,
-                             "domain", domain,
-                             "service", service,
-                             "protocol", protocol,
-                             NULL);
+        resolver = g_object_new (LM_TYPE_BLOCKING_RESOLVER, 
+                                 "type", LM_RESOLVER_SRV,
+                                 "domain", domain,
+                                 "service", service,
+                                 "protocol", protocol,
+                                 NULL);
+        
+        priv = GET_PRIV (resolver);
+
+        priv->callback = callback;
+        priv->user_data = user_data;
+
+        return resolver;
 }
 
 void
@@ -306,13 +332,65 @@ lm_resolver_cancel (LmResolver *resolver)
 
 gchar *
 lm_resolver_create_srv_string (const gchar *domain, 
-                               const gchar *service, 
-                               const gchar *protocol) 
+                               const gchar *service,
+                               const gchar *protocol)
 {
         g_return_val_if_fail (domain != NULL, NULL);
         g_return_val_if_fail (service != NULL, NULL);
         g_return_val_if_fail (protocol != NULL, NULL);
 
         return g_strdup_printf ("_%s._%s.%s", service, protocol, domain);
+}
+
+/* To iterate through the results */ 
+struct addrinfo *
+lm_resolver_results_get_next (LmResolver *resolver)
+{
+        LmResolverPriv  *priv;
+        struct addrinfo *ret_val;
+
+        g_return_val_if_fail (LM_IS_RESOLVER (resolver), NULL);
+
+        priv = GET_PRIV (resolver);
+
+        if (!priv->current_result) {
+                return NULL;
+        }
+
+        ret_val = priv->current_result;
+        priv->current_result = priv->current_result->ai_next;
+
+        return ret_val;
+}
+
+void
+lm_resolver_results_reset (LmResolver *resolver)
+{
+        LmResolverPriv *priv;
+
+        g_return_if_fail (LM_IS_RESOLVER (resolver));
+
+        priv = GET_PRIV (resolver);
+
+        priv->current_result = priv->results;
+}
+
+void 
+_lm_resolver_set_result (LmResolver       *resolver,
+                         LmResolverResult  result,
+                         struct addrinfo  *results)
+{
+        LmResolverPriv *priv;
+
+        g_return_if_fail (LM_IS_RESOLVER (resolver));
+
+        priv = GET_PRIV (resolver);
+
+        priv->result = result;
+        priv->results = priv->current_result = results;
+
+        g_print ("Calling resolver callback\n");
+
+        priv->callback (resolver, result, priv->user_data);
 }
 

@@ -77,6 +77,10 @@ lm_proxy_set_type
 lm_proxy_set_username
 lm_proxy_unref
 lm_resolver_lookup
+lm_resolver_new_for_host
+lm_resolver_new_for_service
+lm_resolver_results_get_next
+lm_resolver_results_reset
 lm_ssl_get_fingerprint
 lm_ssl_get_require_starttls
 lm_ssl_get_use_starttls

@@ -52,23 +52,37 @@ typedef enum {
         LM_RESOLVER_SRV
 } LmResolverType;
 
-typedef void (*LmResolverCallback) (LmResolver *resolver,
-                                    gpointer    user_data);
+typedef enum {
+        LM_RESOLVER_RESULT_OK
+} LmResolverResult;
 
-GType          lm_resolver_get_type          (void);
-LmResolver *   lm_resolver_new_for_host      (const gchar        *host,
-                                              LmResolverCallback  callback,
-                                              gpointer            user_data);
-LmResolver *   lm_resolver_new_for_service   (const gchar        *domain,
-                                              const gchar        *service,
-                                              const gchar        *protocol,
-                                              LmResolverCallback  callback,
-                                              gpointer            user_data);
-void           lm_resolver_lookup            (LmResolver         *resolver);
-void           lm_resolver_cancel            (LmResolver         *resolver);
-gchar *        lm_resolver_create_srv_string (const gchar *domain, 
-                                              const gchar *service, 
-                                              const gchar *protocol);
+typedef void (*LmResolverCallback) (LmResolver       *resolver,
+                                    LmResolverResult  result,
+                                    gpointer          user_data);
+
+GType             lm_resolver_get_type          (void);
+LmResolver *      lm_resolver_new_for_host      (const gchar        *host,
+                                                 LmResolverCallback  callback,
+                                                 gpointer            user_data);
+LmResolver *      lm_resolver_new_for_service   (const gchar        *domain,
+                                                 const gchar        *service,
+                                                 const gchar        *protocol,
+                                                 LmResolverCallback  callback,
+                                                 gpointer            user_data);
+void              lm_resolver_lookup            (LmResolver         *resolver);
+void              lm_resolver_cancel            (LmResolver         *resolver);
+gchar *           lm_resolver_create_srv_string (const gchar        *domain, 
+                                                 const gchar        *service,
+                                                 const gchar        *protocol);
+
+/* To iterate through the results */ 
+struct addrinfo * lm_resolver_results_get_next  (LmResolver         *resolver);
+void              lm_resolver_results_reset     (LmResolver         *resolver);
+
+/* Only for sub classes */
+void              _lm_resolver_set_result       (LmResolver         *resolver,
+                                                 LmResolverResult    result,
+                                                 struct addrinfo    *results);
 
 G_END_DECLS
 

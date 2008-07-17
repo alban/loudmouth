@@ -125,6 +125,9 @@ blocking_resolver_lookup_host (LmBlockingResolver *resolver)
 
         g_print ("Found result for %s\n", host);
 
+        _lm_resolver_set_result (LM_RESOLVER (resolver), LM_RESOLVER_RESULT_OK,
+                                 ans);
+
         g_free (host);
 }
 
