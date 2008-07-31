@@ -918,7 +918,7 @@ _lm_old_socket_resolver_done (GSource *source,
 			old_socket_asyncns_done (socket);
 			break;
 		default:
-                        old_socket_g_assert_not_reached();
+                        g_assert_not_reached();
 			break;
 		}
 	}
@@ -1236,7 +1236,7 @@ lm_old_socket_asyncns_cancel (LmOldSocket *socket)
                 if (socket->resolv_query)
                         asyncns_cancel (socket->asyncns_ctx, socket->resolv_query);
 
-                old_so_asyncns_done (socket);
+                old_socket_asyncns_done (socket);
 	}
 #else
         return;
