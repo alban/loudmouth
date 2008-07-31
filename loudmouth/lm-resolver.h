@@ -53,7 +53,8 @@ typedef enum {
 } LmResolverType;
 
 typedef enum {
-        LM_RESOLVER_RESULT_OK
+        LM_RESOLVER_RESULT_OK,
+        LM_RESOLVER_RESULT_FAILED
 } LmResolverResult;
 
 typedef void (*LmResolverCallback) (LmResolver       *resolver,
