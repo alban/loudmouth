@@ -34,7 +34,9 @@ int
 main (int argc, char **argv)
 {
         LmResolver *resolver;
+        /*
         LmResolver *srv_resolver;
+        */
 
         g_type_init ();
 
@@ -43,11 +45,13 @@ main (int argc, char **argv)
                                              NULL);
         lm_resolver_lookup (resolver);
 
+        /*
         srv_resolver = lm_resolver_new_for_service ("jabber.org",
                                                     "xmpp-client", "tcp",
                                                     resolver_result_cb,
                                                     NULL);
         lm_resolver_lookup (srv_resolver);
+        */
 
         g_print ("Running main loop\n");
 

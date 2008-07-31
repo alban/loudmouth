@@ -13,11 +13,11 @@ AM_CPPFLAGS = 				    \
 	-DRUNTIME_ENDIAN                    \
 	$(NULL)
 
-noinst_PROGRAMS = test-dns-blocking
+noinst_PROGRAMS = test-dns
 
-test_dns_blocking_SOURCES = test-dns-blocking.c
+test_dns_SOURCES = test-dns.c
 
-test_dns_blocking_LDADD = $(LOUDMOUTH_LIBS) $(top_builddir)/loudmouth/libloudmouth-1.la
+test_dns_LDADD = $(LOUDMOUTH_LIBS) $(top_builddir)/loudmouth/libloudmouth-1.la
 
 lib_LTLIBRARIES = libloudmouth-1.la
 

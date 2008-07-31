@@ -167,7 +167,7 @@ asyncns_resolver_prep (LmResolver *resolver, GError **error)
                                       priv->resolv_channel,
 				      G_IO_IN,
 				      (GIOFunc) asyncns_resolver_done,
-				      socket);
+                                      resolver);
 
 	return TRUE;
 }

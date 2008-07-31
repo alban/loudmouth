@@ -20,6 +20,7 @@
 
 #include <config.h>
 
+#include "lm-asyncns-resolver.h"
 #include "lm-blocking-resolver.h"
 #include "lm-internals.h"
 #include "lm-marshal.h"
@@ -267,7 +268,7 @@ lm_resolver_new_for_host (const gchar        *host,
         g_return_val_if_fail (host != NULL, NULL);
         g_return_val_if_fail (callback != NULL, NULL);
 
-        resolver =  g_object_new (LM_TYPE_BLOCKING_RESOLVER,
+        resolver =  g_object_new (LM_TYPE_ASYNCNS_RESOLVER,
                                   "type", LM_RESOLVER_HOST,
                                   "host", host,
                                   NULL);
