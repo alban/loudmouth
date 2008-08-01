@@ -33,25 +33,24 @@ resolver_result_cb (LmResolver       *resolver,
 int
 main (int argc, char **argv)
 {
+#if 0
         LmResolver *resolver;
-        /*
+#endif
         LmResolver *srv_resolver;
-        */
 
         g_type_init ();
-
+#if 0
         resolver = lm_resolver_new_for_host ("kenny.imendio.com",
                                              resolver_result_cb,
                                              NULL);
         lm_resolver_lookup (resolver);
+#endif
 
-        /*
         srv_resolver = lm_resolver_new_for_service ("jabber.org",
                                                     "xmpp-client", "tcp",
                                                     resolver_result_cb,
                                                     NULL);
         lm_resolver_lookup (srv_resolver);
-        */
 
         g_print ("Running main loop\n");
 

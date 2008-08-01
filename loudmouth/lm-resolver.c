@@ -306,7 +306,7 @@ lm_resolver_new_for_service (const gchar        *domain,
         g_return_val_if_fail (protocol != NULL, NULL);
         g_return_val_if_fail (callback != NULL, NULL);
 
-        resolver = g_object_new (LM_TYPE_BLOCKING_RESOLVER, 
+        resolver = g_object_new (LM_TYPE_ASYNCNS_RESOLVER, 
                                  "type", LM_RESOLVER_SRV,
                                  "domain", domain,
                                  "service", service,
