@@ -337,5 +337,21 @@ asyncns_resolver_lookup (LmResolver *resolver)
 static void
 asyncns_resolver_cancel (LmResolver *resolver)
 {
+        LmAsyncnsResolverPriv *priv;
+
+        g_return_if_fail (LM_IS_ASYNCNS_RESOLVER (resolver));
+
+        priv = GET_PRIV (resolver);
+
+        if (priv->asyncns_ctx) {
+                if (priv->resolv_query) {
+                        asyncns_cancel (priv->asyncns_ctx, priv->resolv_query);
+                        priv->resolv_query = NULL;
+                }
+
+                _lm_resolver_set_result (resolver,
+                                         LM_RESOLVER_RESULT_CANCELLED,
+                                         NULL);
+        }
 }
 

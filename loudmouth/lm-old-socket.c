@@ -39,14 +39,15 @@
 #include <resolv.h>
 
 #include "lm-debug.h"
+#include "lm-error.h"
 #include "lm-internals.h"
 #include "lm-misc.h"
+#include "lm-proxy.h"
+#include "lm-resolver.h"
 #include "lm-ssl.h"
 #include "lm-ssl-internals.h"
-#include "lm-proxy.h"
-#include "lm-old-socket.h"
 #include "lm-sock.h"
-#include "lm-error.h"
+#include "lm-old-socket.h"
 
 #ifdef HAVE_ASYNCNS
 #include <asyncns.h>
@@ -92,6 +93,8 @@ struct _LmOldSocket {
 	gpointer         user_data;
 
 	guint          ref_count;
+
+        LmResolver      *resolver;
 
 #ifdef HAVE_ASYNCNS
 	GSource		*watch_resolv;
