@@ -20,6 +20,16 @@
 
 #include <config.h>
 
+#include <string.h>
+
+/* Needed on Mac OS X */
+#if HAVE_ARPA_NAMESER_COMPAT_H
+#include <arpa/nameser_compat.h>
+#endif
+
+#include <arpa/nameser.h>
+#include <resolv.h>
+
 #include "lm-asyncns-resolver.h"
 #include "lm-blocking-resolver.h"
 #include "lm-internals.h"
@@ -393,5 +403,67 @@ _lm_resolver_set_result (LmResolver       *resolver,
         g_print ("Calling resolver callback\n");
 
         priv->callback (resolver, result, priv->user_data);
+}
+
+gboolean
+_lm_resolver_parse_srv_response (unsigned char  *srv, 
+                                 int             srv_len, 
+                                 gchar         **out_server, 
+                                 guint          *out_port)
+{
+	int                  qdcount;
+	int                  ancount;
+	int                  len;
+	const unsigned char *pos;
+	unsigned char       *end;
+	HEADER              *head;
+	char                 name[256];
+	char                 pref_name[256];
+	guint                pref_port = 0;
+	guint                pref_prio = 9999;
+
+	pref_name[0] = 0;
+
+	pos = srv + sizeof (HEADER);
+	end = srv + srv_len;
+	head = (HEADER *) srv;
+
+	qdcount = ntohs (head->qdcount);
+	ancount = ntohs (head->ancount);
+
+	/* Ignore the questions */
+	while (qdcount-- > 0 && (len = dn_expand (srv, end, pos, name, 255)) >= 0) {
+		g_assert (len >= 0);
+		pos += len + QFIXEDSZ;
+	}
+
+	/* Parse the answers */
+	while (ancount-- > 0 && (len = dn_expand (srv, end, pos, name, 255)) >= 0) {
+		/* Ignore the initial string */
+		uint16_t pref, weight, port;
+
+		g_assert (len >= 0);
+		pos += len;
+		/* Ignore type, ttl, class and dlen */
+		pos += 10;
+		GETSHORT (pref, pos);
+		GETSHORT (weight, pos);
+		GETSHORT (port, pos);
+
+		len = dn_expand (srv, end, pos, name, 255);
+		if (pref < pref_prio) {
+			pref_prio = pref;
+			strcpy (pref_name, name);
+			pref_port = port;
+		}
+		pos += len;
+	}
+
+	if (pref_name[0]) {
+		*out_server = g_strdup (pref_name);
+		*out_port = pref_port;
+		return TRUE;
+	} 
+	return FALSE;
 }
 

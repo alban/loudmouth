@@ -131,68 +131,6 @@ blocking_resolver_lookup_host (LmBlockingResolver *resolver)
         g_free (host);
 }
 
-static gboolean
-blocking_resolver_parse_srv_response (unsigned char  *srv, 
-                                      int             srv_len, 
-                                      gchar         **out_server, 
-                                      guint          *out_port)
-{
-	int                  qdcount;
-	int                  ancount;
-	int                  len;
-	const unsigned char *pos;
-	unsigned char       *end;
-	HEADER              *head;
-	char                 name[256];
-	char                 pref_name[256];
-	guint                pref_port = 0;
-	guint                pref_prio = 9999;
-
-	pref_name[0] = 0;
-
-	pos = srv + sizeof (HEADER);
-	end = srv + srv_len;
-	head = (HEADER *) srv;
-
-	qdcount = ntohs (head->qdcount);
-	ancount = ntohs (head->ancount);
-
-	/* Ignore the questions */
-	while (qdcount-- > 0 && (len = dn_expand (srv, end, pos, name, 255)) >= 0) {
-		g_assert (len >= 0);
-		pos += len + QFIXEDSZ;
-	}
-
-	/* Parse the answers */
-	while (ancount-- > 0 && (len = dn_expand (srv, end, pos, name, 255)) >= 0) {
-		/* Ignore the initial string */
-		uint16_t pref, weight, port;
-
-		g_assert (len >= 0);
-		pos += len;
-		/* Ignore type, ttl, class and dlen */
-		pos += 10;
-		GETSHORT (pref, pos);
-		GETSHORT (weight, pos);
-		GETSHORT (port, pos);
-
-		len = dn_expand (srv, end, pos, name, 255);
-		if (pref < pref_prio) {
-			pref_prio = pref;
-			strcpy (pref_name, name);
-			pref_port = port;
-		}
-		pos += len;
-	}
-
-	if (pref_name[0]) {
-		*out_server = g_strdup (pref_name);
-		*out_port = pref_port;
-		return TRUE;
-	} 
-	return FALSE;
-}
-
 static void
 blocking_resolver_lookup_service (LmBlockingResolver *resolver)
 {
@@ -218,8 +156,8 @@ blocking_resolver_lookup_service (LmBlockingResolver *resolver)
 
         len = res_query (srv, C_IN, T_SRV, srv_ans, SRV_LEN);
 
-        result = blocking_resolver_parse_srv_response (srv_ans, len, 
-                                                       &new_server, &new_port);
+        result = _lm_resolver_parse_srv_response (srv_ans, len, 
+                                                  &new_server, &new_port);
         if (result == FALSE) {
                 g_print ("Error while parsing srv response in %s\n", 
                          G_STRFUNC);

@@ -84,6 +84,10 @@ void              lm_resolver_results_reset     (LmResolver         *resolver);
 void              _lm_resolver_set_result       (LmResolver         *resolver,
                                                  LmResolverResult    result,
                                                  struct addrinfo    *results);
+gboolean        _lm_resolver_parse_srv_response (unsigned char      *srv, 
+                                                 int                 srv_len, 
+                                                 gchar            **out_server, 
+                                                 guint              *out_port);
 
 G_END_DECLS
 

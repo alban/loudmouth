@@ -24,6 +24,14 @@
 #include <asyncns.h>
 #define freeaddrinfo(x) asyncns_freeaddrinfo(x)
 
+/* Needed on Mac OS X */
+#if HAVE_ARPA_NAMESER_COMPAT_H
+#include <arpa/nameser_compat.h>
+#endif
+
+#include <arpa/nameser.h>
+#include <resolv.h>
+
 #include "lm-error.h"
 #include "lm-internals.h"
 #include "lm-marshal.h"
@@ -138,7 +146,9 @@ asyncns_resolver_done (GSource      *source,
 }
 
 static gboolean
-asyncns_resolver_prep (LmResolver *resolver, GError **error)
+asyncns_resolver_prep (LmResolver  *resolver, 
+                       GIOFunc      func,
+                       GError     **error)
 {
         LmAsyncnsResolverPriv *priv = GET_PRIV (resolver);
         GMainContext          *context;
@@ -166,7 +176,7 @@ asyncns_resolver_prep (LmResolver *resolver, GError **error)
                 lm_misc_add_io_watch (context,
                                       priv->resolv_channel,
 				      G_IO_IN,
-				      (GIOFunc) asyncns_resolver_done,
+                                      func,
                                       resolver);
 
 	return TRUE;
@@ -186,7 +196,7 @@ asyncns_resolver_lookup_host (LmResolver *resolver)
 	req.ai_socktype = SOCK_STREAM;
 	req.ai_protocol = IPPROTO_TCP;
 
-	if (!asyncns_resolver_prep (resolver, NULL)) {
+	if (!asyncns_resolver_prep (resolver, (GIOFunc) asyncns_resolver_done, NULL)) {
                 g_warning ("Signal error\n");
 		return;
         }
@@ -203,9 +213,90 @@ asyncns_resolver_lookup_host (LmResolver *resolver)
 */
 }
 
+static gboolean
+asyncns_resolver_srv_done (GSource      *source,
+                           GIOCondition  condition,
+                           LmResolver   *resolver)
+{
+        LmAsyncnsResolverPriv *priv = GET_PRIV (resolver);
+        unsigned char         *srv_ans;
+	int 		       srv_len;
+        gboolean               result = FALSE;
+
+        if (!asyncns_isdone (priv->asyncns_ctx, priv->resolv_query)) {
+                /* Still waiting for the NS lookup to finish */
+                return TRUE;
+        }
+
+        srv_len = asyncns_res_done (priv->asyncns_ctx, 
+                                    priv->resolv_query, &srv_ans);
+
+        priv->resolv_query = NULL;
+
+        if (srv_len <= 0) {
+                /* FIXME: Report error */
+                g_warning ("Failed to read srv request results");
+        } else {
+                gchar *new_server;
+                guint  new_port;
+
+                result = _lm_resolver_parse_srv_response (srv_ans, srv_len,
+                                                          &new_server,
+                                                          &new_port);
+                if (result == TRUE) {
+                        g_object_set (resolver,
+                                      "host", new_server,
+                                      "port", new_port,
+                                      NULL);
+                }
+
+                g_free (new_server);
+                /* TODO: Check whether srv_ans needs freeing */
+        }
+
+        asyncns_resolver_cleanup (resolver);
+
+        if (result == TRUE) {
+                asyncns_resolver_lookup_host (resolver);
+        }
+
+        return FALSE;
+}
+
 static void
 asyncns_resolver_lookup_service (LmResolver *resolver)
 {
+        LmAsyncnsResolverPriv *priv = GET_PRIV (resolver);
+        gchar                 *domain;
+        gchar                 *service;
+        gchar                 *protocol;
+        gchar                 *srv;
+
+        g_object_get (resolver,
+                      "domain", &domain,
+                      "service", &service,
+                      "protocol", &protocol,
+                      NULL);
+
+        srv = lm_resolver_create_srv_string (domain, service, protocol);
+
+        if (!asyncns_resolver_prep (resolver, 
+                                    (GIOFunc) asyncns_resolver_srv_done,
+                                    /* Use GError? */ NULL)) {
+                /* FIXME: Signal error */
+                return;
+        }
+
+        priv->resolv_query =
+                asyncns_res_query (priv->asyncns_ctx, srv, C_IN, T_SRV);
+#if 0
+        asyncns_setuserdata (priv->asyncns_ctx, socket->resolv_query, (gpointer) PHASE_1);
+#endif 
+
+        g_free (srv);
+        g_free (domain);
+        g_free (service);
+        g_free (protocol);
 }
 
 static void
