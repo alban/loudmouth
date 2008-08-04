@@ -179,6 +179,10 @@ resolver_finalize (GObject *object)
                 g_main_context_unref (priv->context);
         }
 
+        if (priv->results) {
+                freeaddrinfo (priv->results);
+        }
+
 	(G_OBJECT_CLASS (lm_resolver_parent_class)->finalize) (object);
 }
 

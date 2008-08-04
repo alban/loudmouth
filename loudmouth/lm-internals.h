@@ -54,7 +54,6 @@ typedef struct {
 	LmOldSocket        *socket;
 
 	/* struct to save resolved address */
-	struct addrinfo *resolved_addrs;
 	struct addrinfo *current_addr;
 	LmOldSocketT         fd;
 	GIOChannel      *io_channel;
