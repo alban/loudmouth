@@ -109,17 +109,18 @@ asyncns_resolver_cleanup (LmResolver *resolver)
         priv->resolv_query = NULL;
 }
 
-static gboolean
+static void
 asyncns_resolver_done (LmResolver *resolver)
 {
         LmAsyncnsResolverPriv *priv = GET_PRIV (resolver);
         struct addrinfo	      *ans;
 	int 		       err;
-	gboolean               result = FALSE;
 
         err = asyncns_getaddrinfo_done (priv->asyncns_ctx, priv->resolv_query, &ans);
         priv->resolv_query = NULL;
         /* Signal that we are done */
+
+        g_object_ref (resolver);
 
         if (err) {
                 _lm_resolver_set_result (resolver,
@@ -133,7 +134,7 @@ asyncns_resolver_done (LmResolver *resolver)
 
         asyncns_resolver_cleanup (resolver);
 
-	return result;
+        g_object_unref (resolver);
 }
 
 typedef gboolean  (* LmAsyncnsResolverCallback) (LmResolver *resolver);
@@ -223,7 +224,7 @@ asyncns_resolver_lookup_host (LmResolver *resolver)
 			     (gpointer) asyncns_resolver_done);
 }
 
-static gboolean
+static void
 asyncns_resolver_srv_done (LmResolver *resolver)
 {
         LmAsyncnsResolverPriv *priv = GET_PRIV (resolver);
@@ -269,8 +270,6 @@ asyncns_resolver_srv_done (LmResolver *resolver)
         if (result == TRUE) {
                 asyncns_resolver_lookup_host (resolver);
         }
-
-        return FALSE;
 }
 
 static void
