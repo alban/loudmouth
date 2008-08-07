@@ -272,6 +272,22 @@ resolver_set_property (GObject      *object,
 }
 
 LmResolver *
+lm_resolver_new (GMainContext *context)
+{
+        LmResolver *resolver;
+
+#if HAVE_ASYNCNS
+        resolver = g_object_new (LM_TYPE_ASYNCNS_RESOLVER, NULL);
+#elif
+        resolver = g_object_new (LM_TYPE_BLOCKING_RESOLVER, NULL);
+#endif
+
+        g_object_set (resolver, "context", context, NULL);
+
+        return resolver;
+}
+
+LmResolver *
 lm_resolver_new_for_host (const gchar        *host,
                           LmResolverCallback  callback,
                           gpointer            user_data)
@@ -336,6 +352,14 @@ lm_resolver_lookup (LmResolver *resolver)
 }
 
 void
+lm_resolver_lookup_host (LmResolver *resolver, const gchar *host)
+{}
+
+void
+lm_resolver_lookup_srv (LmResolver *resolver, const gchar *srv)
+{}
+
+void
 lm_resolver_cancel (LmResolver *resolver)
 {
         if (!LM_RESOLVER_GET_CLASS(resolver)->cancel) {
@@ -343,18 +367,6 @@ lm_resolver_cancel (LmResolver *resolver)
         }
 
         LM_RESOLVER_GET_CLASS(resolver)->cancel (resolver);
-}
-
-gchar *
-lm_resolver_create_srv_string (const gchar *domain, 
-                               const gchar *service,
-                               const gchar *protocol)
-{
-        g_return_val_if_fail (domain != NULL, NULL);
-        g_return_val_if_fail (service != NULL, NULL);
-        g_return_val_if_fail (protocol != NULL, NULL);
-
-        return g_strdup_printf ("_%s._%s.%s", service, protocol, domain);
 }
 
 /* To iterate through the results */ 
@@ -388,6 +400,18 @@ lm_resolver_results_reset (LmResolver *resolver)
         priv = GET_PRIV (resolver);
 
         priv->current_result = priv->results;
+}
+
+gchar *
+_lm_resolver_create_srv_string (const gchar *domain, 
+                                const gchar *service,
+                                const gchar *protocol)
+{
+        g_return_val_if_fail (domain != NULL, NULL);
+        g_return_val_if_fail (service != NULL, NULL);
+        g_return_val_if_fail (protocol != NULL, NULL);
+
+        return g_strdup_printf ("_%s._%s.%s", service, protocol, domain);
 }
 
 void 

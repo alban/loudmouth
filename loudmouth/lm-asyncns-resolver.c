@@ -288,7 +288,7 @@ asyncns_resolver_lookup_service (LmResolver *resolver)
                       "protocol", &protocol,
                       NULL);
         
-        srv = lm_resolver_create_srv_string (domain, service, protocol);
+        srv = _lm_resolver_create_srv_string (domain, service, protocol);
         
         g_print ("Looking up service: %s %s %s\n[%s]", domain, service, protocol, srv);
 

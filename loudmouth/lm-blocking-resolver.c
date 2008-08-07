@@ -154,7 +154,7 @@ blocking_resolver_lookup_service (LmBlockingResolver *resolver)
                       "protocol", &protocol,
                       NULL);
 
-        srv = lm_resolver_create_srv_string (domain, service, protocol);
+        srv = _lm_resolver_create_srv_string (domain, service, protocol);
 
         res_init ();
 
