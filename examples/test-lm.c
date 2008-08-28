@@ -274,6 +274,8 @@ main (int argc, char **argv)
 		ssl = lm_ssl_new (expected_fingerprint,
 				  (LmSSLFunction) ssl_cb,
 				  NULL, NULL);
+
+                lm_ssl_use_starttls (ssl, TRUE, FALSE);
 	
 		lm_connection_set_ssl (connection, ssl);
 		lm_ssl_unref (ssl);
