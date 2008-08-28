@@ -597,29 +597,35 @@ SHA1Final (SHA1Context *sc, guint8 hash[SHA1_HASH_SIZE])
   }
 }
 
-#ifdef G_OS_WIN32
-#define snprintf _snprintf
-#endif
-
-const gchar *
+/**
+ * lm_sha_hash:
+ * @str: the input string
+ *
+ * Computes the SHA1 checksum of @str and prints it in text mode.
+ *
+ * Return value: A newly allocated string.
+ **/
+gchar *
 lm_sha_hash (const gchar *str)
 {
-        static gchar  ret_val[41];
-        SHA1Context   ctx;
-        guint8         hash[SHA1_HASH_SIZE];
-        gchar        *ch;
-        guint          i;
-        
-        SHA1Init (&ctx);
-        SHA1Update (&ctx, str, strlen (str));
-        SHA1Final (&ctx, hash);
+	gchar        *ret_val;
+	SHA1Context   ctx;
+	guint8        hash[SHA1_HASH_SIZE];
+	gchar        *ch;
+	guint         i;
 
-        ch = ret_val;
+	ret_val = g_malloc (SHA1_HASH_SIZE*2 + 1);
 
-        for (i = 0; i < SHA1_HASH_SIZE; ++i) {
-                snprintf (ch, 3, "%02x", hash[i]);
-                ch += 2;
-        }
+	SHA1Init (&ctx);
+	SHA1Update (&ctx, str, strlen (str));
+	SHA1Final (&ctx, hash);
 
-        return (const gchar *) ret_val;
+	ch = ret_val;
+
+	for (i = 0; i < SHA1_HASH_SIZE; ++i) {
+		g_snprintf (ch, 3, "%02x", hash[i]);
+		ch += 2;
+	}
+
+	return ret_val;
 }

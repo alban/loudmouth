@@ -23,6 +23,6 @@
 
 #include <glib.h>
 
-const gchar *     lm_sha_hash    (const gchar *str);
+gchar *     lm_sha_hash    (const gchar *str);
 
 #endif /* __LM_SHA_H__ */
