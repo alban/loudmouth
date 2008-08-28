@@ -34,6 +34,12 @@ Building:
 make
 make install
 
+SSL Support:
+============
+You can choose between using GnuTLS (recommended) and OpenSSL to enable SSL
+support in Loudmouth. You choose which backend to use by passing the
+--with-ssl= flag to configure. GnuTLS is the default and will be used unless
+you pass the flag, use "openssl" for OpenSSL.
 
 Debugging:
 ==========
