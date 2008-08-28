@@ -582,14 +582,15 @@ connection_create_auth_msg (LmConnection *connection,
 	}
 
 	if (auth_type & AUTH_TYPE_DIGEST) {
-		gchar       *str;
-		const gchar *digest;
+		gchar *str;
+                gchar *digest;
 
 		lm_verbose ("Using digest\n");
 		str = g_strconcat (connection->stream_id, password, NULL);
 		digest = lm_sha_hash (str);
 		g_free (str);
 		lm_message_node_add_child (q_node, "digest", digest);
+                g_free (digest);
 	} 
 	else if (auth_type & AUTH_TYPE_PLAIN) {
 		lm_verbose ("Using plaintext auth\n");
