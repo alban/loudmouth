@@ -52,7 +52,7 @@ AC_SUBST([LT_AGE])
 
 AM_PATH_GLIB_2_0
 
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h memory.h netdb.h netinet/in.h stdlib.h string.h sys/socket.h sys/time.h unistd.h]) 
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h memory.h netdb.h netinet/in.h netinet/in_systm.h stdlib.h string.h sys/socket.h sys/time.h unistd.h]) 
 AC_CHECK_HEADERS([winsock2.h arpa/nameser_compat.h])
 
 if test "$ac_cv_header_winsock2_h" = "yes"; then
