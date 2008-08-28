@@ -223,17 +223,16 @@ _lm_ssl_begin (LmSSL *ssl, gint fd, const gchar *server, GError **error)
 	if (ret < 0 || !auth_ok) {
 		char *errmsg;
 
-		gnutls_perror (ret);
-	
 		if (!auth_ok) {
-			errmsg = "*** GNUTLS authentication error";
+			errmsg = "authentication error";
 		} else {
-			errmsg = "*** GNUTLS handshake failed";
+			errmsg = "handshake failed";
 		}
 
 		g_set_error (error, 
 			     LM_ERROR, LM_ERROR_CONNECTION_OPEN,
-			     errmsg);			
+                             "*** GNUTLS %s: %s",
+			     errmsg, gnutls_strerror (ret));			
 
 		return FALSE;
 	}
