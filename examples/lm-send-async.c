@@ -241,6 +241,8 @@ main (int argc, char **argv)
 				  (LmSSLFunction) ssl_cb,
 				  NULL, NULL);
 	
+                lm_ssl_use_starttls (ssl, TRUE, FALSE);
+
 		lm_connection_set_ssl (connection, ssl);
 		lm_ssl_unref (ssl);
 	}
