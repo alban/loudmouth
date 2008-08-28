@@ -19,6 +19,7 @@
  */
 
 #include <config.h>
+
 #include <glib.h>
 #include <glib/gi18n.h>
 
@@ -29,9 +30,16 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <fcntl.h>
+
+/* Needed for BSD, LM-130 */
+#ifdef HAVE_NETINET_IN_SYSTM_H
+#include <netinet/in_systm.h>
+#endif
+
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
+
 #include <arpa/inet.h>
 #define LM_SHUTDOWN SHUT_RDWR
 
