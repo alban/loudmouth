@@ -45,7 +45,7 @@ static GOptionEntry entries[] =
   { "port", 'P', 0, G_OPTION_ARG_INT, &port, 
     "Port to connect to [default=5222]", NULL },
   { "username", 'u', 0, G_OPTION_ARG_STRING, &username, 
-    "Username to connect with (e.g. 'user' in user@server.org)", NULL },
+    "Username to connect with (user@server.org)", NULL },
   { "password", 'p', 0, G_OPTION_ARG_STRING, &password, 
     "Password to try", NULL },
   { "resource", 'r', 0, G_OPTION_ARG_STRING, &resource, 
