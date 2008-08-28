@@ -212,7 +212,7 @@ _lm_ssl_begin (LmSSL *ssl, gint fd, const gchar *server, GError **error)
 				ssl->gnutls_xcred);
 
 	gnutls_transport_set_ptr (ssl->gnutls_session,
-				  (gnutls_transport_ptr_t) fd);
+				  (gnutls_transport_ptr_t)(glong) fd);
 
 	ret = gnutls_handshake (ssl->gnutls_session);
 
