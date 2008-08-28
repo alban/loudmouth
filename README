@@ -14,18 +14,14 @@ feedback I would be most grateful.
 Requirements:
 =============
 
-Glib >= 2.4.0:
-ftp://ftp.gtk.org/pub/gtk/v2.2/
+Glib >= 2.16.0:
+http://ftp.gnome.org/pub/GNOME/sources/glib/2.16/
 
 gtk-doc (optional, if you want documentation built):
 ftp://ftp.gnome.org/pub/GNOME/sources/gtk-doc/1.0
 
 If you want SSL-support you'll also need:
 GnuTLS >= 1.2.0 with libtasn support.
-
-If you want to run the unit tests, you'll also need:
-Check
-http://check.sourceforge.net/
 
 Building:
 =========
