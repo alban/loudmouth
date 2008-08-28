@@ -35,7 +35,7 @@ _lm_ssl_base_init (LmSSLBase      *base,
 	base->fingerprint[0] = '\0';
 	
 	if (expected_fingerprint) {
-		base->expected_fingerprint = g_strdup (expected_fingerprint);
+		base->expected_fingerprint = g_memdup (expected_fingerprint, 16);
 	} else {
 		base->expected_fingerprint = NULL;
 	}
