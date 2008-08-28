@@ -21,6 +21,7 @@
 
 /*#undef HAVE_PTHREAD */
 
+#include <glib.h>
 #include <assert.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -153,27 +154,6 @@ typedef struct res_query_response {
     struct rheader header;
     int ret;
 } res_response_t;
-
-#ifndef HAVE_STRNDUP
-
-static char *strndup(const char *s, size_t l) {
-    size_t a;
-    char *n;
-
-    a = strlen(s);
-    if (a > l)
-        a = l;
-
-    if (!(n = malloc(a+1)))
-        return NULL;
-
-    strncpy(n, s, a);
-    n[a] = 0;
-
-    return n;
-}
-
-#endif
 
 static int fd_nonblock(int fd) {
     int i;
@@ -750,10 +730,10 @@ static int handle_response(asyncns_t *asyncns, rheader_t *resp, size_t length) {
             q->ret = ni_resp->ret;
 
             if (ni_resp->hostlen)
-                q->host = strndup((const char*) ni_resp + sizeof(nameinfo_response_t), ni_resp->hostlen-1);
+                q->host = g_strndup((const char*) ni_resp + sizeof(nameinfo_response_t), (gsize)ni_resp->hostlen-1);
 
             if (ni_resp->servlen)
-                q->serv = strndup((const char*) ni_resp + sizeof(nameinfo_response_t) + ni_resp->hostlen, ni_resp->servlen-1);
+                q->serv = g_strndup((const char*) ni_resp + sizeof(nameinfo_response_t) + ni_resp->hostlen, (gsize)ni_resp->servlen-1);
                     
 
             complete_query(asyncns, q);
@@ -1093,8 +1073,8 @@ void asyncns_cancel(asyncns_t *asyncns, asyncns_query_t* q) {
 
     asyncns_freeaddrinfo(q->addrinfo);
     free(q->addrinfo);
-    free(q->host);
-    free(q->serv);
+    g_free(q->host);
+    g_free(q->serv);
 
     asyncns->n_queries--;
     free(q);
