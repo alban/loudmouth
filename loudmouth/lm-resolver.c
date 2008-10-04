@@ -278,7 +278,7 @@ lm_resolver_new (GMainContext *context)
 
 #if HAVE_ASYNCNS
         resolver = g_object_new (LM_TYPE_ASYNCNS_RESOLVER, NULL);
-#elif
+#else
         resolver = g_object_new (LM_TYPE_BLOCKING_RESOLVER, NULL);
 #endif
 
